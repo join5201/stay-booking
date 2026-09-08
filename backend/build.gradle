@@ -29,6 +29,27 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// 한국어 주석이 소스에 있다. 빌드 기계의 기본 문자셋에 맡기면 판마다 깨진다
+tasks.withType(JavaCompile).configureEach {
+	options.encoding = 'UTF-8'
+}
+
 tasks.named('test') {
 	useJUnitPlatform()
+
+	// backend/.env를 테스트 태스크 환경변수로 넘긴다. docker compose가 읽는 그 파일이다.
+	// 두 곳이 같은 파일을 보게 해서 DB 계정이 두 벌로 갈라지는 것을 막는다.
+	def envFile = file('.env')
+	if (envFile.exists()) {
+		envFile.readLines().each { line ->
+			def trimmed = line.trim()
+			if (trimmed && !trimmed.startsWith('#') && trimmed.contains('=')) {
+				def at = trimmed.indexOf('=')
+				environment trimmed.substring(0, at).trim(), trimmed.substring(at + 1).trim()
+			}
+		}
+	}
+
+	// 결정 D-1 다가 읽을 기계 판독 결과다. 경로는 3단계에서 실측해 계약 9절에 적는다
+	reports.junitXml.required = true
 }

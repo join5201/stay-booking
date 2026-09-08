@@ -35,3 +35,7 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### O2O ###
+# DB 계정. backend/README.md 2절이 이름만 적는다
+.env
