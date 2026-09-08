@@ -1,0 +1,10 @@
+# 텍스트 파일의 줄바꿈을 저장소와 워킹 트리 양쪽에서 LF로 고정한다.
+# 이유: core.autocrlf=true이면 커밋 전에 계산한 sha256이 체크아웃 뒤 어긋난다.
+# HR2는 기록된 버전과 실제 파일의 대조인데 그 대조가 줄바꿈 때문에 깨졌다. 이슈 13.
+* text=auto eol=lf
+
+# 바이너리는 건드리지 않는다
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
