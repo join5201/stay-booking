@@ -192,6 +192,12 @@ export function fill(file, { dry = false } = {}) {
       const hash = row.cells[hashCol];
       if (!target || !/^[A-Za-z]:\//.test(target)) continue;
       if (!isFile(target)) continue; // 없는 경로와 폴더는 아래 경로 검사가 보고한다
+      // 자기 자신의 해시는 적는 순간 틀린다. 적으면 파일이 바뀌고 파일이 바뀌면 해시가 바뀐다
+      if (path.resolve(target) === path.resolve(file)) {
+        r.check('fill.self-hash', row.line, false,
+          '이 파일이 자기 해시를 적으려 한다. 버전 칸을 자기 해시 없음으로 두고 승인 커밋으로 가리킨다');
+        continue;
+      }
       const digest = sha256(target);
       const isBlank = !hash || /^\{\{.*\}\}$/.test(hash);
       if (!isBlank) {
