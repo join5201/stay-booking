@@ -1,0 +1,24 @@
+# 추적 제외. 파일 자체는 지우지 않는다 (CLAUDE.md N2)
+
+# 과거 산출물과 스크립트 원본. 스크립트 사본은 harness-prompts/tools/에 있다
+tmp/
+
+# 생성 이미지. 이벤트 스토밍 PNG 변형
+output/
+
+# 다운로드 착지 폴더. 내용은 document/, project-sync/, harness-prompts/, decisions/에 복사되어 있다
+Claude outputs/
+
+# 정리 대상
+_to_delete/
+.tmp_hla_check/
+
+# 개인 설정. 공유 설정인 .claude/settings.json은 추적한다
+.claude/settings.local.json
+CLAUDE.local.md
+
+# out/은 하네스의 생성 후보 자리다. 빌드 산출물이 아니므로 제외하지 않는다
+
+# OS
+.DS_Store
+Thumbs.db

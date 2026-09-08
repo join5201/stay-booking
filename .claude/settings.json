@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(./secrets/**)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/id_rsa*)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Edit(./.env)",
+      "Edit(./.env.*)",
+      "Edit(**/.env)",
+      "Edit(**/.env.*)",
+      "Edit(./project-sync/**)",
+      "Bash(rm *)",
+      "PowerShell(Remove-Item *)"
+    ],
+    "allow": [
+      "Bash(node harness-prompts/tools/check.mjs:*)",
+      "Bash(node harness-prompts/tools/build-v2.mjs:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "PowerShell(node harness-prompts/tools/check.mjs *)",
+      "PowerShell(node harness-prompts/tools/build-v2.mjs *)",
+      "PowerShell(git status *)",
+      "PowerShell(git diff *)"
+    ]
+  }
+}
