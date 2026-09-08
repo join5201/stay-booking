@@ -6,6 +6,10 @@
 // 구조: fixtures/의 통과 파일이 골든이다. 실패 fixture는 골든에서 딱 한 군데를
 // 바꿔 만든다. 그래야 그 검사가 그 차이 하나 때문에 걸렸다는 것이 증명된다.
 //
+// 골든 파일을 만드는 규칙 (2026-09-08 HRV-07): fixture는 harness/prompts/의 양식에서
+// 만든다. 검사기에 맞춰 만들지 않는다. 그렇게 만들면 테스트가 코드의 거울이 되어
+// 코드가 양식을 오해한 것까지 통과시킨다. 실제로 그 사고가 났다.
+//
 // 실행
 //   node --test harness/tools/tests/check.test.mjs
 //   디렉터리를 넘기면 Node 24가 모듈로 해석해서 실패한다. 파일을 직접 넘긴다.
@@ -90,6 +94,28 @@ test('fill 실패. 보호 경로는 쓰지 않는다', () => {
   assert.match(r.out, /fill\.protected/);
 });
 
+// HRV-05
+test('fill 실패. 보호 경로를 대소문자로 우회할 수 없다', () => {
+  const r = run(() => fill(path.join(ROOT, 'DOCUMENT', 'README.md')));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /fill\.protected/);
+});
+
+// HRV-06
+test('fill 실패. 기록된 해시가 실제와 다르면 잡는다', () => {
+  const f = prep('fill-pass.md', (t) => t.replace('{{필수}}', 'sha256:0000000000000000'));
+  const r = run(() => fill(f, { dry: true }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /fill\.hash-stale/);
+});
+
+test('fill 실패. 버전 칸에 sha256이 아닌 값이 있으면 잡는다', () => {
+  const f = prep('fill-pass.md', (t) => t.replace('{{필수}}', 'v3'));
+  const r = run(() => fill(f, { dry: true }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /fill\.hash-recorded/);
+});
+
 // ---------- g1 doc ----------
 
 test('g1 doc 통과. 펜스 안 기호는 제외된다', () => {
@@ -104,8 +130,10 @@ const docCases = [
   ['긴 줄표', (t) => t.replace('본문이다.', '본문이다 — 그렇다.'), /doc\.no-emdash/],
   ['가운뎃점', (t) => t.replace('본문이다.', '본문 · 이다.'), /doc\.no-middot/],
   ['종료 문장 없음', (t) => t.replace('Step 9 산출물 제출. 다음 지시를 기다린다.', '끝.'), /doc\.end-sentence/],
-  ['링크 대상 없음', (t) => t.replace('eval-criteria-ddd.md', 'eval-criteria-없음.md'), /link\.exists/],
+  ['절대 링크 대상 없음', (t) => t.replace('eval-criteria-ddd.md', 'eval-criteria-없음.md'), /link\.exists/],
   ['옛 상대경로 링크', (t) => t.replace('본문이다.', '본문이다. [옛 링크](claude/06-4.md)'), /link\.stale/],
+  // HRV-09
+  ['깨진 상대 링크', (t) => t.replace('본문이다.', '본문이다. [상대](./없는파일.md)'), /link\.exists/],
 ];
 
 for (const [name, mutate, want] of docCases) {
@@ -115,6 +143,18 @@ for (const [name, mutate, want] of docCases) {
     assert.match(r.out, want);
   });
 }
+
+// HRV-09
+test('g1 doc 실패. 승인 양식의 필수 항목 누락', () => {
+  const r = run(() => g1(prep('g1-doc-pass.md'), { type: 'doc', require: ['반영하지 않은 것'] }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /doc\.required-item/);
+});
+
+test('g1 doc 통과. 필수 항목이 있으면 통과', () => {
+  const r = run(() => g1(prep('g1-doc-pass.md'), { type: 'doc', require: ['본문이다'] }));
+  assert.equal(r.code, 0);
+});
 
 // ---------- g1 api, code ----------
 
@@ -149,9 +189,16 @@ test('g1 code 실패. 결과 파일을 지정하지 않았다', () => {
   assert.match(r.out, /code\.artifact-given/);
 });
 
+// HRV-09
+test('g1 code 실패. 소스 파일을 결과 파일로 지정', () => {
+  const r = run(() => g1(prep('g1-api-pass.md'), { type: 'code', artifacts: [path.join(ROOT, 'harness/tools/check.mjs')] }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /code\.artifact-not-source/);
+});
+
 // ---------- g2 ----------
 
-test('g2 통과. HR4 항목 전부', () => {
+test('g2 통과. 실제 양식 구조로 HR4 항목 전부', () => {
   const r = run(() => g2(prep('g2-pass.md')));
   assert.equal(r.code, 0);
 });
@@ -159,13 +206,22 @@ test('g2 통과. HR4 항목 전부', () => {
 const g2Cases = [
   ['버전 해시 불일치', (t) => t.replace(/sha256:[0-9a-f]{64}/, 'sha256:' + '0'.repeat(64)), /g2\.version-match/],
   ['원본에 있는 지적이 결정표에 없다', (t) => t.replace(/^\| A \| 2 \| S9-R1-A-02 \|.*$\n/m, ''), /g2\.id-missing/],
-  ['결정표에만 있는 지적', (t) => t.replace('S9-R1-A-02', 'S9-R1-A-09'), /g2\.id-extra/],
-  ['선언한 행 수가 A와 B의 합과 다르다', (t) => t.replace('| A 원본 지적 수 | 2 |', '| A 원본 지적 수 | 3 |'), /g2\.row-count-declared/],
+  ['결정표에만 있는 지적', (t) => t.replace('| A | 2 | S9-R1-A-02 |', '| A | 2 | S9-R1-A-09 |'), /g2\.id-extra/],
+  ['선언한 행 수가 원본 합계와 다르다', (t) => t.replace('| A 원본 지적 수 | 2 |', '| A 원본 지적 수 | 3 |'), /g2\.report-count/],
   ['빈 결정', (t) => t.replace('| 수용 | 반영한다 |', '|  | 반영한다 |'), /g2\.decision-empty/],
   ['거부에 이유가 없다', (t) => t.replace('| 거부 | 오판 기록 MJ-01 |', '| 거부 |  |'), /g2\.reject-reason/],
-  ['반박을 확인필요가 아닌 등급에 썼다', (t) => t.replace('| S9-R1-A-02 | 확인필요 |', '| S9-R1-A-02 | 보통 |'), /g2\.rebut-severity/],
   ['치명 거부의 오판 기록에 근거가 없다', (t) => t.replace(/^\| 근거 \|.*$/m, '| 근거 | {{필수}} |'), /g2\.fatal-reject-record/],
-  ['남은 실제 치명이 있다', (t) => t.replace('| 남은 실제 치명 지적 | 없음 |', '| 남은 실제 치명 지적 | S9-R1-B-01 |'), /g2\.fatal-remaining/],
+  // HRV-01. 결정표의 심각도만 바꿔도 원본과 대조해 잡는다
+  ['결정표 심각도 하향', (t) => t.replace('| S9-R1-B-01 | 치명 |', '| S9-R1-B-01 | 보통 |'), /g2\.severity-preserved/],
+  ['치명에 반박', (t) => t.replace('| 거부 | 오판 기록 MJ-01 |', '| 반박 | 확인했다 |'), /g2\.rebut-severity/],
+  // HRV-02
+  ['A와 B가 같은 파일', (t) => t.replace('g2-report-B.md', 'g2-report-A.md'), /g2\.ab-distinct/],
+  ['결정표 Step이 원본과 다르다', (t) => t.replace('| Step | 9 |', '| Step | 8 |'), /g2\.report-step/],
+  ['결정표 라운드가 원본과 다르다', (t) => t.replace('| 평가 라운드 | R1 |', '| 평가 라운드 | R2 |'), /g2\.report-round/],
+  // HRV-08
+  ['남의 근거에 ID를 적어도 오판 기록으로 인정하지 않는다',
+    (t) => t.replace('| Step, 라운드, A/B, 지적 ID | S9-R1-B-01 |', '| Step, 라운드, A/B, 지적 ID | S9-R1-A-01 |')
+      .replace(/^\| 근거 \|(.*)$/m, '| 근거 | S9-R1-B-01 의 근거다$1 |'), /g2\.fatal-reject-record/],
 ];
 
 for (const [name, mutate, want] of g2Cases) {
@@ -175,3 +231,37 @@ for (const [name, mutate, want] of g2Cases) {
     assert.match(r.out, want);
   });
 }
+
+// HRV-02. 원본 리포트가 잘리면 잡는다
+test('g2 실패. 원본 리포트가 잘려 보조 표 행이 모자란다', () => {
+  const cut = fs.readFileSync(path.join(FIX, 'g2-report-A.md'), 'utf8')
+    .replace(/^\| 2 \| S9-R1-A-02 \|.*$\n/m, '');
+  const cutPath = path.join(TMP, `${seq++}-cut-report-A.md`);
+  fs.writeFileSync(cutPath, cut, 'utf8');
+  const f = prep('g2-pass.md', (t) => t
+    .replace(new RegExp(ROOT + '/harness/tools/tests/fixtures/g2-report-A\\.md', 'g'), cutPath.split(path.sep).join('/'))
+    .replace(/A 원본 리포트 절대경로와 버전 또는 해시 \| ([^|]*)\|/, (mm, v) =>
+      `A 원본 리포트 절대경로와 버전 또는 해시 | ${v.replace(/sha256:[0-9a-f]+/, 'sha256:' + crypto.createHash('sha256').update(cut).digest('hex'))}|`));
+  const r = run(() => g2(f));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /g2\.report-schema/);
+});
+
+// HRV-04. 반영 전에는 치명이 남아 있어도 통과하고 최종에서만 막는다
+test('g2 pre 통과. 수용한 치명이 남아 있어도 반영 전 검사는 통과', () => {
+  const f = prep('g2-pass.md', (t) => t.replace('| 남은 실제 치명 지적 | 없음 |', '| 남은 실제 치명 지적 | S9-R1-B-01 |'));
+  const r = run(() => g2(f, { mode: 'pre' }));
+  assert.equal(r.code, 0);
+});
+
+test('g2 final 실패. 치명이 남으면 최종 완료 검사가 막는다', () => {
+  const f = prep('g2-pass.md', (t) => t.replace('| 남은 실제 치명 지적 | 없음 |', '| 남은 실제 치명 지적 | S9-R1-B-01 |'));
+  const r = run(() => g2(f, { mode: 'final' }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /g2\.fatal-remaining/);
+});
+
+test('g2 final 통과. 치명 0이고 반영본이 기록돼 있으면 통과', () => {
+  const r = run(() => g2(prep('g2-pass.md'), { mode: 'final' }));
+  assert.equal(r.code, 0);
+});

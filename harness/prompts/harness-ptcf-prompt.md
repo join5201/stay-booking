@@ -293,24 +293,29 @@ Thought(무엇을 판단해야 하는가, 3줄 이내) → Action(확인, 검색
 
 상태 판정은 파일 존재와 harness/state/progress.md 마지막 행 둘 다로 한다. 둘이 어긋나면 고르지 않고 정지한다. S는 Step 번호, R은 라운드(R1, R2).
 
+판정에 쓰는 것은 파일 존재만이 아니다. 그 산출물의 버전과 그 버전에 대한 검사 성공 여부까지 본다. 폴더가 있다는 사실이 그 단계가 끝났다는 뜻은 아니다. 2026-09-08 하네스 리뷰 HRV-10이 지적한 자리다.
+
 | 조건 (위에서부터 처음 맞는 행) | 선택 템플릿 | 모델이 하는 일 | 정지점과 종료 문장 |
 |---|---|---|---|
+| progress 마지막 행의 결과가 done | 없음 | 이 Task는 끝났다. 다음 Task로 넘어갈지 사용자에게 묻는다 | 정지. "Task S{S}는 done이다. 다음 Task를 지정해 달라." |
+| 산출물 폴더는 있는데 그 버전에 대한 검사 성공 기록이 progress에 없음 | 없음 | 중단된 지점이다. 어느 검사가 안 돌았는지 적고 그 검사부터 다시 돌린다. 앞 단계를 다시 만들지 않는다 | 정지. "중단 지점 확인. {검사 이름}부터 재개할지 확인을 기다린다." |
 | harness/tasks/task-S{S}.md 없음 | harness/prompts/task-contract.md | 양식을 채워 harness/tasks/task-S{S}.md 후보 작성. node check.mjs fill 통과 | 사용자 승인 대기. "계약 초안 완료. 승인을 기다린다." |
 | 계약 승인됨, harness/out/task-S{S}-R1/ 없음 | harness/prompts/generate.md | 양식을 채운 뒤 그 지시대로 자신이 후보를 생성. harness/out/task-S{S}-R1/candidate.md. node check.mjs g1 실행. 실패면 실패 목록을 인용해 1회 보정 | G1 통과 시 "생성 완료, G1 통과. 평가 요청 준비로 넘어갈지 확인을 기다린다." 2회 실패 시 "G1 2회 실패. halted. 원인은 progress.md." |
 | G1 통과, harness/reviews/task-S{S}-R{R}-A.md 또는 -B.md 없음 | harness/prompts/evaluate.md 두 벌 | A용, B용 평가 요청을 채워 harness/out/task-S{S}-R{R}/evaluate-A.md, evaluate-B.md 저장. 허용 입력 파일을 harness/out/task-S{S}-R{R}/eval-input/ 에 복사(HR1 목록만). 평가 기준 파일 경로 지정 | 정지. "평가 요청 2벌 준비 완료. Codex 새 작업 둘에 전달하고 리포트를 harness/reviews/에 넣어 달라." |
 | reviews A와 B 존재, harness/decisions/task-S{S}-R{R}.md 없음 | harness/prompts/decision-table.md | 원본 지적을 한 행씩 옮겨 결정표 생성. 결정과 이유 열은 비운다. 지적 ID 부여 | 정지. "결정표 준비 완료. 결정과 이유를 채워 달라." |
-| 결정표에 빈 결정 없음, G2 미실행 | node check.mjs g2 | G2 실행. 결과를 결정표 G2 확인 절에 붙임 | 통과 시 "G2 통과. 반영으로 넘어갈지 확인을 기다린다." 실패 시 "G2 실패 항목 N개. 결정표 수정을 기다린다." |
+| 결정표에 빈 결정 없음, 현재 결정표 버전에 대한 G2 성공 기록 없음 | node check.mjs g2 --mode pre | 반영 전 G2 실행. 결과를 결정표 G2 확인 절에 붙임. 결정표를 고친 뒤에는 이전 성공 기록을 인정하지 않고 다시 돌린다 | 통과 시 "G2 통과. 반영으로 넘어갈지 확인을 기다린다." 실패 시 "G2 실패 항목 N개. 결정표 수정을 기다린다." |
 | G2 통과, 반영본 없음 | harness/prompts/apply.md | 수용 항목만 반영한 후보 harness/out/task-S{S}-R{R}/applied.md, 지적 ID별 변경 위치 표, 미수용 항목 무변경 diff | 사용자 승인 대기. "반영 후보 완료. 승인을 기다린다." |
 | R1 반영 승인됨, R2 없음, 사용자가 재평가를 요청 | harness/prompts/evaluate.md 두 벌 (R2) | 위 평가 요청 행과 같음. 대상은 applied.md | 정지. Codex 전달 문장 |
-| R2 결정표와 반영 완료, 또는 사용자가 재평가 불필요 선언 | decision-table.md의 반영과 최종 확인 인계 절 | 최종 확인 표 채움. 남은 실제 치명, 검증 미완료 명시. done은 쓰지 않는다 | 정지. "최종 확인 표 완료. 완료 판단을 기다린다." |
-| 사용자가 완료 확정 | 없음 | progress.md에 done 행 기록. 확정본을 claude/ 경로로 복사 후 git commit 제안 | "Task S{S} 종료." |
+| R2 결정표와 반영 완료 또는 사용자가 재평가 불필요 선언, 그리고 최종 확인 표가 아직 안 찼음 | decision-table.md의 반영과 최종 확인 인계 절 | 최종 확인 표를 채우고 node check.mjs g2 --mode final을 돌린다. 남은 실제 치명, 검증 미완료 명시. done은 쓰지 않는다 | 정지. "최종 확인 표 완료. 완료 판단을 기다린다." |
+| 최종 확인 표가 찼고 g2 --mode final 통과, 사용자가 완료 확정 | 없음 | progress.md에 done 행 기록. 확정본을 원래 문서 자리로 옮기고 git commit 제안 | "Task S{S} 종료." |
 
 선택 규칙.
 - 한 턴에 한 행. 정지점에서 사용자 입력 없이 다음 행으로 넘어가지 않는다.
 - 어느 행의 입력 파일이라도 없으면 그 행을 고르지 말고 없는 파일 목록을 보고한다.
 - 형식 보정 1회와 재평가 1회는 별개 카운터다. 초과하면 halted로 기록하고 정지한다.
 - 평가는 이 세션이 하지 않는다. 평가 요청 파일을 만들고 멈추는 것까지가 이 세션의 일이다. 리포트가 harness/reviews/에 들어와야 다음 행이 열린다.
-- 모든 행의 시작과 끝에 progress.md 한 행을 추가한다(H5 형식). 실제 시간을 적는다.
+- 모든 행의 시작과 끝에 progress.md 한 행을 추가한다(H5 형식). 실제 시간을 적는다. 이 기록이 다음 턴의 검사 성공 여부 판정 근거다.
+- G1 형식 보정용 재요청과 블라인드 재평가는 다른 것이다. 재요청 프롬프트에는 g1 실패 목록만 넣는다. R1의 평가 관련 기록을 R2 평가 요청에 넣지 않는다.
 
 ## 4. 이 프롬프트를 쓸 때 주의할 점
 

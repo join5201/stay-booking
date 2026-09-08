@@ -109,7 +109,7 @@
 |---|---|
 | 작업 디렉터리 | C:/Dev/potenup/99_projects/o2o |
 | 실행 환경 | Node 24.14.1. 환경변수 없음 |
-| 실행할 명령 | node harness/tools/check.mjs fill harness/tasks/task-S8.md 로 이 계약의 해시를 채운다. 후보 9개마다 node harness/tools/check.mjs g1 <후보> --type doc --end "<해당 문서의 마지막 줄>" 을 돌려 통과를 확인한다 |
+| 실행할 명령 | node harness/tools/check.mjs fill harness/tasks/task-S8.md 로 이 계약의 해시를 채우고 기록된 해시를 대조한다. 후보 9개마다 node harness/tools/check.mjs g1 <후보> --type doc --end "이 판은 08-3 결정 11건의 반영 후보다. 승인 전에는 확정본으로 인용하지 않는다." --require "반영하지 않은 것" 을 돌린다. 결정표는 반영 전에 --mode pre, 최종 확인에 --mode final로 두 번 돌린다 |
 | 테스트 DB | DB 사용 없음 |
 | 데이터 초기화 허용 범위 | 없음 |
 | 빌드 출력과 로그 경로 | 해당 없음 |
@@ -117,7 +117,9 @@
 | A와 B 평가 범위 | A는 eval-criteria-ddd.md 3절의 정책과 Saga 축. B는 공통 축 3개 |
 | 필수 검증을 실행하지 못했을 때 | 미실행 명령과 사유를 progress.md의 실패 원인 칸에 적고 결과를 halted로 기록한다. 통과로 기록하지 않는다 |
 
-이 Task는 하네스의 첫 실전 바퀴다. 하네스 자체의 결함이 나오면 그것은 이 Task의 실패가 아니다. harness/state/troubleshooting.md에 행을 추가하고 계속 진행한다. 형식 보정 1회와 재평가 1회 카운터는 하네스 결함으로 인한 재시도에 쓰지 않는다.
+이 Task는 하네스의 첫 실전 바퀴다. 하네스 자체의 결함이 나오면 harness/state/troubleshooting.md에 행을 추가한다. 형식 보정 1회와 재평가 1회 카운터에도 넣지 않는다.
+
+다만 계속 진행할 수 있는 범위를 가른다. 검사기 결함으로 게이트가 오류를 내면 그 게이트에 의존하지 않는 독립 작업만 계속한다. 게이트 자체를 통과하지 못한 채로 다음 단계로 넘어가지 않는다. 구체적으로 G1을 통과하지 못한 후보를 평가에 넘기지 않고, G2를 통과하지 못한 결정표로 반영하지 않는다. 검사기를 고친 뒤 그 게이트를 다시 돌려 통과시키고 나서 진행한다. (2026-09-08 HRV-12)
 
 ## 승인과 진행
 

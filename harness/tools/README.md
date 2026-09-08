@@ -6,9 +6,9 @@
 
 | 파일 | 상태 |
 |---|---|
-| check.mjs | fill, g1, g2 세 명령. 2026-09-08 H3에서 재작성 |
+| check.mjs | fill, g1, g2 세 명령. 2026-09-08 H3에서 재작성, 같은 날 하네스 리뷰 12건 반영 |
 | build-v2.mjs | tmp/api-spec-v2/build-v2.mjs 사본. API 명세 조립용. 미검증 |
-| tests/ | 골든 fixture 6개와 테스트 29건 |
+| tests/ | 골든 fixture 6개와 테스트 44건. fixture는 harness/prompts/의 양식에서 만든다 |
 
 원본은 tmp/ 아래에 그대로 둔다. 삭제하지 않는다.
 
@@ -18,7 +18,7 @@
 |---|---|
 | node harness/tools/check.mjs fill <양식> [--dry] | 빈칸 잔존 0, 경로가 절대경로이고 존재, 버전 칸에 sha256 기입 |
 | node harness/tools/check.mjs g1 <후보> --type doc\|api\|code | doc은 날짜 2종, 금지 기호 3종, 내부 링크, 종료 문장. api는 요청과 응답과 오류 절. code는 빌드와 테스트 결과 파일 존재 |
-| node harness/tools/check.mjs g2 <결정표> | 버전 일치, 지적 ID 집합, 행 수, 빈 결정, 거부 이유, 반박 등급, 치명 거부 필수 필드, 남은 치명 |
+| node harness/tools/check.mjs g2 <결정표> --mode pre 또는 final | 버전 일치, 원본 리포트 스키마, 지적 ID 집합, 행 수, 심각도 보존, 빈 결정, 거부 이유, 반박 등급, 치명 거부 필수 필드. 남은 치명과 반영본은 final에서만 |
 | node --test harness/tools/tests/check.test.mjs | 골든 파일 테스트 |
 
 종료 코드는 0 통과, 1 검사 실패, 2 사용법 오류다.
@@ -37,6 +37,8 @@ fill만 쓴다. 대상은 인자로 받은 그 파일 하나뿐이고 document/,
 | --end "<문장>" | g1 doc의 종료 문장을 바꾼다. 기본값은 07 v3 F16의 문장이다 |
 | --artifact <경로> | g1 code에서 빌드나 테스트 결과 파일을 지정한다. 여러 번 쓸 수 있다 |
 | --dry | fill이 쓰지 않고 결과만 보여 준다 |
+| --require "a,b" | g1 doc이 확인할 승인 양식 필수 항목 |
+| --mode pre 또는 final | g2의 반영 전 검사와 최종 완료 검사를 가른다 |
 
 ## 경로 규칙
 

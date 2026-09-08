@@ -8,31 +8,38 @@
 //
 // 명령 셋
 //   node harness/tools/check.mjs fill <양식파일> [--dry]
-//   node harness/tools/check.mjs g1 <후보파일> --type doc|api|code [--end "<종료문장>"] [--artifact <경로>]
-//   node harness/tools/check.mjs g2 <결정표파일>
+//   node harness/tools/check.mjs g1 <후보파일> --type doc|api|code [--end "<문장>"] [--require "a,b"] [--artifact <경로>]
+//   node harness/tools/check.mjs g2 <결정표파일> [--mode pre|final]
+//   node --test harness/tools/tests/check.test.mjs
 //
 // 실행 예시
-//   node harness/tools/check.mjs fill harness/tasks/task-S9.md
-//   node harness/tools/check.mjs g1 harness/out/task-S9-R1/candidate.md --type doc
-//   node harness/tools/check.mjs g2 harness/decisions/task-S9-R1.md
-//   node --test harness/tools/tests/check.test.mjs        골든 파일 테스트 29건
+//   node harness/tools/check.mjs fill harness/tasks/task-S8.md
+//   node harness/tools/check.mjs g1 harness/out/task-S8-R1/candidate.md --type doc
+//   node harness/tools/check.mjs g2 harness/decisions/task-S8-R1.md --mode pre
 //
 // 통과 출력 예시
-//   PASS g1 harness/out/task-S9-R1/candidate.md
+//   PASS g1 harness/out/task-S8-R1/candidate.md
 //     검사 8건 통과
 //
 // 실패 출력 예시 (종료 코드 1)
-//   FAIL g1 harness/out/task-S9-R1/candidate.md
-//     [doc.date-updated]  1  최종 갱신 줄이 없다 (F5)
-//     [doc.no-bold]      42  제목 밖 볼드 **비관적 락** (F8)
-//     [doc.end-sentence] 310  마지막 줄이 고정 종료 문장이 아니다 (F16)
-//     검사 8건 중 3건 실패
-//   이 세 줄을 그대로 재요청 프롬프트에 붙인다 (HR3).
+//   FAIL g2 harness/decisions/task-S8-R1.md
+//     [g2.severity-preserved]  61  S9-R1-B-01 심각도가 원본과 다르다. 원본 치명, 결정표 보통
+//     [g2.report-truncated]     1  A 리포트의 요약 합계 3과 보조 표 행 2가 다르다
+//     검사 24건 중 2건 실패
+//   이 줄들을 그대로 재요청 프롬프트에 붙인다 (HR3).
 //
 // 쓰기 정책
 //   g1과 g2는 아무 파일도 쓰지 않는다. 읽기만 한다.
 //   fill만 쓴다. 대상은 인자로 받은 그 파일 하나뿐이다. 보호 경로는 거부한다.
-//   이전 판이 검사 도중 document/o2o-*.md를 덮어써서 생긴 규칙이다.
+//   보호 경로 비교는 대소문자를 무시한다. Windows에서 HARNESS/docs로 우회되던 구멍이다(HRV-05).
+//
+// 2026-09-08 하네스 구현 리뷰(HRV-01부터 12) 반영
+//   g2가 원본 리포트의 심각도와 스키마를 직접 읽는다. 결정표 값을 믿지 않는다(HRV-01, 02).
+//   반영 전 검사와 최종 완료 검사를 --mode로 가른다(HRV-04).
+//   fill이 기존 해시도 실제 바이트와 대조한다(HRV-06).
+//   양식의 경로 행과 해시 행을 짝으로 읽고 파일 목록 전체를 대조한다(HRV-07).
+//   오판 기록은 지정된 식별 필드에서만 ID를 읽는다(HRV-08).
+//   g1 doc이 필수 항목과 상대 링크와 앵커까지 본다(HRV-09 문서분).
 //
 // 종료 코드: 0 통과, 1 검사 실패, 2 사용법 오류
 
@@ -51,7 +58,8 @@ const PROTECTED = ['document', path.join('harness', 'project-sync'), path.join('
 const EM_DASH = '—';
 const MIDDLE_DOT = '·';
 const DEFAULT_END = 'Step {N} 산출물 제출. 다음 지시를 기다린다.';
-const ID_RE = /S\d+-R\d+-[AB]-\d{2}/;
+const ID_RE = /^S(\d+)-R(\d+)-([AB])-(\d{2})$/;
+const SEVERITIES = ['치명', '보통', '확인필요'];
 
 function rel(p) {
   return path.relative(ROOT, path.resolve(p)).split(path.sep).join('/');
@@ -61,9 +69,13 @@ function sha256(p) {
   return crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
 }
 
+// 대소문자를 무시한다. Windows 파일시스템이 구분하지 않기 때문이다 (HRV-05)
 function isProtected(p) {
-  const r = path.relative(ROOT, path.resolve(p));
-  return PROTECTED.some((d) => r === d || r.startsWith(d + path.sep));
+  const r = path.relative(ROOT, path.resolve(p)).toLowerCase();
+  return PROTECTED.some((d) => {
+    const dl = d.toLowerCase();
+    return r === dl || r.startsWith(dl + path.sep);
+  });
 }
 
 // 코드 펜스를 지운다. 문체 규칙은 코드와 데이터에 적용하지 않는다 (F11)
@@ -106,6 +118,23 @@ function lookup(text, label) {
   return null;
 }
 
+// 헤더 이름으로 열을 찾은 표를 돌려준다
+function findTableByHeaders(text, needed) {
+  for (const t of parseTables(text)) {
+    const h = t.rows[0];
+    if (!h) continue;
+    const idx = {};
+    let ok = true;
+    for (const [key, name] of Object.entries(needed)) {
+      const i = h.cells.indexOf(name);
+      if (i < 0) { ok = false; break; }
+      idx[key] = i;
+    }
+    if (ok) return { table: t, idx };
+  }
+  return null;
+}
+
 class Report {
   constructor(cmd, file) { this.cmd = cmd; this.file = file; this.fails = []; this.count = 0; }
   check(name, line, ok, msg) {
@@ -130,7 +159,7 @@ class Report {
 }
 
 // ---------- fill ----------
-// 빈칸 잔존 0, 경로가 절대경로이고 존재, 버전 또는 해시 칸에 sha256 기입
+// 빈칸 잔존 0, 경로가 절대경로이고 존재, 버전 또는 해시 칸에 sha256 기입과 대조
 
 export function fill(file, { dry = false } = {}) {
   const r = new Report('fill', file);
@@ -141,7 +170,7 @@ export function fill(file, { dry = false } = {}) {
   }
   let text = fs.readFileSync(file, 'utf8');
 
-  // 1. 버전 또는 해시 칸을 먼저 채운다. 같은 행의 절대경로에서 sha256을 계산한다
+  // 1. 버전 또는 해시 칸. 비어 있으면 채우고, 값이 있으면 실제 바이트와 대조한다 (HRV-06)
   const filled = [];
   const lines = text.split('\n');
   for (const t of parseTables(text)) {
@@ -155,8 +184,18 @@ export function fill(file, { dry = false } = {}) {
       const hash = row.cells[hashCol];
       if (!target || !/^[A-Za-z]:\//.test(target)) continue;
       if (!fs.existsSync(target)) continue;
-      if (hash && !/^\{\{.*\}\}$/.test(hash)) continue; // 이미 채워져 있으면 두지 않는다
       const digest = sha256(target);
+      const isBlank = !hash || /^\{\{.*\}\}$/.test(hash);
+      if (!isBlank) {
+        // 기록된 값을 건너뛰지 않는다. 입력이 바뀌면 실패시킨다
+        const rec = (hash.match(/sha256:([0-9a-f]{8,64})/) || [])[1];
+        r.check('fill.hash-recorded', row.line, !!rec, `버전 칸에 sha256이 없다: ${hash}`);
+        if (rec) {
+          r.check('fill.hash-stale', row.line, digest.startsWith(rec),
+            `기록된 해시가 실제와 다르다: ${rel(target)}. 기록 ${rec}, 실제 ${digest.slice(0, rec.length)}`);
+        }
+        continue;
+      }
       const idx = row.line - 1;
       const cells = lines[idx].trim().replace(/^\|/, '').replace(/\|$/, '').split('|');
       cells[hashCol] = ` sha256:${digest.slice(0, 16)} `;
@@ -186,9 +225,12 @@ export function fill(file, { dry = false } = {}) {
     for (const row of t.rows.slice(1)) {
       const v = row.cells[pathCol];
       if (!v || /^\{\{/.test(v) || v === '해당 없음') continue;
-      const abs = /^[A-Za-z]:\//.test(v);
-      r.check('fill.path-absolute', row.line, abs, `절대경로가 아니다: ${v}`);
-      if (abs) r.check('fill.path-exists', row.line, fs.existsSync(v), `파일이 없다: ${v}`);
+      for (const m of v.matchAll(/[A-Za-z]:\/[^\s,)]+/g)) {
+        r.check('fill.path-exists', row.line, fs.existsSync(m[0]), `파일이 없다: ${m[0]}`);
+      }
+      if (!/[A-Za-z]:\//.test(v)) {
+        r.check('fill.path-absolute', row.line, false, `절대경로가 아니다: ${v}`);
+      }
     }
   }
 
@@ -202,15 +244,22 @@ export function fill(file, { dry = false } = {}) {
 
 // ---------- g1 ----------
 
-function checkLinks(r, text) {
-  let staleOk = true;
+// 링크 검사. 절대경로, 상대경로, 앵커까지 본다 (HRV-09 문서분)
+function checkLinks(r, text, file) {
+  const dir = path.dirname(path.resolve(file));
   let existOk = true;
+  let staleOk = true;
   text.split('\n').forEach((line, i) => {
-    for (const m of line.matchAll(/\]\(([A-Za-z]:\/[^)]+)\)/g)) {
-      const target = m[1].replace(/#.*$/, '');
-      if (!fs.existsSync(target)) { existOk = false; r.check('link.exists', i + 1, false, `링크 대상이 없다: ${target}`); }
+    for (const m of line.matchAll(/\]\(([^)]+)\)/g)) {
+      const raw = m[1].trim();
+      if (/^(https?:|mailto:)/.test(raw)) continue;
+      if (raw.startsWith('#')) continue;
+      const target = raw.replace(/#.*$/, '').replace(/:\d+$/, '');
+      if (!target) continue;
+      if (/\]\(claude\//.test(m[0])) { staleOk = false; r.check('link.stale', i + 1, false, '프로젝트 계열 상대경로 링크가 남아 있다 (claude/)'); continue; }
+      const abs = /^[A-Za-z]:\//.test(target) ? target : path.resolve(dir, target);
+      if (!fs.existsSync(abs)) { existOk = false; r.check('link.exists', i + 1, false, `링크 대상이 없다: ${target}`); }
     }
-    if (/\]\(claude\//.test(line)) { staleOk = false; r.check('link.stale', i + 1, false, '프로젝트 계열 상대경로 링크가 남아 있다 (claude/)'); }
   });
   if (existOk) r.check('link.exists', 0, true, '');
   if (staleOk) r.check('link.stale', 0, true, '');
@@ -232,15 +281,19 @@ function checkStyle(r, text) {
   if (seen.bold) r.check('doc.no-bold', 0, true, '');
 }
 
-export function g1(file, { type, end, artifacts = [] } = {}) {
+export function g1(file, { type, end, require: required = [], artifacts = [] } = {}) {
   const r = new Report('g1', file);
   const text = fs.readFileSync(file, 'utf8');
 
   if (type === 'doc') {
     r.check('doc.date-created', 1, /^최초 작성:/m.test(text), '최초 작성 줄이 없다 (F5)');
     r.check('doc.date-updated', 1, /^최종 갱신:/m.test(text), '최종 갱신 줄이 없다 (F5)');
+    // 승인 양식의 필수 항목 (HRV-09). 계약이 지정한 항목명을 --require로 받는다
+    for (const item of required) {
+      r.check('doc.required-item', 1, text.includes(item), `승인 양식의 필수 항목이 없다: ${item}`);
+    }
     checkStyle(r, text);
-    checkLinks(r, text);
+    checkLinks(r, text, file);
     const nonEmpty = text.split('\n').filter((l) => l.trim() !== '');
     const last = (nonEmpty[nonEmpty.length - 1] || '').trim();
     const want = end || DEFAULT_END;
@@ -252,12 +305,20 @@ export function g1(file, { type, end, artifacts = [] } = {}) {
       r.check('api.section', 1, new RegExp('^#{1,6}\\s.*' + sec, 'm').test(text), `${sec} 절이 없다`);
     }
     checkStyle(r, text);
-    checkLinks(r, text);
+    checkLinks(r, text, file);
   } else if (type === 'code') {
+    // 존재 확인까지다. 결과 파일이 있다는 사실을 테스트 성공으로 해석하지 않는다.
+    // 실제 성공 판정은 첫 코드 Task에서 eval-criteria-code.md v1과 함께 정한다 (HRV-09 코드분 이월)
     r.check('code.artifact-given', 0, artifacts.length > 0, '--artifact로 빌드와 테스트 결과 파일을 지정해야 한다');
     for (const a of artifacts) {
       const ok = fs.existsSync(a) && fs.statSync(a).size > 0;
       r.check('code.artifact-exists', 0, ok, `결과 파일이 없거나 비어 있다: ${a}`);
+      if (ok) {
+        const insideRepo = !path.relative(ROOT, path.resolve(a)).startsWith('..');
+        const isSource = /\.(mjs|js|ts|java|tsx|jsx)$/.test(a);
+        r.check('code.artifact-not-source', 0, !(insideRepo && isSource),
+          `소스 파일을 결과 파일로 지정했다: ${a}`);
+      }
     }
   } else {
     console.error('사용법 오류: --type은 doc, api, code 중 하나');
@@ -266,63 +327,154 @@ export function g1(file, { type, end, artifacts = [] } = {}) {
   return r.print();
 }
 
-// ---------- g2 ----------
-// HR4의 항목을 기계로 검사한다. 사람 서명은 결정표의 G2 확인 절에 남긴다
+// ---------- 원본 리포트 파서 (HRV-01, 02) ----------
+// 평가 리포트에서 지적 ID와 심각도를 직접 읽는다. 결정표의 값을 믿지 않는다.
+// 스키마는 eval-criteria-ddd.md 4절이고 보조 표는 evaluate.md 5항이 요구한다.
 
-const VERSION_LABELS = [
-  '평가 대상 버전 또는 해시',
-  '승인된 작업 계약 절대경로와 버전',
-  'A 원본 리포트 절대경로와 버전 또는 해시',
-  'B 원본 리포트 절대경로와 버전 또는 해시',
+export function parseReport(file) {
+  const out = { file, ok: true, errors: [], rows: [], summary: null, detailCount: 0 };
+  const text = fs.readFileSync(file, 'utf8');
+
+  const m = text.match(/치명\s*(\d+)\s*\/\s*보통\s*(\d+)\s*\/\s*확인필요\s*(\d+)/);
+  if (!m) {
+    out.ok = false;
+    out.errors.push('판정 요약 줄이 없다. 리포트가 잘렸거나 스키마를 따르지 않았다');
+    return out;
+  }
+  out.summary = { 치명: Number(m[1]), 보통: Number(m[2]), 확인필요: Number(m[3]) };
+  const total = out.summary.치명 + out.summary.보통 + out.summary.확인필요;
+
+  const detail = findTableByHeaders(text, { sev: '심각도', loc: '위치' });
+  out.detailCount = detail ? detail.table.rows.length - 1 : 0;
+
+  const aux = findTableByHeaders(text, { num: '원본 번호', id: '지적 ID', sev: '심각도' });
+  if (!aux) {
+    if (total === 0) return out; // 정상 완료된 0건 리포트
+    out.ok = false;
+    out.errors.push('보조 표(원본 번호, 지적 ID, 심각도)가 없다. 지적을 ID로 추적할 수 없다');
+    return out;
+  }
+  for (const row of aux.table.rows.slice(1)) {
+    const id = row.cells[aux.idx.id];
+    const sev = row.cells[aux.idx.sev];
+    const num = row.cells[aux.idx.num];
+    if (!ID_RE.test(id)) { out.ok = false; out.errors.push(`지적 ID 형식이 아니다: ${id}`); continue; }
+    if (!SEVERITIES.includes(sev)) { out.ok = false; out.errors.push(`${id} 심각도 값이 셋 중 하나가 아니다: ${sev}`); continue; }
+    out.rows.push({ id, severity: sev, num });
+  }
+
+  if (out.rows.length !== total) {
+    out.ok = false;
+    out.errors.push(`요약 합계 ${total}과 보조 표 행 ${out.rows.length}이 다르다. 잘렸거나 누락됐다`);
+  }
+  if (detail && out.detailCount !== total) {
+    out.ok = false;
+    out.errors.push(`요약 합계 ${total}과 상세 표 행 ${out.detailCount}이 다르다`);
+  }
+  const dist = { 치명: 0, 보통: 0, 확인필요: 0 };
+  for (const x of out.rows) dist[x.severity] += 1;
+  for (const s of SEVERITIES) {
+    if (dist[s] !== out.summary[s]) {
+      out.ok = false;
+      out.errors.push(`${s} 수가 요약 ${out.summary[s]}과 보조 표 ${dist[s]}로 다르다`);
+    }
+  }
+  return out;
+}
+
+// ---------- g2 ----------
+// HR4의 항목을 기계로 검사한다. 사람 서명은 결정표의 G2 확인 절에 남긴다.
+// mode가 pre면 반영 전 검사, final이면 최종 완료 검사다 (HRV-04)
+
+const VERSION_SPECS = [
+  { name: '평가 대상', pathLabel: '평가 대상 절대경로와 파일 목록', hashLabel: '평가 대상 버전 또는 해시' },
+  { name: '작업 계약', hashLabel: '승인된 작업 계약 절대경로와 버전' },
+  { name: 'A 리포트', hashLabel: 'A 원본 리포트 절대경로와 버전 또는 해시', role: 'A' },
+  { name: 'B 리포트', hashLabel: 'B 원본 리포트 절대경로와 버전 또는 해시', role: 'B' },
 ];
 
-export function g2(file) {
+function readSpec(text, spec) {
+  const hashRow = lookup(text, spec.hashLabel);
+  if (!hashRow) return null;
+  const pathRow = spec.pathLabel ? lookup(text, spec.pathLabel) : hashRow;
+  if (!pathRow) return null;
+  const paths = [...pathRow.value.matchAll(/[A-Za-z]:\/[^\s,)]+/g)].map((x) => x[0]);
+  const hashes = [...hashRow.value.matchAll(/sha256:([0-9a-f]{8,64})/g)].map((x) => x[1]);
+  return { paths, hashes, line: hashRow.line, pathLine: pathRow.line };
+}
+
+export function g2(file, { mode = 'pre' } = {}) {
   const r = new Report('g2', file);
   const text = fs.readFileSync(file, 'utf8');
 
-  // 1. 버전 일치
-  for (const label of VERSION_LABELS) {
-    const row = lookup(text, label);
-    r.check('g2.version-row', row ? row.line : 1, !!row, `${label} 행이 없다`);
-    if (!row) continue;
-    const p = (row.value.match(/[A-Za-z]:\/[^\s,)]+/) || [])[0];
-    const h = (row.value.match(/sha256:([0-9a-f]{8,64})/) || [])[1];
-    if (!p) { r.check('g2.version-path', row.line, false, `${label}에 절대경로가 없다`); continue; }
-    if (!fs.existsSync(p)) { r.check('g2.version-path', row.line, false, `파일이 없다: ${p}`); continue; }
-    if (!h) { r.check('g2.version-hash', row.line, false, `${label}에 sha256이 없다 (HR2)`); continue; }
-    r.check('g2.version-match', row.line, sha256(p).startsWith(h), `해시 불일치: ${p}`);
+  const declaredStep = (lookup(text, 'Step') || { value: '' }).value.match(/\d+/);
+  const declaredRound = (lookup(text, '평가 라운드') || { value: '' }).value.match(/R(\d+)/);
+
+  // 1. 버전 일치. 경로 행과 해시 행을 짝으로 읽고 파일 목록 전체를 대조한다 (HRV-07)
+  const specs = {};
+  for (const spec of VERSION_SPECS) {
+    const got = readSpec(text, spec);
+    r.check('g2.version-row', got ? got.line : 1, !!got, `${spec.hashLabel} 행이 없다`);
+    if (!got) continue;
+    specs[spec.name] = got;
+    r.check('g2.version-count', got.pathLine, got.paths.length > 0 && got.paths.length === got.hashes.length,
+      `${spec.name}의 경로 ${got.paths.length}개와 해시 ${got.hashes.length}개가 짝이 맞지 않는다`);
+    got.paths.forEach((p, i) => {
+      if (!fs.existsSync(p)) { r.check('g2.version-path', got.pathLine, false, `파일이 없다: ${p}`); return; }
+      const h = got.hashes[i];
+      if (!h) { r.check('g2.version-hash', got.line, false, `${rel(p)}의 sha256이 없다 (HR2)`); return; }
+      r.check('g2.version-match', got.line, sha256(p).startsWith(h), `해시 불일치: ${rel(p)}`);
+    });
   }
 
-  // 2. 지적 ID 집합과 행 수
-  const reportIds = new Set();
-  for (const label of ['A 원본 리포트 절대경로와 버전 또는 해시', 'B 원본 리포트 절대경로와 버전 또는 해시']) {
-    const row = lookup(text, label);
-    if (!row) continue;
-    const p = (row.value.match(/[A-Za-z]:\/[^\s,)]+/) || [])[0];
-    if (p && fs.existsSync(p)) {
-      for (const m of fs.readFileSync(p, 'utf8').matchAll(/S\d+-R\d+-[AB]-\d{2}/g)) reportIds.add(m[0]);
+  // 2. A와 B가 같은 파일이면 안 된다 (HRV-02)
+  const aPath = specs['A 리포트'] && specs['A 리포트'].paths[0];
+  const bPath = specs['B 리포트'] && specs['B 리포트'].paths[0];
+  r.check('g2.ab-distinct', 1, !aPath || !bPath || path.resolve(aPath) !== path.resolve(bPath),
+    'A와 B 리포트가 같은 파일이다. 두 평가자는 각각 새 작업에서 돈다');
+
+  // 3. 원본 리포트를 스키마째 읽는다 (HRV-01, 02)
+  const origin = new Map();
+  for (const spec of VERSION_SPECS.filter((s) => s.role)) {
+    const got = specs[spec.name];
+    const p = got && got.paths[0];
+    if (!p || !fs.existsSync(p)) { r.check('g2.report-readable', 1, false, `${spec.name}를 읽을 수 없다`); continue; }
+    const rep = parseReport(p);
+    r.check('g2.report-schema', 1, rep.ok, `${spec.name} 스키마 위반: ${rep.errors.join(' / ')}`);
+    for (const row of rep.rows) {
+      const m = row.id.match(ID_RE);
+      r.check('g2.report-role', 1, m[3] === spec.role, `${row.id}가 ${spec.name}에 있는데 역할 문자가 ${m[3]}다`);
+      if (declaredStep) r.check('g2.report-step', 1, m[1] === declaredStep[0], `${row.id}의 Step이 결정표 선언 ${declaredStep[0]}과 다르다`);
+      if (declaredRound) r.check('g2.report-round', 1, m[2] === declaredRound[1], `${row.id}의 라운드가 결정표 선언 R${declaredRound[1]}과 다르다`);
+      origin.set(row.id, row);
     }
+    const declared = num(lookup(text, `${spec.role} 원본 지적 수`));
+    r.check('g2.report-count', 1, declared === rep.rows.length,
+      `${spec.name}에 선언한 지적 수 ${declared}가 실제 ${rep.rows.length}과 다르다`);
   }
 
+  // 4. 지적 ID 집합과 행 수
   const decisions = readDecisionRows(text);
   const tableIds = new Set(decisions.map((d) => d.id));
-  const missing = [...reportIds].filter((x) => !tableIds.has(x));
-  const extra = [...tableIds].filter((x) => !reportIds.has(x));
+  const missing = [...origin.keys()].filter((x) => !tableIds.has(x));
+  const extra = [...tableIds].filter((x) => !origin.has(x));
   r.check('g2.id-missing', 1, missing.length === 0, `원본에 있는데 결정표에 없다: ${missing.join(', ')}`);
   r.check('g2.id-extra', 1, extra.length === 0, `결정표에만 있다: ${extra.join(', ')}`);
   r.check('g2.id-duplicate', 1, tableIds.size === decisions.length, '결정표에 중복 지적 ID가 있다');
 
-  const aCount = num(lookup(text, 'A 원본 지적 수'));
-  const bCount = num(lookup(text, 'B 원본 지적 수'));
   const rowCount = num(lookup(text, '결정표 전체 행 수'));
-  r.check('g2.row-count-declared', 1, rowCount === aCount + bCount,
-    `선언한 행 수 ${rowCount}가 A ${aCount} 더하기 B ${bCount}와 다르다`);
+  r.check('g2.row-count-declared', 1, rowCount === origin.size,
+    `선언한 행 수 ${rowCount}가 원본 지적 합계 ${origin.size}과 다르다`);
   r.check('g2.row-count-actual', 1, decisions.length === rowCount,
     `실제 행 ${decisions.length}이 선언한 ${rowCount}과 다르다`);
 
-  // 3. 결정 값과 이유
+  // 5. 결정 값과 이유. 심각도는 원본에서 읽는다 (HRV-01)
   const VALID = ['수용', '거부', '반박'];
   for (const d of decisions) {
+    const src = origin.get(d.id);
+    r.check('g2.severity-preserved', d.line, !!src && src.severity === d.severity,
+      `${d.id} 심각도가 원본과 다르다. 원본 ${src ? src.severity : '없음'}, 결정표 ${d.severity}`);
+    const sev = src ? src.severity : d.severity;
     r.check('g2.decision-empty', d.line, d.decision !== '', `${d.id} 결정이 비어 있다`);
     if (d.decision !== '') {
       r.check('g2.decision-value', d.line, VALID.includes(d.decision),
@@ -332,10 +484,10 @@ export function g2(file) {
       r.check('g2.reject-reason', d.line, d.reason !== '', `${d.id} 거부에 이유가 없다`);
     }
     if (d.decision === '반박') {
-      r.check('g2.rebut-severity', d.line, d.severity === '확인필요',
-        `${d.id} 반박은 확인필요 등급에만 쓴다 (현재 ${d.severity})`);
+      r.check('g2.rebut-severity', d.line, sev === '확인필요',
+        `${d.id} 반박은 확인필요 등급에만 쓴다. 원본 심각도는 ${sev}다`);
     }
-    if (d.decision === '거부' && d.severity === '치명') {
+    if (d.decision === '거부' && sev === '치명') {
       const rec = findMisjudgeRecord(text, d.id);
       const need = ['근거', '대안', '안티패턴', '사용자 결정', '결정 날짜'];
       const lack = need.filter((k) => !rec || !rec[k] || /^\{\{/.test(rec[k]));
@@ -344,11 +496,18 @@ export function g2(file) {
     }
   }
 
-  // 4. 남은 실제 치명
-  const remaining = lookup(text, '남은 실제 치명 지적');
-  r.check('g2.fatal-remaining', remaining ? remaining.line : 1,
-    !!remaining && /^(없음|해당 없음)$/.test(remaining.value.trim()),
-    `남은 실제 치명이 있다: ${remaining ? remaining.value : '행 자체가 없다'}`);
+  // 6. 남은 실제 치명. 최종 완료 검사에서만 본다 (HRV-04)
+  //    반영 전에는 수용한 치명이 아직 남아 있는 것이 정상이다
+  if (mode === 'final') {
+    const remaining = lookup(text, '남은 실제 치명 지적');
+    r.check('g2.fatal-remaining', remaining ? remaining.line : 1,
+      !!remaining && /^(없음|해당 없음)$/.test(remaining.value.trim()),
+      `남은 실제 치명이 있다: ${remaining ? remaining.value : '행 자체가 없다'}`);
+    const applied = lookup(text, '반영본 절대경로와 버전 또는 해시');
+    r.check('g2.applied-recorded', applied ? applied.line : 1,
+      !!applied && !/^\{\{/.test(applied.value.trim()) && applied.value.trim() !== '',
+      '반영본 경로와 버전이 비어 있다');
+  }
 
   return r.print();
 }
@@ -362,42 +521,40 @@ function num(row) {
 // 지적별 결정 표를 읽는다. 열 위치는 헤더 이름으로 찾는다
 function readDecisionRows(text) {
   const out = [];
-  for (const t of parseTables(text)) {
-    const h = t.rows[0];
-    if (!h) continue;
-    const c = {
-      id: h.cells.indexOf('지적 ID'),
-      sev: h.cells.indexOf('심각도'),
-      dec: h.cells.indexOf('결정'),
-      why: h.cells.indexOf('이유'),
-    };
-    if (c.id < 0 || c.dec < 0) continue;
-    for (const row of t.rows.slice(1)) {
-      const id = row.cells[c.id] || '';
-      if (!ID_RE.test(id)) continue;
-      out.push({
-        line: row.line,
-        id,
-        severity: c.sev >= 0 ? row.cells[c.sev] || '' : '',
-        decision: c.dec >= 0 ? row.cells[c.dec] || '' : '',
-        reason: c.why >= 0 ? row.cells[c.why] || '' : '',
-      });
-    }
+  const found = findTableByHeaders(text, { id: '지적 ID', dec: '결정' });
+  if (!found) return out;
+  const h = found.table.rows[0];
+  const sevCol = h.cells.indexOf('심각도');
+  const whyCol = h.cells.indexOf('이유');
+  for (const row of found.table.rows.slice(1)) {
+    const id = (row.cells[found.idx.id] || '').trim();
+    if (!ID_RE.test(id)) continue;
+    out.push({
+      line: row.line,
+      id,
+      severity: sevCol >= 0 ? row.cells[sevCol] || '' : '',
+      decision: row.cells[found.idx.dec] || '',
+      reason: whyCol >= 0 ? row.cells[whyCol] || '' : '',
+    });
   }
   return out;
 }
 
-// 치명 거부의 오판 판단 기록. 지적 ID가 들어 있는 두 칸 표를 찾는다
+// 치명 거부의 오판 판단 기록.
+// 지정된 식별 필드에서만 ID를 읽는다. 근거나 대안에 남의 ID를 적어도 인정하지 않는다 (HRV-08)
+const MISJUDGE_KEY = 'Step, 라운드, A/B, 지적 ID';
+
 function findMisjudgeRecord(text, id) {
   for (const t of parseTables(text)) {
     const map = {};
-    let hit = false;
     for (const row of t.rows) {
       if (row.cells.length < 2) continue;
       map[row.cells[0]] = row.cells[1];
-      if (row.cells[1] && row.cells[1].includes(id)) hit = true;
     }
-    if (hit) return map;
+    const key = map[MISJUDGE_KEY];
+    if (!key) continue;
+    const ids = key.split(/[\s,]+/).filter(Boolean);
+    if (ids.includes(id)) return map;
   }
   return null;
 }
@@ -411,16 +568,18 @@ export function main(argv) {
     return 2;
   }
   if (!fs.existsSync(file)) { console.error(`파일이 없다: ${file}`); return 2; }
-  const opt = { artifacts: [] };
+  const opt = { artifacts: [], require: [] };
   for (let i = 0; i < rest.length; i++) {
     if (rest[i] === '--type') opt.type = rest[++i];
     else if (rest[i] === '--end') opt.end = rest[++i];
+    else if (rest[i] === '--require') opt.require = rest[++i].split(',').map((s) => s.trim()).filter(Boolean);
     else if (rest[i] === '--artifact') opt.artifacts.push(rest[++i]);
+    else if (rest[i] === '--mode') opt.mode = rest[++i];
     else if (rest[i] === '--dry') opt.dry = true;
   }
   if (cmd === 'fill') return fill(file, opt);
   if (cmd === 'g1') return g1(file, opt);
-  if (cmd === 'g2') return g2(file);
+  if (cmd === 'g2') return g2(file, opt);
   console.error(`알 수 없는 명령: ${cmd}`);
   return 2;
 }
