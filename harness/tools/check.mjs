@@ -1,3 +1,15 @@
+// 상태: 실행하지 말 것. tmp/document-review/check.mjs의 사본이며 H3의 입력이다.
+//
+// 깨진 곳 둘.
+// 1. 경로가 2026-09-07 개편 이전 것이다. root 바로 아래에서 o2o-service-types.md와
+//    o2o-space-stay-types.md를 찾는데 지금은 document/ 아래에 있다. harness-prompts/도
+//    지금은 harness/prompts/다. 그대로 돌리면 ENOENT로 죽는다.
+// 2. 더 나쁜 것은 죽지 않고 도는 경우다. 이 스크립트는 검사만 하지 않고 위 두 파일을
+//    fs.writeFileSync로 덮어쓴다. 그 둘은 건드리지 말 것 범위의 원본이다.
+//
+// H3에서 fill, g1, g2 세 명령으로 다시 쓰면서 이 두 가지를 고친다.
+// 검사는 읽기만 한다. 고치는 것은 사람이나 생성자가 한다.
+//
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';

@@ -28,23 +28,23 @@ O2O 숙박 예약 서비스의 DDD 설계와 그 설계를 돌리는 하네스(H
 | 경로 | 성격 | 평가 입력이 될 수 있나 |
 |---|---|---|
 | document/ | O2O 서비스 베이스 설계 문서 | 된다 |
-| harness-prompts/ | 실행 중 읽는 양식과 평가 기준 | 기준 파일만 |
-| harness-docs/ | 하네스 설계 근거와 결정 이력 | 안 된다 |
+| harness/prompts/ | 실행 중 읽는 양식과 평가 기준 | 기준 파일만 |
+| harness/docs/ | 하네스 설계 근거와 결정 이력 | 안 된다 |
 
 전체 배치
 
 | 경로 | 역할 |
 |---|---|
 | document/ | 설계 문서 01~06, API 명세 11, 검토 기록 12, 유형 정리 |
-| harness-docs/ | 하네스 실행 방식, 인계, 구현 계획, 대조 기록 (10-4~10-8) |
-| harness-prompts/ | 작업 계약, 생성, 평가, 결정표, 반영 양식 5종과 평가 기준 2종 |
-| harness-prompts/tools/ | 검사 스크립트 |
-| project-sync/ | 프로젝트 계열 원본 사본. 수정 금지 |
-| decisions/ | 결정의 정본 |
-| tasks/ | 작업 계약 |
-| out/ | 생성 후보와 형식 보정 이력 |
-| reviews/ | 평가 리포트 원문 |
-| state/ | 진행, 트러블슈팅, 누적 지식 |
+| harness/docs/ | 하네스 실행 방식, 인계, 구현 계획, 대조 기록 (10-4~10-8) |
+| harness/prompts/ | 작업 계약, 생성, 평가, 결정표, 반영 양식 5종과 평가 기준 2종 |
+| harness/tools/ | 검사 스크립트 |
+| harness/project-sync/ | 프로젝트 계열 원본 사본. 수정 금지 |
+| harness/decisions/ | 결정의 정본 |
+| harness/tasks/ | 작업 계약 |
+| harness/out/ | 생성 후보와 형식 보정 이력 |
+| harness/reviews/ | 평가 리포트 원문 |
+| harness/state/ | 진행, 트러블슈팅, 누적 지식 |
 
 각 디렉터리에 README.md가 있다. 무엇이 들어가는지, 왜 필요한지, 파일명 규약이 그 안에 있다.
 
@@ -68,8 +68,8 @@ O2O 숙박 예약 서비스의 DDD 설계와 그 설계를 돌리는 하네스(H
 | 하네스 H0 환경, H1 레이아웃, H2 원본 정렬 | 완료 |
 | 하네스 H3 검사 스크립트, H4 양식 갱신, H5 기록 규칙, H6 첫 작업 계약 | 미착수 |
 
-진행의 정본은 state/progress.md다. 마지막 행이 현재 위치다.
+진행의 정본은 harness/state/progress.md다. 마지막 행이 현재 위치다.
 
 ## 추적하지 않는 것
 
-tmp/, output/, Claude outputs/, _to_delete/, .tmp_hla_check/는 .gitignore로 제외했다. 과거 산출물, PDF, 생성 이미지, 중복 사본이다. 파일 자체는 로컬에 그대로 있다. tmp/의 검사 스크립트 2개는 harness-prompts/tools/에 사본이 있다.
+tmp/, output/, Claude outputs/, _to_delete/, .tmp_hla_check/는 .gitignore로 제외했다. 과거 산출물, PDF, 생성 이미지, 중복 사본이다. 파일 자체는 로컬에 그대로 있다. tmp/의 검사 스크립트 2개는 harness/tools/에 사본이 있다.

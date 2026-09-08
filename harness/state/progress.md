@@ -1,4 +1,4 @@
-# 진행 기록 (state/progress.md)
+# 진행 기록 (harness/state/progress.md)
 
 최초 작성: 2026-09-07
 최종 갱신: 2026-09-07 (H2 원본 정렬)
@@ -7,7 +7,7 @@
 
 행 형식: 임시다. 날짜시각, 단계, 결과, 다음 단계 네 칸이다. 정식 형식(Task, 라운드, 단계, 결과, 실패 원인, 교훈, 다음 작업, 실제 시간)은 H5에서 확정하고 이 머리말과 표 머리를 그때 갱신한다.
 
-이웃 기록 파일: 막힌 것과 그 원인은 state/troubleshooting.md, 재사용되는 지식은 state/knowledge.md, 확정된 결정은 decisions/에 적는다. 이 파일에는 단계의 진행만 적는다. 파일 수정 이력은 두지 않기로 했다(2026-09-07 사용자 결정).
+이웃 기록 파일: 막힌 것과 그 원인은 harness/state/troubleshooting.md, 재사용되는 지식은 harness/state/knowledge.md, 확정된 결정은 harness/decisions/에 적는다. 이 파일에는 단계의 진행만 적는다. 파일 수정 이력은 두지 않기로 했다(2026-09-07 사용자 결정).
 
 규칙 세 개.
 1. 추가 전용이다. 기존 행을 고치지 않는다.
@@ -16,11 +16,12 @@
 
 | 날짜시각 | 단계 | 결과 | 다음 단계 |
 |---|---|---|---|
-| 2026-09-07 18:31 | H0 환경 | 승인 대기. CLAUDE.md, AGENTS.md, .claude/settings.json, state/progress.md 생성 | H1 파일 레이아웃 |
-| 2026-09-07 18:39 | H0 환경 보강 | 사용자 지시 반영. 베이스 경로 document/ 확정, state/troubleshooting.md와 knowledge.md 신설, decisions/README.md 신설, N9 신설. 파일 수정 이력은 사용자 결정으로 제외 | H1 파일 레이아웃 |
+| 2026-09-07 18:31 | H0 환경 | 승인 대기. CLAUDE.md, AGENTS.md, .claude/settings.json, harness/state/progress.md 생성 | H1 파일 레이아웃 |
+| 2026-09-07 18:39 | H0 환경 보강 | 사용자 지시 반영. 베이스 경로 document/ 확정, harness/state/troubleshooting.md와 knowledge.md 신설, harness/decisions/README.md 신설, N9 신설. 파일 수정 이력은 사용자 결정으로 제외 | H1 파일 레이아웃 |
 | 2026-09-07 18:44 | H0 환경 | 완료. 사용자가 H1 진행을 지시하며 H0을 승인 | H1 파일 레이아웃 |
-| 2026-09-07 18:44 | H1 파일 레이아웃 | 완료. tasks/ out/ reviews/ harness-prompts/tools/ harness-docs/ 생성, README 7개, 10-4~10-8을 harness-docs/로 이동, check.mjs와 build-v2.mjs 사본, 경로 인용 전면 갱신 | H2 원본 정렬 |
-| 2026-09-07 18:58 | H2 원본 정렬 | 완료. out/h2/two-lineage-diff.md, out/h2/01-o2o-ddd-plan.v20.md, harness-prompts/07-o2o-ptcf-prompt.v3.md 3건 후보 생성. 08-3 종속 항목과 미반입 원본 7개는 미결 | H3 검사 스크립트 |
+| 2026-09-07 18:44 | H1 파일 레이아웃 | 완료. harness/tasks/ harness/out/ harness/reviews/ harness/tools/ harness/docs/ 생성, README 7개, 10-4~10-8을 harness/docs/로 이동, check.mjs와 build-v2.mjs 사본, 경로 인용 전면 갱신 | H2 원본 정렬 |
+| 2026-09-07 18:58 | H2 원본 정렬 | 완료. harness/out/h2/two-lineage-diff.md, harness/out/h2/01-o2o-ddd-plan.v20.md, harness/prompts/07-o2o-ptcf-prompt.v3.md 3건 후보 생성. 08-3 종속 항목과 미반입 원본 7개는 미결 | H3 검사 스크립트 |
 | 2026-09-07 19:03 | H2 후속 | 사용자가 08-3 결정 11개를 전부 수용으로 확정. decisions-08-3.md에 결정 열 11행과 근거 9절, 종속 10절, 되돌릴 목록 11절 기재. 01 v20 Step 8과 차이표 4절 갱신 | H3 검사 스크립트 |
 | 2026-09-08 14:11 | H2 후속 | 사용자가 04-5, 08-1, 08-2, 08-3 원문 4개 반입. 08-3 8절 결정표 11행을 decisions-08-3.md와 대조해 일치 확인. 차이표 근거 칸 4개와 01 v20 Step 3.5, Step 8, 8절 갱신 | H3 검사 스크립트 |
 | 2026-09-08 14:16 | 저장소 편입 | 완료. git init, .gitignore와 README.md 신설, 초기 커밋 5fc0f54(75파일 12407줄), origin main push. tmp/ output/ 등 83M은 추적 제외 | H3 검사 스크립트 |
+| 2026-09-08 14:31 | 디렉터리 통합 | 완료. 하네스 9개를 harness/ 아래로 git mv, 경로 인용 23개 파일 갱신, harness/README.md 신설, 마스터 프롬프트 사본의 하드코딩 경로를 CLAUDE.md 참조로 교체, .gitignore에 빌드 산출물 경로 한정 규칙 | H3 검사 스크립트 |

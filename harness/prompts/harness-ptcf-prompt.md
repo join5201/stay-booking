@@ -3,7 +3,7 @@
 최초 작성: 2026-09-07
 최종 갱신: 2026-09-07 v2 (템플릿 자율 선택 반영. 사용자는 첫 턴에만 1절을 붙이고 이후에는 승인과 결정만 한다)
 용도: Claude Code 새 세션의 첫 프롬프트. 사용자가 직접 붙이는 것은 1절 한 번뿐이다. 이후 턴은 모델이 이 파일의 3절(준비 단계 템플릿)과 5절(실행 단계 선택표)을 읽어 다음 템플릿을 스스로 고르고, 사용자는 승인, 거부, 결정만 한다.
-입력: 10-4 v4, 10-5 v2, 10-6 v2, 10-8 v2(8절 결정, 9절 환경 점검), 07 v2, harness-prompts 양식 5종, eval-criteria-ddd.md, eval-criteria-code.md v0, decisions/decisions-08-3.md
+입력: 10-4 v4, 10-5 v2, 10-6 v2, 10-8 v2(8절 결정, 9절 환경 점검), 07 v2, harness-prompts 양식 5종, eval-criteria-ddd.md, eval-criteria-code.md v0, harness/decisions/decisions-08-3.md
 범위: 하네스 준비(H0~H6)와 실행 단계 선택표(5절). 설계 Step 9와 서비스 구현의 실제 내용은 5절의 행을 따라 진행되며, 이 파일은 그 순서와 정지점만 정한다.
 
 ---
@@ -31,19 +31,19 @@ C:/Dev/potenup/99_projects/o2o 의 하네스 준비를 아래 7단계로 진행�
 한 번에 한 단계만 다룬다. 단계가 끝나면 멈추고 내 승인을 받은 뒤 다음 단계로 간다. 앞서 나가지 않는다.
 
 템플릿 자율 선택. 이 프롬프트를 받은 뒤 나는 Task 블록을 다시 붙이지 않는다. 매 턴 시작 시 너는 다음 순서로 스스로 고른다.
-1. C:/Dev/potenup/99_projects/o2o/state/progress.md 마지막 행과 파일 존재 여부로 현재 단계를 판정한다. progress.md가 없으면 H0이다. H0은 첫 산출물로 state/progress.md를 만들고(임시 행 형식: 날짜시각, 단계, 결과, 다음 단계), 이후 모든 단계는 끝날 때 한 행을 추가한다. 그래서 H1부터는 progress.md가 항상 있다.
-2. 준비 단계(H0~H6)면 C:/Dev/potenup/99_projects/o2o/harness-prompts/harness-ptcf-prompt.md 3절에서 해당 H 블록을 읽어 그대로 Task로 삼는다. 실행 단계면 같은 파일 5절 선택표에서 조건에 맞는 행을 고른다.
+1. 진행 기록 파일의 마지막 행과 파일 존재 여부로 현재 단계를 판정한다. 그 파일과 템플릿 파일의 실제 경로는 C:/Dev/potenup/99_projects/o2o/CLAUDE.md 3절에 있다. 이 프롬프트에 경로를 직접 적지 않는다. 레이아웃이 바뀌어도 이 프롬프트를 고치지 않기 위해서다. progress.md가 없으면 H0이다. H0은 첫 산출물로 harness/state/progress.md를 만들고(임시 행 형식: 날짜시각, 단계, 결과, 다음 단계), 이후 모든 단계는 끝날 때 한 행을 추가한다. 그래서 H1부터는 progress.md가 항상 있다.
+2. 준비 단계(H0~H6)면 이 파일 3절에서 해당 H 블록을 읽어 그대로 Task로 삼는다. 실행 단계면 같은 파일 5절 선택표에서 조건에 맞는 행을 고른다.
 3. 고른 템플릿 이름과 선택 근거(어느 파일이 있고 없는지)를 첫 줄에 한 줄로 밝힌 뒤 진행한다.
 4. 선택 근거가 어긋나면(progress.md와 파일 존재가 다르면, 입력 파일이 없으면, 08-3 결정이 비어 있는데 그것에 의존하면) 템플릿을 고르지 말고 정지해서 묻는다.
 5. 내 입력은 "진행", "승인", "거부: 이유", 결정표 작성, decisions-08-3.md 작성 다섯뿐이다. 이 밖의 지시가 없는 한 템플릿 밖의 일을 하지 않는다.
 
 H0  환경. CLAUDE.md, AGENTS.md, .claude/settings.json 작성
-H1  파일 레이아웃. tasks/, out/, reviews/, decisions/, state/, harness-prompts/tools/ 생성. tmp/ 정리는 이동만
-H2  원본 정렬. project-sync/ 문서와 로컬 문서의 차이표, 01 v20 병합 초안, 07 v3 초안
-H3  검사 스크립트. tmp/document-review/check.mjs를 harness-prompts/tools/check.mjs로 옮겨 fill, g1, g2 세 명령으로 확장. 골든 파일 테스트
+H1  파일 레이아웃. harness/tasks/, harness/out/, harness/reviews/, harness/decisions/, harness/state/, harness/tools/ 생성. tmp/ 정리는 이동만
+H2  원본 정렬. harness/project-sync/ 문서와 로컬 문서의 차이표, 01 v20 병합 초안, 07 v3 초안
+H3  검사 스크립트. tmp/document-review/check.mjs를 harness/tools/check.mjs로 옮겨 fill, g1, g2 세 명령으로 확장. 골든 파일 테스트
 H4  양식 갱신. harness-prompts 5종에 10-8 3-1의 반영 목록 적용
-H5  기록 규칙. state/progress.md 행 형식 확정과 첫 행
-H6  첫 작업 계약. tasks/task-S9.md 초안(Step 9 설계 문서 Task). 08-3 결정 11개가 채워진 뒤에만 완성한다
+H5  기록 규칙. harness/state/progress.md 행 형식 확정과 첫 행
+H6  첫 작업 계약. harness/tasks/task-S9.md 초안(Step 9 설계 문서 Task). 08-3 결정 11개가 채워진 뒤에만 완성한다
 H7~ 실행 단계. 5절 선택표. 작업 계약 → 생성 → G1 → 평가 요청(A, B) → 결정표 → G2 → 반영 → 재평가 1회 → 최종 인계
 
 단계 순서의 근거. 어겼을 때 무엇이 깨지는지 알고 지켜라.
@@ -72,9 +72,9 @@ H7~ 실행 단계. 5절 선택표. 작업 계약 → 생성 → G1 → 평가 �
 |---|---|
 | 01 병합 기준 | 프로젝트 v19 계열. v20 = v19 본문 + 로컬 v9의 0절, Step 9 표, 로컬 경로 |
 | 평가 입력 | 입력 팩(o2o-review-input-pack.md)만. 01 전체를 평가자에게 주지 않는다 |
-| 08-3 8절 결정 11개 | 사용자가 decisions/decisions-08-3.md에 채운다. 채워지기 전에는 미결로 취급하고 의존하는 산출물을 확정하지 않는다 |
-| 코드 평가 기준 | harness-prompts/eval-criteria-code.md v0. 첫 코드 Task로 검증 후 v1 |
-| 설계 평가 기준 | harness-prompts/eval-criteria-ddd.md (ddd-blind-review 원본 발췌) |
+| 08-3 8절 결정 11개 | 사용자가 harness/decisions/decisions-08-3.md에 채운다. 채워지기 전에는 미결로 취급하고 의존하는 산출물을 확정하지 않는다 |
+| 코드 평가 기준 | harness/prompts/eval-criteria-code.md v0. 첫 코드 Task로 검증 후 v1 |
+| 설계 평가 기준 | harness/prompts/eval-criteria-ddd.md (ddd-blind-review 원본 발췌) |
 | 검사 스크립트 언어 | Node. 기존 tmp/document-review/check.mjs, tmp/api-spec-v2/build-v2.mjs 와 통일 |
 | 서비스 기술 구성 | Spring 기반 Java 백엔드, Next.js 프론트, MySQL. 로컬 개발과 검증까지. 배포 제외 |
 | 지적 ID | S{Step}-R{라운드}-{A/B}-{원본 번호 2자리} |
@@ -86,9 +86,9 @@ H7~ 실행 단계. 5절 선택표. 작업 계약 → 생성 → G1 → 평가 �
 | 01~06, 11, 12, o2o-*.md | 설계 문서, API 명세, 검토 기록 | 읽기. 수정은 H2 병합 승인 뒤 |
 | 10-4, 10-5, 10-6 | 실행 방식, 인계, 구현 계획 | 읽기. 10-4의 "01 전체 제공" 행은 H4에서 결정대로 갱신 |
 | 10-7, 10-8 | 대조 기록. 10-8 8절이 결정, 9절이 환경 점검 | 읽기 |
-| harness-prompts/*.md | 양식 5종, 평가 기준 2종 | H4에서 갱신 |
-| project-sync/ | 프로젝트 계열 원본 사본(01 v19, 07 v2, 입력 팩 v2. 나머지 15개는 사용자가 추가) | H2 입력. 수정 금지 |
-| decisions/decisions-08-3.md | 08-3 결정표 | 사용자가 채운다. 읽기만 |
+| harness/prompts/*.md | 양식 5종, 평가 기준 2종 | H4에서 갱신 |
+| harness/project-sync/ | 프로젝트 계열 원본 사본(01 v19, 07 v2, 입력 팩 v2. 나머지 15개는 사용자가 추가) | H2 입력. 수정 금지 |
+| harness/decisions/decisions-08-3.md | 08-3 결정표 | 사용자가 채운다. 읽기만 |
 | tmp/ | 과거 산출물, 스크립트, PDF | H1에서 이동만. 삭제 금지 |
 
 ## 시스템이 보장해야 하는 것 (하네스 요구사항)
@@ -134,7 +134,7 @@ Thought(무엇을 판단해야 하는가, 3줄 이내) → Action(확인, 검색
 - 불필요한 반복 설명을 생략한다.
 
 ## 단계 출력 형식
-0. 선택한 템플릿과 근거 (한 줄. 예: "H2 원본 정렬 선택. progress 마지막 행 H1 완료, project-sync/ 3파일 존재, 15개 미반입")
+0. 선택한 템플릿과 근거 (한 줄. 예: "H2 원본 정렬 선택. progress 마지막 행 H1 완료, harness/project-sync/ 3파일 존재, 15개 미반입")
 1. 입력 요약 (3줄 이내)
 2. 산출물 본문
 3. 이번 단계에서 확정한 것 / 남긴 미결 / 다음 단계에 미치는 영향
@@ -149,7 +149,7 @@ Thought(무엇을 판단해야 하는가, 3줄 이내) → Action(확인, 검색
 
 # 첫 턴
 
-지금 C:/Dev/potenup/99_projects/o2o/harness-prompts/harness-ptcf-prompt.md 를 읽고, state/progress.md 유무로 현재 단계를 판정한 뒤, 해당 템플릿을 골라 시작하라. 선택 근거를 첫 줄에 적어라.
+지금 C:/Dev/potenup/99_projects/o2o/CLAUDE.md 3절에서 템플릿 파일과 진행 기록 파일의 경로를 확인하고, 템플릿 파일을 읽고, 진행 기록 유무로 현재 단계를 판정한 뒤, 해당 템플릿을 골라 시작하라. 선택 근거를 첫 줄에 적어라.
 ```
 
 ---
@@ -174,14 +174,14 @@ Thought(무엇을 판단해야 하는가, 3줄 이내) → Action(확인, 검색
 ```text
 # 이번 턴 Task: H0 환경
 
-입력: C:/Dev/potenup/99_projects/o2o/10-4-o2o-harness-workflow-decisions.md, 10-5-o2o-harness-handoff.md, 10-8-o2o-harness-recheck.md(8절, 9절), project-sync/07-o2o-ptcf-prompt.md
-목표: CLAUDE.md, AGENTS.md, .claude/settings.json 세 파일과 state/progress.md 첫 행을 만든다.
+입력: C:/Dev/potenup/99_projects/o2o/10-4-o2o-harness-workflow-decisions.md, 10-5-o2o-harness-handoff.md, 10-8-o2o-harness-recheck.md(8절, 9절), harness/project-sync/07-o2o-ptcf-prompt.md
+목표: CLAUDE.md, AGENTS.md, .claude/settings.json 세 파일과 harness/state/progress.md 첫 행을 만든다.
 완료 조건:
-- state/progress.md 생성. 임시 행 형식(날짜시각, 단계, 결과, 다음 단계)으로 H0 행 기록. 정식 형식은 H5에서 확정
+- harness/state/progress.md 생성. 임시 행 형식(날짜시각, 단계, 결과, 다음 단계)으로 H0 행 기록. 정식 형식은 H5에서 확정
 - CLAUDE.md: 200줄 이하. 5개 절만. 프로젝트와 기술 구성, 작성 표준(07 v2 Format 문체 규칙을 조항 번호로), 파일 규약(문서 지도와 H1 레이아웃 예정 경로), 실행 명령(검사 스크립트 예정 명령, git status), DO NOT(LLM API 호출, 파일 삭제, 01 전체를 평가 입력에 넣기, 미결 정책을 확정값으로 쓰기, done 임의 확정)
 - AGENTS.md: Codex가 평가자로 읽을 규칙. eval-criteria-ddd.md 6절의 지시 원문과 8절 하지 말 것을 옮기고, 소스와 테스트 수정 금지, 승인한 명령만 실행을 적는다. AGENTS.md를 Codex가 어떤 경로에서 읽는지 공식 문서로 확인하고 출처를 적는다. 확인 못 하면 [추측]으로 표시한다
-- .claude/settings.json: permissions.deny에 .env 계열과 비밀 파일 읽기와 편집, allow에 node harness-prompts/tools/check.mjs 계열과 git status와 git diff. hooks는 비워 둔다. 설정 키 이름은 Claude Code 공식 문서로 확인하고 출처를 적는다
-건드리지 말 것: 01~12, harness-prompts/, project-sync/, tmp/
+- .claude/settings.json: permissions.deny에 .env 계열과 비밀 파일 읽기와 편집, allow에 node harness/tools/check.mjs 계열과 git status와 git diff. hooks는 비워 둔다. 설정 키 이름은 Claude Code 공식 문서로 확인하고 출처를 적는다
+건드리지 말 것: 01~12, harness/prompts/, harness/project-sync/, tmp/
 
 출력 형식: 1절 Format의 단계 출력 형식 그대로
 ```
@@ -194,11 +194,11 @@ Thought(무엇을 판단해야 하는가, 3줄 이내) → Action(확인, 검색
 입력: H0 산출물, 10-8-o2o-harness-recheck.md 5-2절
 목표: 하네스 디렉터리를 만들고 tmp/의 스크립트를 제자리로 옮긴다.
 완료 조건:
-- tasks/, out/, reviews/, decisions/(기존), state/, harness-prompts/tools/ 존재. 각 디렉터리에 README.md 한 줄(무엇이 들어가는지, 파일명 규약)
-- 파일명 규약: tasks/task-S{Step}.md, out/task-S{Step}-R{라운드}/, reviews/task-S{Step}-R{라운드}-{A|B}.md, decisions/task-S{Step}-R{라운드}.md
-- tmp/document-review/check.mjs를 harness-prompts/tools/check.mjs로 복사(원본은 둔다). tmp/api-spec-v2/build-v2.mjs는 harness-prompts/tools/로 복사
+- harness/tasks/, harness/out/, harness/reviews/, harness/decisions/(기존), harness/state/, harness/tools/ 존재. 각 디렉터리에 README.md 한 줄(무엇이 들어가는지, 파일명 규약)
+- 파일명 규약: harness/tasks/task-S{Step}.md, harness/out/task-S{Step}-R{라운드}/, harness/reviews/task-S{Step}-R{라운드}-{A|B}.md, harness/decisions/task-S{Step}-R{라운드}.md
+- tmp/document-review/check.mjs를 harness/tools/check.mjs로 복사(원본은 둔다). tmp/api-spec-v2/build-v2.mjs는 harness/tools/로 복사
 - CLAUDE.md 파일 규약 절을 실제 경로로 갱신(diff 승인 후)
-건드리지 말 것: 01~12, project-sync/, tmp/의 삭제
+건드리지 말 것: 01~12, harness/project-sync/, tmp/의 삭제
 
 출력 형식: 1절 Format의 단계 출력 형식 그대로
 ```
@@ -208,14 +208,14 @@ Thought(무엇을 판단해야 하는가, 3줄 이내) → Action(확인, 검색
 ```text
 # 이번 턴 Task: H2 원본 정렬
 
-입력: project-sync/ 전체(사용자가 15개를 추가했는지 먼저 확인. 없으면 있는 것만으로 진행하고 없는 목록을 적는다), 로컬 01 v9, 02~06, 11 v2, decisions/decisions-08-3.md
+입력: harness/project-sync/ 전체(사용자가 15개를 추가했는지 먼저 확인. 없으면 있는 것만으로 진행하고 없는 목록을 적는다), 로컬 01 v9, 02~06, 11 v2, harness/decisions/decisions-08-3.md
 목표: 두 계열 차이표, 01 v20 병합 초안, 07 v3 초안을 만든다.
 완료 조건:
 - 차이표: 10-8 1-1 표를 기준으로 항목별 로컬 값, 프로젝트 값, 병합 결과, 근거 문서. 로컬 05 v7과 프로젝트 05-3 v10의 용어 충돌 행 포함
-- 01 v20 초안: project-sync/01-o2o-ddd-plan.v19.md 본문 + 로컬 v9의 0절과 Step 9 표 + 로컬 절대경로. 파일은 tasks/../out/h2/01-o2o-ddd-plan.v20.md 후보로. 로컬 01은 승인 전 수정 금지
-- 07 v3 초안: harness-prompts/07-o2o-ptcf-prompt.v3.md. 확정된 결정의 07 v3 변경 항목 전부 반영. 조항 번호는 F1, F2 형식
+- 01 v20 초안: harness/project-sync/01-o2o-ddd-plan.v19.md 본문 + 로컬 v9의 0절과 Step 9 표 + 로컬 절대경로. 파일은 harness/tasks/../harness/out/h2/01-o2o-ddd-plan.v20.md 후보로. 로컬 01은 승인 전 수정 금지
+- 07 v3 초안: harness/prompts/07-o2o-ptcf-prompt.v3.md. 확정된 결정의 07 v3 변경 항목 전부 반영. 조항 번호는 F1, F2 형식
 - 08-3 결정이 비어 있으면 입력 팩 v3와 11 v3 대조는 미결로 남기고 H6에 연결
-건드리지 말 것: 로컬 01~12 원본, project-sync/
+건드리지 말 것: 로컬 01~12 원본, harness/project-sync/
 
 출력 형식: 1절 Format의 단계 출력 형식 그대로
 ```
@@ -225,7 +225,7 @@ Thought(무엇을 판단해야 하는가, 3줄 이내) → Action(확인, 검색
 ```text
 # 이번 턴 Task: H3 검사 스크립트
 
-입력: harness-prompts/tools/check.mjs, harness-prompts/*.md 양식 5종, eval-criteria-ddd.md 4절 스키마, 10-8 5-4절
+입력: harness/tools/check.mjs, harness/prompts/*.md 양식 5종, eval-criteria-ddd.md 4절 스키마, 10-8 5-4절
 목표: check.mjs를 fill, g1, g2 세 명령으로 확장하고 골든 파일 테스트를 붙인다.
 완료 조건:
 - node check.mjs fill <양식> : {{...}} 잔존 0개 확인, 경로가 절대경로이고 존재하는지 확인, "버전 또는 해시" 칸에 sha256 자동 기입. 실패 시 잔존 빈칸 목록과 종료 코드 1
@@ -262,7 +262,7 @@ Thought(무엇을 판단해야 하는가, 3줄 이내) → Action(확인, 검색
 # 이번 턴 Task: H5 기록 규칙
 
 입력: 10-5 7절, 10-8 5-5절
-목표: state/progress.md의 행 형식을 확정하고 H0~H4의 임시 행을 정식 형식으로 다시 쓴다.
+목표: harness/state/progress.md의 행 형식을 확정하고 H0~H4의 임시 행을 정식 형식으로 다시 쓴다.
 완료 조건:
 - 행 필드: 날짜시각, Task, 라운드, 단계(계약, 생성, G1, 평가A, 평가B, 결정, G2, 반영, 최종), 결과, 실패 원인, 교훈, 다음 작업, 실제 시간
 - status 값: pending, drafted, reviewed, applied, done, halted. done은 사용자 최종 승인 행에서만
@@ -278,11 +278,11 @@ Thought(무엇을 판단해야 하는가, 3줄 이내) → Action(확인, 검색
 ```text
 # 이번 턴 Task: H6 첫 작업 계약
 
-입력: harness-prompts/task-contract.md(H4 갱신본), decisions/decisions-08-3.md, 01 v20 초안, 07 v3 초안, eval-criteria-ddd.md, project-sync/o2o-review-input-pack.md
-목표: tasks/task-S9.md 초안. Step 9 구현 매핑 설계 문서 Task.
+입력: harness/prompts/task-contract.md(H4 갱신본), harness/decisions/decisions-08-3.md, 01 v20 초안, 07 v3 초안, eval-criteria-ddd.md, harness/project-sync/o2o-review-input-pack.md
+목표: harness/tasks/task-S9.md 초안. Step 9 구현 매핑 설계 문서 Task.
 완료 조건:
 - 08-3 결정 11개가 비어 있으면 계약을 완성하지 않는다. 결정에 의존하는 칸(정책 적용, 입력 버전)을 미결로 표시한 초안까지만 내고 멈춘다
-- 채워져 있으면: 작업 유형 설계 문서, 목표는 01 v20 Step 9 표의 산출물 4행, 허용 변경 파일은 out/task-S9-R1/ 후보만, 입력은 01 v20의 Step 9 입력 문서와 06-2 v5와 06-4 v5(08-3 반영본)와 입력 팩 v3, 평가 기준은 eval-criteria-ddd.md의 Step 9 축, 완료 기준은 4행 각각의 확인 가능 조건
+- 채워져 있으면: 작업 유형 설계 문서, 목표는 01 v20 Step 9 표의 산출물 4행, 허용 변경 파일은 harness/out/task-S9-R1/ 후보만, 입력은 01 v20의 Step 9 입력 문서와 06-2 v5와 06-4 v5(08-3 반영본)와 입력 팩 v3, 평가 기준은 eval-criteria-ddd.md의 Step 9 축, 완료 기준은 4행 각각의 확인 가능 조건
 - node check.mjs fill 통과
 건드리지 말 것: 계약 외 파일
 
@@ -291,17 +291,17 @@ Thought(무엇을 판단해야 하는가, 3줄 이내) → Action(확인, 검색
 
 ## 5. 실행 단계 선택표 (H6 이후. 모델이 매 턴 조건을 검사해 한 행을 고른다)
 
-상태 판정은 파일 존재와 state/progress.md 마지막 행 둘 다로 한다. 둘이 어긋나면 고르지 않고 정지한다. S는 Step 번호, R은 라운드(R1, R2).
+상태 판정은 파일 존재와 harness/state/progress.md 마지막 행 둘 다로 한다. 둘이 어긋나면 고르지 않고 정지한다. S는 Step 번호, R은 라운드(R1, R2).
 
 | 조건 (위에서부터 처음 맞는 행) | 선택 템플릿 | 모델이 하는 일 | 정지점과 종료 문장 |
 |---|---|---|---|
-| tasks/task-S{S}.md 없음 | harness-prompts/task-contract.md | 양식을 채워 tasks/task-S{S}.md 후보 작성. node check.mjs fill 통과 | 사용자 승인 대기. "계약 초안 완료. 승인을 기다린다." |
-| 계약 승인됨, out/task-S{S}-R1/ 없음 | harness-prompts/generate.md | 양식을 채운 뒤 그 지시대로 자신이 후보를 생성. out/task-S{S}-R1/candidate.md. node check.mjs g1 실행. 실패면 실패 목록을 인용해 1회 보정 | G1 통과 시 "생성 완료, G1 통과. 평가 요청 준비로 넘어갈지 확인을 기다린다." 2회 실패 시 "G1 2회 실패. halted. 원인은 progress.md." |
-| G1 통과, reviews/task-S{S}-R{R}-A.md 또는 -B.md 없음 | harness-prompts/evaluate.md 두 벌 | A용, B용 평가 요청을 채워 out/task-S{S}-R{R}/evaluate-A.md, evaluate-B.md 저장. 허용 입력 파일을 out/task-S{S}-R{R}/eval-input/ 에 복사(HR1 목록만). 평가 기준 파일 경로 지정 | 정지. "평가 요청 2벌 준비 완료. Codex 새 작업 둘에 전달하고 리포트를 reviews/에 넣어 달라." |
-| reviews A와 B 존재, decisions/task-S{S}-R{R}.md 없음 | harness-prompts/decision-table.md | 원본 지적을 한 행씩 옮겨 결정표 생성. 결정과 이유 열은 비운다. 지적 ID 부여 | 정지. "결정표 준비 완료. 결정과 이유를 채워 달라." |
+| harness/tasks/task-S{S}.md 없음 | harness/prompts/task-contract.md | 양식을 채워 harness/tasks/task-S{S}.md 후보 작성. node check.mjs fill 통과 | 사용자 승인 대기. "계약 초안 완료. 승인을 기다린다." |
+| 계약 승인됨, harness/out/task-S{S}-R1/ 없음 | harness/prompts/generate.md | 양식을 채운 뒤 그 지시대로 자신이 후보를 생성. harness/out/task-S{S}-R1/candidate.md. node check.mjs g1 실행. 실패면 실패 목록을 인용해 1회 보정 | G1 통과 시 "생성 완료, G1 통과. 평가 요청 준비로 넘어갈지 확인을 기다린다." 2회 실패 시 "G1 2회 실패. halted. 원인은 progress.md." |
+| G1 통과, harness/reviews/task-S{S}-R{R}-A.md 또는 -B.md 없음 | harness/prompts/evaluate.md 두 벌 | A용, B용 평가 요청을 채워 harness/out/task-S{S}-R{R}/evaluate-A.md, evaluate-B.md 저장. 허용 입력 파일을 harness/out/task-S{S}-R{R}/eval-input/ 에 복사(HR1 목록만). 평가 기준 파일 경로 지정 | 정지. "평가 요청 2벌 준비 완료. Codex 새 작업 둘에 전달하고 리포트를 harness/reviews/에 넣어 달라." |
+| reviews A와 B 존재, harness/decisions/task-S{S}-R{R}.md 없음 | harness/prompts/decision-table.md | 원본 지적을 한 행씩 옮겨 결정표 생성. 결정과 이유 열은 비운다. 지적 ID 부여 | 정지. "결정표 준비 완료. 결정과 이유를 채워 달라." |
 | 결정표에 빈 결정 없음, G2 미실행 | node check.mjs g2 | G2 실행. 결과를 결정표 G2 확인 절에 붙임 | 통과 시 "G2 통과. 반영으로 넘어갈지 확인을 기다린다." 실패 시 "G2 실패 항목 N개. 결정표 수정을 기다린다." |
-| G2 통과, 반영본 없음 | harness-prompts/apply.md | 수용 항목만 반영한 후보 out/task-S{S}-R{R}/applied.md, 지적 ID별 변경 위치 표, 미수용 항목 무변경 diff | 사용자 승인 대기. "반영 후보 완료. 승인을 기다린다." |
-| R1 반영 승인됨, R2 없음, 사용자가 재평가를 요청 | harness-prompts/evaluate.md 두 벌 (R2) | 위 평가 요청 행과 같음. 대상은 applied.md | 정지. Codex 전달 문장 |
+| G2 통과, 반영본 없음 | harness/prompts/apply.md | 수용 항목만 반영한 후보 harness/out/task-S{S}-R{R}/applied.md, 지적 ID별 변경 위치 표, 미수용 항목 무변경 diff | 사용자 승인 대기. "반영 후보 완료. 승인을 기다린다." |
+| R1 반영 승인됨, R2 없음, 사용자가 재평가를 요청 | harness/prompts/evaluate.md 두 벌 (R2) | 위 평가 요청 행과 같음. 대상은 applied.md | 정지. Codex 전달 문장 |
 | R2 결정표와 반영 완료, 또는 사용자가 재평가 불필요 선언 | decision-table.md의 반영과 최종 확인 인계 절 | 최종 확인 표 채움. 남은 실제 치명, 검증 미완료 명시. done은 쓰지 않는다 | 정지. "최종 확인 표 완료. 완료 판단을 기다린다." |
 | 사용자가 완료 확정 | 없음 | progress.md에 done 행 기록. 확정본을 claude/ 경로로 복사 후 git commit 제안 | "Task S{S} 종료." |
 
@@ -309,13 +309,13 @@ Thought(무엇을 판단해야 하는가, 3줄 이내) → Action(확인, 검색
 - 한 턴에 한 행. 정지점에서 사용자 입력 없이 다음 행으로 넘어가지 않는다.
 - 어느 행의 입력 파일이라도 없으면 그 행을 고르지 말고 없는 파일 목록을 보고한다.
 - 형식 보정 1회와 재평가 1회는 별개 카운터다. 초과하면 halted로 기록하고 정지한다.
-- 평가는 이 세션이 하지 않는다. 평가 요청 파일을 만들고 멈추는 것까지가 이 세션의 일이다. 리포트가 reviews/에 들어와야 다음 행이 열린다.
+- 평가는 이 세션이 하지 않는다. 평가 요청 파일을 만들고 멈추는 것까지가 이 세션의 일이다. 리포트가 harness/reviews/에 들어와야 다음 행이 열린다.
 - 모든 행의 시작과 끝에 progress.md 한 행을 추가한다(H5 형식). 실제 시간을 적는다.
 
 ## 4. 이 프롬프트를 쓸 때 주의할 점
 
 - H0의 settings.json 키 이름과 AGENTS.md 규약은 반드시 공식 문서로 확인시킨다. 확인 못 했다고 답하면 그 상태로 두고 사용자가 확인한 뒤 진행한다. 추측한 키로 만든 설정은 조용히 무시되어 게이트가 없는 상태로 돈다.
-- H2에서 project-sync/에 15개 문서가 없으면 병합 초안이 불완전하다. 사용자가 claude.ai 프로젝트에서 내려받아 넣는 것이 선행 조건이다.
+- H2에서 harness/project-sync/에 15개 문서가 없으면 병합 초안이 불완전하다. 사용자가 claude.ai 프로젝트에서 내려받아 넣는 것이 선행 조건이다.
 - H6은 08-3 결정 없이는 끝나지 않는다. 그것이 의도다. 결정 없이 Step 9로 가면 미결 정책이 코드로 내려간다.
 - 훅은 이 프롬프트 범위 밖이다. H3의 스크립트가 fixture로 안정된 뒤 별도 프롬프트로 PreToolUse와 Stop 훅에 연결한다.
 - 세션이 길어져 이전 단계 산출물을 잊는 기색이 보이면 "progress.md를 읽고 현재 단계를 다시 판정하라"고만 한다. 템플릿을 다시 붙이지 않는다.

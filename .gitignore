@@ -1,12 +1,12 @@
 # 추적 제외. 파일 자체는 지우지 않는다 (CLAUDE.md N2)
 
-# 과거 산출물과 스크립트 원본. 스크립트 사본은 harness-prompts/tools/에 있다
+# 과거 산출물과 스크립트 원본. 스크립트 사본은 harness/tools/에 있다
 tmp/
 
 # 생성 이미지. 이벤트 스토밍 PNG 변형
 output/
 
-# 다운로드 착지 폴더. 내용은 document/, project-sync/, harness-prompts/, decisions/에 복사되어 있다
+# 다운로드 착지 폴더. 내용은 document/와 harness/ 아래에 복사되어 있다
 Claude outputs/
 
 # 정리 대상
@@ -17,7 +17,16 @@ _to_delete/
 .claude/settings.local.json
 CLAUDE.local.md
 
-# out/은 하네스의 생성 후보 자리다. 빌드 산출물이 아니므로 제외하지 않는다
+# 빌드 산출물. 경로를 한정해서 적는다.
+# 맨이름(build/, out/, dist/)으로 적으면 harness/out/이 통째로 사라진다.
+# harness/out/은 생성 후보의 자리이지 빌드 산출물이 아니다.
+backend/build/
+backend/.gradle/
+backend/target/
+frontend/.next/
+frontend/out/
+frontend/node_modules/
+frontend/dist/
 
 # OS
 .DS_Store

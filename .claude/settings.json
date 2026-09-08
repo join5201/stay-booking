@@ -16,17 +16,17 @@
       "Edit(./.env.*)",
       "Edit(**/.env)",
       "Edit(**/.env.*)",
-      "Edit(./project-sync/**)",
+      "Edit(./harness/project-sync/**)",
       "Bash(rm *)",
       "PowerShell(Remove-Item *)"
     ],
     "allow": [
-      "Bash(node harness-prompts/tools/check.mjs:*)",
-      "Bash(node harness-prompts/tools/build-v2.mjs:*)",
+      "Bash(node harness/tools/check.mjs:*)",
+      "Bash(node harness/tools/build-v2.mjs:*)",
       "Bash(git status:*)",
       "Bash(git diff:*)",
-      "PowerShell(node harness-prompts/tools/check.mjs *)",
-      "PowerShell(node harness-prompts/tools/build-v2.mjs *)",
+      "PowerShell(node harness/tools/check.mjs *)",
+      "PowerShell(node harness/tools/build-v2.mjs *)",
       "PowerShell(git status *)",
       "PowerShell(git diff *)"
     ]

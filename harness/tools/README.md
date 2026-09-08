@@ -1,4 +1,4 @@
-# harness-prompts/tools/
+# harness/tools/
 
 무엇이 들어가는가: 검사 스크립트다. LLM을 부르지 않는 로컬 검사 도구.
 
@@ -15,8 +15,8 @@ H3에서 확정할 명령
 
 | 명령 | 검사 |
 |---|---|
-| node harness-prompts/tools/check.mjs fill <양식> | 빈칸 잔존 0, 경로 존재, 버전 칸 sha256 기입 |
-| node harness-prompts/tools/check.mjs g1 <후보> --type doc 또는 api 또는 code | 양식 필수 항목, 날짜, 금지 기호, 종료 문장 |
-| node harness-prompts/tools/check.mjs g2 <결정표> | ID 집합 일치, 행 수, 빈 결정, 거부 이유, 반박 등급, 치명 거부 필수 필드 |
+| node harness/tools/check.mjs fill <양식> | 빈칸 잔존 0, 경로 존재, 버전 칸 sha256 기입 |
+| node harness/tools/check.mjs g1 <후보> --type doc 또는 api 또는 code | 양식 필수 항목, 날짜, 금지 기호, 종료 문장 |
+| node harness/tools/check.mjs g2 <결정표> | ID 집합 일치, 행 수, 빈 결정, 거부 이유, 반박 등급, 치명 거부 필수 필드 |
 
 경로 구분자는 슬래시로 고정한다. .claude/settings.json의 allow 규칙이 명령 문자열 앞부분을 그대로 비교한다.

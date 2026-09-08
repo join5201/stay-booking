@@ -11,9 +11,9 @@
 | 무엇 | 경로 |
 |---|---|
 | 로컬 계열 | C:/Dev/potenup/99_projects/o2o/document/01-o2o-ddd-plan.md (v9, 09-07) |
-| 프로젝트 계열 | C:/Dev/potenup/99_projects/o2o/project-sync/01-o2o-ddd-plan.v19.md (v19, 09-06) |
-| 기준 표 | C:/Dev/potenup/99_projects/o2o/harness-docs/10-8-o2o-harness-recheck.md 1-1 |
-| 용어 대조 | document/05-o2o-glossary.md (로컬 v7) 대 project-sync/05-3-o2o-glossary.md (프로젝트 v10) |
+| 프로젝트 계열 | C:/Dev/potenup/99_projects/o2o/harness/project-sync/01-o2o-ddd-plan.v19.md (v19, 09-06) |
+| 기준 표 | C:/Dev/potenup/99_projects/o2o/harness/docs/10-8-o2o-harness-recheck.md 1-1 |
+| 용어 대조 | document/05-o2o-glossary.md (로컬 v7) 대 harness/project-sync/05-3-o2o-glossary.md (프로젝트 v10) |
 
 병합 기준: 확정된 결정대로 프로젝트 v19 계열이다. 근거는 검증 횟수와 결정의 깊이이지 최신성이 아니다. 로컬 v9가 09-07로 더 최근이지만 Step 5~8이 예정 상태다.
 
@@ -30,8 +30,8 @@
 | 액터 명칭 | 게스트, guestId | 이용자(User), userId, userCount | v19 채택 | 05-3 v8, 01 v19 1절 |
 | 커맨드와 이벤트 | 22 / 22 | 22 / 22. 08-3 수용 시 SettlePayment로 23, 09-1 보드 v2로 이벤트 23 | 22 / 22로 두고 23은 08-3 결정에 종속. 미결 | 10-8 1-1 |
 | 정책 | 6행 표(01 v9 Step 8) | 정책 카드 8장(06-4 2-2) + 순찰 T2 | v19 채택 | 06-4 v4(document/), 08-1 원문. 대조 완료(09-08) |
-| 07 마스터 프롬프트 | 미확보 | v2 존재 | project-sync/07-o2o-ptcf-prompt.md를 입력으로 v3 작성 | 10-5 2절 |
-| 평가 기준 | 미확보 | ddd-blind-review 스킬 원본 | harness-prompts/eval-criteria-ddd.md | 10-8 6절 |
+| 07 마스터 프롬프트 | 미확보 | v2 존재 | harness/project-sync/07-o2o-ptcf-prompt.md를 입력으로 v3 작성 | 10-5 2절 |
+| 평가 기준 | 미확보 | ddd-blind-review 스킬 원본 | harness/prompts/eval-criteria-ddd.md | 10-8 6절 |
 | 입력 팩 | 파일 없음 | o2o-review-input-pack.md v2 존재 | v3는 08-3 수용 뒤. 미결 | 10-8 3-1 |
 
 ## 2. 로컬 v9에만 있는 것 (v20에 살린다)
@@ -77,4 +77,4 @@
 | 11 API v3 대조 | 미결. 결정은 났고 대조가 남았다 | 10-8 3-3 항목 |
 | 04-6, 09, 09-1 원문 | 미반입. 08-1, 08-2, 08-3, 04-5는 09-08 반입 완료 | 반입 시 이 표의 근거 문서 칸을 원문으로 교체 |
 
-2026-09-08에 04-5, 08-1, 08-2, 08-3 원문 4개가 project-sync/에 들어와 근거 문서 칸 넷을 원문 인용으로 교체했다. 08-3 8절 결정표 11행을 decisions/decisions-08-3.md와 대조했고 번호, 결정 대상, 추천, 08-2 대비 네 칸이 전부 일치했다. 남은 미반입은 04-6, 09, 09-1 셋이다.
+2026-09-08에 04-5, 08-1, 08-2, 08-3 원문 4개가 harness/project-sync/에 들어와 근거 문서 칸 넷을 원문 인용으로 교체했다. 08-3 8절 결정표 11행을 harness/decisions/decisions-08-3.md와 대조했고 번호, 결정 대상, 추천, 08-2 대비 네 칸이 전부 일치했다. 남은 미반입은 04-6, 09, 09-1 셋이다.

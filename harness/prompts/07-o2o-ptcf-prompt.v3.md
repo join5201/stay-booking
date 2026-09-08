@@ -2,7 +2,7 @@
 
 최초 작성: 2026-09-02
 최종 갱신: 2026-09-07 v3 (H2 원본 정렬: 액터 명칭 userId, 재검증 블록 폐기와 평가 기준 파일 교체, 기술 제약에 Next.js와 로컬 범위, 규칙에 조항 번호, 고정 종료 문장)
-입력: C:/Dev/potenup/99_projects/o2o/project-sync/07-o2o-ptcf-prompt.md (v2)
+입력: C:/Dev/potenup/99_projects/o2o/harness/project-sync/07-o2o-ptcf-prompt.md (v2)
 용도: O2O 숙박 예약 서비스를 DDD 설계 단계에서 돌리는 재사용 프롬프트 원본
 
 이 문서는 후보다. 승인 전에는 확정본으로 인용하지 않는다.
@@ -14,12 +14,12 @@
 | 항목 | v2 | v3 | 근거 |
 |---|---|---|---|
 | 액터 명칭 | guestId, 게스트 | userId, 이용자(User), userCount | 01 v20 1절, 05-3 v8 |
-| 재검증 블록 | 2절에 5문항 자가 재검증 블록 | 폐기. 평가는 harness-prompts/eval-criteria-ddd.md로 대체 | 07 v2 4절 마지막 항목이 스스로 지적한 문제 |
+| 재검증 블록 | 2절에 5문항 자가 재검증 블록 | 폐기. 평가는 harness/prompts/eval-criteria-ddd.md로 대체 | 07 v2 4절 마지막 항목이 스스로 지적한 문제 |
 | 기술 제약 | Java, Spring Boot, MySQL, Docker, AWS | Next.js 프론트 추가. 배포를 로컬 개발과 검증까지로 축소 | 01 v20 0절 |
 | 규칙 번호 | 없음 | Persona P1~P5, Task T1~T4, Format F1~F16 | 10-8 3-1 |
 | 종료 문장 | 없음 | Format 끝 F16에 고정 종료 문장 | 10-7 2-1 |
 
-재검증 블록을 폐기하는 이유는 v2 4절이 이미 적어 두었다. 같은 세션에서 돌리면 자기 결정을 방어하는 판정이 나온다. 대화 이력이 없는 세션에 넘기는 편이 낫다. 이 하네스에서 그 세션은 Codex의 새 작업이고, 기준 파일은 harness-prompts/eval-criteria-ddd.md다.
+재검증 블록을 폐기하는 이유는 v2 4절이 이미 적어 두었다. 같은 세션에서 돌리면 자기 결정을 방어하는 판정이 나온다. 대화 이력이 없는 세션에 넘기는 편이 낫다. 이 하네스에서 그 세션은 Codex의 새 작업이고, 기준 파일은 harness/prompts/eval-criteria-ddd.md다.
 
 ## 1. 마스터 프롬프트 (복사해서 사용)
 
@@ -70,7 +70,7 @@ T4. 앞 단계 결정을 뒤집어야 하면 뒤집고, 그 이유와 영향 범
 유비쿼터스 언어(Ubiquitous Language)는 Step 4에서 끝나는 작업이 아니라 전 단계에 걸친 활동이다.
 
 검증은 이 세션이 하지 않는다. 산출물의 감사는 대화 이력이 없는 별도 세션이
-harness-prompts/eval-criteria-ddd.md의 축과 심각도와 출력 스키마로 수행한다.
+harness/prompts/eval-criteria-ddd.md의 축과 심각도와 출력 스키마로 수행한다.
 같은 세션에서 자기 산출물을 재검증하면 자기 결정을 방어하는 판정이 나온다.
 
 # Context
@@ -174,7 +174,7 @@ Step {N} 산출물 제출. 다음 지시를 기다린다.
 4. F16의 종료 문장
 ```
 
-v2에 있던 재검증 블록은 이 판에서 삭제했다. 검증은 harness-prompts/evaluate.md로 요청하고 기준은 harness-prompts/eval-criteria-ddd.md다.
+v2에 있던 재검증 블록은 이 판에서 삭제했다. 검증은 harness/prompts/evaluate.md로 요청하고 기준은 harness/prompts/eval-criteria-ddd.md다.
 
 ## 3. 조항 번호 대응표
 
