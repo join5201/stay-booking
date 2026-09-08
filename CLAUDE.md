@@ -103,10 +103,10 @@ backend와 frontend를 service/로 감싸지 않는다. 설계 문서 어디에�
 |---|---|
 | document/01~06, 11, 12, o2o-*.md | 설계 문서, API 명세, 검토 기록. README.md 있음 |
 | harness/docs/10-4~10-8 | 실행 방식, 인계, 구현 계획, 대조 기록 2종. README.md 있음 |
-| harness/prompts/ | 양식 5종과 평가 기준 2종 |
+| harness/prompts/ | 양식 5종, 평가 기준 2종, 답변 형식 규격, 마스터 프롬프트 4종. README.md 있음 |
 | harness/tools/ | 검사 스크립트. check.mjs, build-v2.mjs |
 | harness/project-sync/ | 프로젝트 계열 원본 사본. 수정 금지 |
-| harness/tasks/ | 작업 계약. task-S{Step}.md |
+| harness/tasks/ | 작업 계약. 문서 Task는 task-S{Step}.md, 기능별 개발 Task는 task-S{Step}-{기능키}.md |
 | harness/out/ | 생성 후보와 형식 보정 이력. task-S{Step}-R{라운드}/ |
 | harness/reviews/ | Codex 리포트 원문. task-S{Step}-R{라운드}-{A 또는 B}.md |
 | harness/decisions/ | 결정의 정본. decisions-08-3.md와 task-S{Step}-R{라운드}.md |
@@ -114,7 +114,7 @@ backend와 frontend를 service/로 감싸지 않는다. 설계 문서 어디에�
 | tmp/ | 과거 산출물과 스크립트. 원본 보관. 삭제하지 않는다. 추적 제외 |
 | Claude outputs/, _to_delete/, output/, .tmp_hla_check/ | 미분류. 추적 제외 |
 
-디렉터리 7곳에 README.md가 있다. document, harness-docs, harness/prompts/tools, tasks, out, reviews, state, decisions.
+디렉터리 9곳에 README.md가 있다. document와 harness 아래 docs, prompts, tools, tasks, out, reviews, decisions, state. project-sync만 없고 그 이유는 3-1에 있다.
 
 파일명에 Task, 라운드, A와 B가 들어가야 G2가 파일명만으로 버전 일치를 1차 검사할 수 있다(harness/docs/10-8 5-2).
 
