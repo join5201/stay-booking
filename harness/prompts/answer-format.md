@@ -1,7 +1,7 @@
 # 답변 형식 규격
 
 최초 작성: 2026-09-08
-최종 갱신: 2026-09-08 v1
+최종 갱신: 2026-09-08 v2 (4절 검사 ID를 실제 출력 이름으로 정정)
 정본 관계: 규칙 R1부터 R4의 정본은 CLAUDE.md 2-1이다. 이 파일은 그 규칙을 어떤 틀과 어떤 검사로 지키는지의 규격이다.
 근거: harness/docs/10-9-o2o-harness-answer-format-plan.md
 
@@ -65,7 +65,7 @@ A와 B 등급의 절 골격이다. 기계로 못 재는 R1과 R3을 이 틀이 �
 | answer.result-section | 마지막 절 제목이 결과인가 | A, B |
 | answer.result-rows | 결과 절에 다섯 행이 다 있는가 | A, B |
 | answer.result-empty | 앞의 셋이 해당 없음일 때 이유가 붙었는가 | A, B |
-| answer.forbidden | 줄표와 가운뎃점과 제목 밖 볼드 | 전부 |
+| answer.no-emdash, answer.no-middot, answer.no-bold | 줄표와 가운뎃점과 제목 밖 볼드 | 전부 |
 
 자동 등급 판정은 위에서부터 처음 맞는 행을 쓴다.
 
