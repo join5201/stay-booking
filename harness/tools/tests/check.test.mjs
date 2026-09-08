@@ -150,6 +150,20 @@ test('fill 실패. 계약이 자기 해시를 적으려 하면 거부한다', ()
   assert.match(r.out, /fill\.self-hash/);
 });
 
+test('fill 통과. 자기 해시 없음은 허용 값이다', () => {
+  const dst = path.join(TMP, `${seq++}-self-ok.md`);
+  const asPosix = dst.split(path.sep).join('/');
+  fs.writeFileSync(dst, [
+    '# 자기 해시 허용 값', '',
+    '| 자료 | 절대경로 | 버전 또는 해시 | 읽을 범위 |',
+    '|---|---|---|---|',
+    `| 이 작업 계약 | ${asPosix} | 자기 해시 없음 | 전문 |`,
+    '',
+  ].join('\n'), 'utf8');
+  const r = run(() => fill(dst, { dry: true }));
+  assert.equal(r.code, 0);
+});
+
 // ---------- g1 doc ----------
 
 test('g1 doc 통과. 펜스 안 기호는 제외된다', () => {

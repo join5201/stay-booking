@@ -62,6 +62,8 @@ const ID_RE = /^S(\d+)-R(\d+)-([AB])-(\d{2})$/;
 const SEVERITIES = ['치명', '보통', '확인필요'];
 // 계약 시점에 아직 없는 대상을 가리키는 허용 값. 빈칸이 아니라 의도된 유예다
 const DEFERRED = '생성 후 기입';
+// 계약이 자기 해시를 적으면 항상 틀린다. 이 값 하나만 허용한다
+const NO_SELF_HASH = '자기 해시 없음';
 
 function rel(p) {
   return path.relative(ROOT, path.resolve(p)).split(path.sep).join('/');
@@ -192,10 +194,11 @@ export function fill(file, { dry = false } = {}) {
       const hash = row.cells[hashCol];
       if (!target || !/^[A-Za-z]:\//.test(target)) continue;
       if (!isFile(target)) continue; // 없는 경로와 폴더는 아래 경로 검사가 보고한다
-      // 자기 자신의 해시는 적는 순간 틀린다. 적으면 파일이 바뀌고 파일이 바뀌면 해시가 바뀐다
+      // 자기 자신의 해시는 적는 순간 틀린다. 적으면 파일이 바뀌고 파일이 바뀌면 해시가 바뀐다.
+      // 허용 값은 NO_SELF_HASH 하나다
       if (path.resolve(target) === path.resolve(file)) {
-        r.check('fill.self-hash', row.line, false,
-          '이 파일이 자기 해시를 적으려 한다. 버전 칸을 자기 해시 없음으로 두고 승인 커밋으로 가리킨다');
+        r.check('fill.self-hash', row.line, hash === NO_SELF_HASH,
+          `이 파일이 자기 해시를 적으려 한다. 버전 칸을 ${NO_SELF_HASH}으로 두고 승인 커밋으로 가리킨다`);
         continue;
       }
       const digest = sha256(target);
