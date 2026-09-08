@@ -60,6 +60,8 @@ const MIDDLE_DOT = '·';
 const DEFAULT_END = 'Step {N} 산출물 제출. 다음 지시를 기다린다.';
 const ID_RE = /^S(\d+)-R(\d+)-([AB])-(\d{2})$/;
 const SEVERITIES = ['치명', '보통', '확인필요'];
+// 계약 시점에 아직 없는 대상을 가리키는 허용 값. 빈칸이 아니라 의도된 유예다
+const DEFERRED = '생성 후 기입';
 
 function rel(p) {
   return path.relative(ROOT, path.resolve(p)).split(path.sep).join('/');
@@ -67,6 +69,11 @@ function rel(p) {
 
 function sha256(p) {
   return crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+}
+
+// 폴더에 sha256을 부르면 EISDIR로 죽는다. existsSync는 폴더에도 참을 돌려준다
+function isFile(p) {
+  try { return fs.statSync(p).isFile(); } catch { return false; }
 }
 
 // 대소문자를 무시한다. Windows 파일시스템이 구분하지 않기 때문이다 (HRV-05)
@@ -172,6 +179,7 @@ export function fill(file, { dry = false } = {}) {
 
   // 1. 버전 또는 해시 칸. 비어 있으면 채우고, 값이 있으면 실제 바이트와 대조한다 (HRV-06)
   const filled = [];
+  const deferred = [];
   const lines = text.split('\n');
   for (const t of parseTables(text)) {
     const header = t.rows[0];
@@ -183,7 +191,7 @@ export function fill(file, { dry = false } = {}) {
       const target = row.cells[pathCol];
       const hash = row.cells[hashCol];
       if (!target || !/^[A-Za-z]:\//.test(target)) continue;
-      if (!fs.existsSync(target)) continue;
+      if (!isFile(target)) continue; // 없는 경로와 폴더는 아래 경로 검사가 보고한다
       const digest = sha256(target);
       const isBlank = !hash || /^\{\{.*\}\}$/.test(hash);
       if (!isBlank) {
@@ -225,8 +233,14 @@ export function fill(file, { dry = false } = {}) {
     for (const row of t.rows.slice(1)) {
       const v = row.cells[pathCol];
       if (!v || /^\{\{/.test(v) || v === '해당 없음') continue;
+      if (v === DEFERRED) { deferred.push(row.line); continue; }
       for (const m of v.matchAll(/[A-Za-z]:\/[^\s,)]+/g)) {
-        r.check('fill.path-exists', row.line, fs.existsSync(m[0]), `파일이 없다: ${m[0]}`);
+        const exists = fs.existsSync(m[0]);
+        r.check('fill.path-exists', row.line, exists, `파일이 없다: ${m[0]}`);
+        if (exists) {
+          r.check('fill.path-is-file', row.line, isFile(m[0]),
+            `폴더는 해시를 계산할 수 없다. 파일을 적거나 생성 후 기입으로 두라: ${m[0]}`);
+        }
       }
       if (!/[A-Za-z]:\//.test(v)) {
         r.check('fill.path-absolute', row.line, false, `절대경로가 아니다: ${v}`);
@@ -235,6 +249,10 @@ export function fill(file, { dry = false } = {}) {
   }
 
   const code = r.print();
+  if (deferred.length) {
+    console.log(`  생성 후 기입 ${deferred.length}건. 줄 ${deferred.join(', ')}`);
+    console.log('  이 행이 남아 있는 동안에는 평가 요청 단계로 가지 않는다');
+  }
   if (filled.length) {
     console.log(`  sha256 기입 ${filled.length}건${dry ? ' (dry, 저장 안 함)' : ''}`);
     for (const f of filled) console.log(`    ${f.line}  ${f.target} -> ${f.digest}`);
@@ -421,6 +439,7 @@ export function g2(file, { mode = 'pre' } = {}) {
       `${spec.name}의 경로 ${got.paths.length}개와 해시 ${got.hashes.length}개가 짝이 맞지 않는다`);
     got.paths.forEach((p, i) => {
       if (!fs.existsSync(p)) { r.check('g2.version-path', got.pathLine, false, `파일이 없다: ${p}`); return; }
+      if (!isFile(p)) { r.check('g2.version-is-file', got.pathLine, false, `폴더는 해시를 계산할 수 없다: ${p}`); return; }
       const h = got.hashes[i];
       if (!h) { r.check('g2.version-hash', got.line, false, `${rel(p)}의 sha256이 없다 (HR2)`); return; }
       r.check('g2.version-match', got.line, sha256(p).startsWith(h), `해시 불일치: ${rel(p)}`);
@@ -438,7 +457,7 @@ export function g2(file, { mode = 'pre' } = {}) {
   for (const spec of VERSION_SPECS.filter((s) => s.role)) {
     const got = specs[spec.name];
     const p = got && got.paths[0];
-    if (!p || !fs.existsSync(p)) { r.check('g2.report-readable', 1, false, `${spec.name}를 읽을 수 없다`); continue; }
+    if (!p || !isFile(p)) { r.check('g2.report-readable', 1, false, `${spec.name}를 읽을 수 없다. 없는 경로이거나 폴더다`); continue; }
     const rep = parseReport(p);
     r.check('g2.report-schema', 1, rep.ok, `${spec.name} 스키마 위반: ${rep.errors.join(' / ')}`);
     for (const row of rep.rows) {

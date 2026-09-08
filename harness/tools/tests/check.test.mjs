@@ -116,6 +116,23 @@ test('fill 실패. 버전 칸에 sha256이 아닌 값이 있으면 잡는다', (
   assert.match(r.out, /fill\.hash-recorded/);
 });
 
+// 폴더 경로에서 크래시하던 것을 검사 실패로 바꿨다
+test('fill 실패. 폴더 경로는 해시를 계산할 수 없다', () => {
+  const f = prep('fill-pass.md', (t) => t.replace(ROOT + '/document/01-o2o-ddd-plan.md', ROOT + '/document'));
+  const r = run(() => fill(f, { dry: true }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /fill\.path-is-file/);
+});
+
+test('fill 통과. 생성 후 기입은 빈칸이 아니라 유예다', () => {
+  const f = prep('fill-pass.md', (t) =>
+    t.replace(`| 01 전체 | ${ROOT}/document/01-o2o-ddd-plan.md | {{필수}} | 전문 |`,
+      '| 평가 대상 | 생성 후 기입 | 생성 후 기입 | 전체 |'));
+  const r = run(() => fill(f, { dry: true }));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /생성 후 기입 1건/);
+});
+
 // ---------- g1 doc ----------
 
 test('g1 doc 통과. 펜스 안 기호는 제외된다', () => {
@@ -245,6 +262,13 @@ test('g2 실패. 원본 리포트가 잘려 보조 표 행이 모자란다', () 
   const r = run(() => g2(f));
   assert.equal(r.code, 1);
   assert.match(r.out, /g2\.report-schema/);
+});
+
+test('g2 실패. 리포트 경로가 폴더면 크래시하지 않고 잡는다', () => {
+  const f = prep('g2-pass.md', (t) => t.replace(ROOT + '/harness/tools/tests/fixtures/g2-report-B.md', ROOT + '/harness/tools/tests/fixtures'));
+  const r = run(() => g2(f));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /g2\.version-is-file/);
 });
 
 // HRV-04. 반영 전에는 치명이 남아 있어도 통과하고 최종에서만 막는다
