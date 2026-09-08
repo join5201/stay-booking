@@ -1,7 +1,7 @@
 # 누적 지식 (harness/state/knowledge.md)
 
 최초 작성: 2026-09-07
-최종 갱신: 2026-09-08 (harness/ 통합. 2행 추가)
+최종 갱신: 2026-09-08 (H3. 3행 추가)
 
 왜 이 파일이 필요한가: 지식의 부채를 갚는 자리다. 두 번 걸린 것, 문서 어디에도 없어서 매번 다시 알아내는 것을 여기 모은다. 이 파일이 없으면 같은 확인 작업을 매 세션 반복한다.
 
@@ -24,6 +24,9 @@
 | 2026-09-07 | Claude Code는 AGENTS.md를 읽지 않는다 | CLAUDE.md만 읽는다. 같이 읽히게 하려면 @AGENTS.md 임포트를 써야 한다 | https://code.claude.com/docs/en/memory | AGENTS.md 머리말. 이 하네스는 일부러 잇지 않는다 |
 | 2026-09-07 | Codex의 AGENTS.md 탐색 | Codex 홈을 먼저 보고 Git 루트에서 현재 디렉터리까지 내려오며 모은다. 가까운 파일이 뒤에 와서 우선한다. 디렉터리당 한 파일, 기본 상한 32 KiB | https://learn.chatgpt.com/docs/agent-configuration/agents-md | AGENTS.md 0절 운용 조건 |
 | 2026-09-07 | 이 폴더는 git 추적 밖이었다 | 루트 .gitignore의 /99_projects/가 제외했다. 2026-09-08 자체 저장소 편입으로 해소. 폐기 | C:/Dev/potenup/.gitignore 확인 | 폐기 |
+| 2026-09-08 | node --test에 디렉터리를 넘기면 실패한다 | Node 24.14.1에서 node --test <디렉터리>가 그 경로를 모듈로 해석해 MODULE_NOT_FOUND로 죽는다. 파일 경로를 직접 넘겨야 한다 | 이번 세션 실측 | harness/tools/tests/check.test.mjs 머리 주석 |
+| 2026-09-08 | 골든 fixture에 치환 토큰 설명을 적으면 치환기가 문다 | 설명줄에 __HASH:경로__를 예시로 적었더니 치환 정규식이 그것도 실제 경로로 읽어 ENOENT가 났다. fixture 안에서는 토큰 자체를 쓰지 않고 말로 설명한다 | 이번 세션 실측 | fixtures/g2-pass.md, fill-pass.md |
+| 2026-09-08 | 검사는 읽고 채움은 쓴다 | 이전 check.mjs가 검사 도중 document/o2o-*.md를 덮어썼다. 새 판은 g1과 g2가 아무것도 쓰지 않고 fill만 인자로 받은 파일 하나를 쓰며 보호 경로는 거부한다 | 이번 세션. troubleshooting 2026-09-08 행 | harness/tools/check.mjs 머리 주석 |
 | 2026-09-08 | 프로젝트 .claude/는 자동 삭제되지 않는다 | 정리 sweep 대상은 전부 ~/.claude/ 아래다. 프로젝트 .claude/는 표에 없다. 다만 rules/, skills/, commands/, agents/, workflows/, output-styles/, agent-memory/가 예약 이름이고 .claude/rules/ 아래 .md는 매 세션 컨텍스트에 올라간다 | https://code.claude.com/docs/en/claude-directory | .claude/에 하네스를 넣지 않기로 한 근거. 삭제 위험이 아니라 소유권과 예약 이름이 이유다 |
 | 2026-09-08 | 프롬프트에 구체 경로를 박지 않는다 | 마스터 프롬프트가 progress.md와 템플릿 파일의 절대경로를 적고 있어서 디렉터리를 옮길 때마다 프롬프트가 깨졌다. CLAUDE.md 3절 한 곳만 가리키게 바꿨다 | 이번 개편에서 실제 발생 | harness/prompts/harness-ptcf-prompt.md 1절 |
 | 2026-09-08 | 중첩 저장소는 상위 gitignore와 간섭하지 않는다 | 상위 저장소가 /99_projects/를 무시하고 있어도 그 안에서 git init을 하면 새 저장소가 독립적으로 동작한다. 상위의 harness/out/ 무시 규칙도 새 저장소에 상속되지 않는다 | 이번 세션 실측 | .gitignore, CLAUDE.md 1절 |
