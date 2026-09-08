@@ -1,7 +1,7 @@
 # 누적 지식 (harness/state/knowledge.md)
 
 최초 작성: 2026-09-07
-최종 갱신: 2026-09-08 (H5. 2행 추가)
+최종 갱신: 2026-09-08 (task-S8 계약. 1행 추가)
 
 왜 이 파일이 필요한가: 지식의 부채를 갚는 자리다. 두 번 걸린 것, 문서 어디에도 없어서 매번 다시 알아내는 것을 여기 모은다. 이 파일이 없으면 같은 확인 작업을 매 세션 반복한다.
 
@@ -24,6 +24,7 @@
 | 2026-09-07 | Claude Code는 AGENTS.md를 읽지 않는다 | CLAUDE.md만 읽는다. 같이 읽히게 하려면 @AGENTS.md 임포트를 써야 한다 | https://code.claude.com/docs/en/memory | AGENTS.md 머리말. 이 하네스는 일부러 잇지 않는다 |
 | 2026-09-07 | Codex의 AGENTS.md 탐색 | Codex 홈을 먼저 보고 Git 루트에서 현재 디렉터리까지 내려오며 모은다. 가까운 파일이 뒤에 와서 우선한다. 디렉터리당 한 파일, 기본 상한 32 KiB | https://learn.chatgpt.com/docs/agent-configuration/agents-md | AGENTS.md 0절 운용 조건 |
 | 2026-09-07 | 이 폴더는 git 추적 밖이었다 | 루트 .gitignore의 /99_projects/가 제외했다. 2026-09-08 자체 저장소 편입으로 해소. 폐기 | C:/Dev/potenup/.gitignore 확인 | 폐기 |
+| 2026-09-08 | 판 번호는 반영 완료의 증거가 아니다 | 로컬 02, 03, 04가 08-3 7절의 목표 판 번호 v8, v11, v9를 이미 달고 있는데 08-3 내용은 0건이었다. 판 번호는 그 파일의 이력이고 다른 계열의 목표 번호와 우연히 같을 수 있다. 반영 여부는 표지 문자열로 확인한다 | task-S8 계약 작성 중 실측. SettlePayment, settledAt, ORPHAN, REFUND_PENDING 전부 0건 | harness/tasks/task-S8.md 이 계약이 먼저 정하는 것 1항 |
 | 2026-09-08 | 기록 형식은 첫 행 전에 정한다 | progress.md를 임시 4칸으로 열 턴 돌렸더니 H5에서 재작성할 행이 열한 개가 됐다. 형식 확정을 뒤로 미루는 비용은 미룬 턴 수에 비례한다 | 이번 세션 실측 | harness/state/progress.md 재작성 주석 |
 | 2026-09-08 | 결정 문서끼리도 대조가 필요하다 | 10-4 v4가 01 전체 제공을 결정했는데 그것이 평가 기준 스킬 원본이 지목한 무력화 행위 그 자체였다. 두 결정 문서를 대조하지 않으면 상위 규칙을 어기는 결정이 확정으로 남는다 | 10-8 1-2, H4에서 10-4 v5로 번복 | harness/docs/10-4 1절과 3절 |
 | 2026-09-08 | node --test에 디렉터리를 넘기면 실패한다 | Node 24.14.1에서 node --test <디렉터리>가 그 경로를 모듈로 해석해 MODULE_NOT_FOUND로 죽는다. 파일 경로를 직접 넘겨야 한다 | 이번 세션 실측 | harness/tools/tests/check.test.mjs 머리 주석 |
