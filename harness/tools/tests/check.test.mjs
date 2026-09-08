@@ -133,6 +133,37 @@ test('fill 통과. 생성 후 기입은 빈칸이 아니라 유예다', () => {
   assert.match(r.out, /생성 후 기입 1건/);
 });
 
+// 자기 해시는 fixture로 만들 수 없다. 파일이 자기 경로를 알아야 하는데
+// 그 경로가 실행 시점에 정해지기 때문이다. 그래서 이 케이스만 테스트에서 조립한다.
+test('fill 실패. 계약이 자기 해시를 적으려 하면 거부한다', () => {
+  const dst = path.join(TMP, `${seq++}-self-hash.md`);
+  const asPosix = dst.split(path.sep).join('/');
+  fs.writeFileSync(dst, [
+    '# 자기 해시 재현', '',
+    '| 자료 | 절대경로 | 버전 또는 해시 | 읽을 범위 |',
+    '|---|---|---|---|',
+    `| 이 작업 계약 | ${asPosix} | {{fill}} | 전문 |`,
+    '',
+  ].join('\n'), 'utf8');
+  const r = run(() => fill(dst, { dry: true }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /fill\.self-hash/);
+});
+
+test('fill 통과. 자기 해시 없음은 허용 값이다', () => {
+  const dst = path.join(TMP, `${seq++}-self-ok.md`);
+  const asPosix = dst.split(path.sep).join('/');
+  fs.writeFileSync(dst, [
+    '# 자기 해시 허용 값', '',
+    '| 자료 | 절대경로 | 버전 또는 해시 | 읽을 범위 |',
+    '|---|---|---|---|',
+    `| 이 작업 계약 | ${asPosix} | 자기 해시 없음 | 전문 |`,
+    '',
+  ].join('\n'), 'utf8');
+  const r = run(() => fill(dst, { dry: true }));
+  assert.equal(r.code, 0);
+});
+
 // ---------- g1 doc ----------
 
 test('g1 doc 통과. 펜스 안 기호는 제외된다', () => {

@@ -1,0 +1,211 @@
+# 작업 계약 task-S2
+
+양식: harness/prompts/task-contract.md v3 (2026-09-08)
+최초 작성: 2026-09-08
+최종 갱신: 2026-09-08 (초안. 승인 대기)
+
+이 계약은 아직 승인되지 않았다. 승인 전에는 생성 단계로 넘어가지 않는다.
+
+## 작업
+
+| 항목 | 내용 |
+|---|---|
+| Task ID와 Step | task-S2. Step 2 도메인 이벤트 집합에 대한 09-1 보드 v2 델타 판정 |
+| 작업 유형 | 설계 문서 |
+| 목표 | 09-1 보드 v2와 설계 문서 계열의 델타 13건을 판정하고, 수용분만 반영한 후보를 만든다 |
+| 대상 API ID | 결정 D-1이 수용이면 11 API의 숙소, 객실타입, 프로모션 경로. 그 전에는 해당 없음 |
+| 완료 기준 | 결정 4건이 C:/Dev/potenup/99_projects/o2o/harness/decisions/decisions-09-1.md에서 전부 값을 갖고, 수용분을 반영한 후보가 node harness/tools/check.mjs g1 --type doc를 통과하며, 거부분은 같은 결정표에 거부 이유와 함께 남는다 |
+| 변경 허용 파일과 범위 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S2-R1/ 아래 후보와 C:/Dev/potenup/99_projects/o2o/harness/decisions/decisions-09-1.md 둘뿐이다. document/와 harness/project-sync/는 읽기만 한다 |
+| 범위 밖과 유지할 전제 | 아래 3절 |
+| 기준 버전 | 4절 입력 표의 해시. node harness/tools/check.mjs fill이 채운다 |
+| 후보 작업 공간 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S2-R1/ |
+| 결과 기록 경로 | C:/Dev/potenup/99_projects/o2o/harness/state/progress.md |
+
+## 1. 이 Task가 task-S8과 다른 점
+
+task-S8은 이미 내려진 결정 11건을 문서에 반영하는 작업이었다. 계약이 판 번호와 04-5 반입을 스스로 정할 수 있었던 것도 그 둘에 대안이 없었기 때문이다.
+
+이 Task는 결정이 없는 상태에서 시작한다. 델타 13건 중 무엇을 v1에 넣을지가 정해져 있지 않고, 그 판정에 실제 대안이 둘 이상 있다. 그래서 단계가 하나 앞에 붙는다. 결정 4건을 먼저 받고 그 뒤에 생성한다. 결정 없이 생성하면 미결이 조용히 확정으로 굳는다(N4).
+
+| 단계 | task-S8 | task-S2 |
+|---|---|---|
+| 첫 단계 | 계약 승인 후 곧바로 생성 | 계약 승인, 그다음 결정 4건, 그다음 생성 |
+| 결정의 출처 | decisions-08-3.md. 이미 채워져 있었다 | decisions-09-1.md. 이 Task에서 만든다 |
+| 반영 대상 | 9종 고정 | 결정에 따라 갈린다. 5절 조건부 표 |
+
+## 2. 판정할 델타 13건
+
+출처는 C:/Dev/potenup/99_projects/o2o/harness/project-sync/09-1-o2o-board-v2.md 10-1절이다. 커맨드 5개와 이벤트 8개다.
+
+### 묶음 1. Close와 Delete 계열 10건
+
+| 컨텍스트 | 커맨드 | 이벤트 | 보드 테두리 |
+|---|---|---|---|
+| 숙소 카탈로그 | CloseProperty | PropertyClosed | 점선 |
+| 숙소 카탈로그 | DeleteProperty | PropertyDeleted | 점선 |
+| 숙소 카탈로그 | CloseRoomType | RoomTypeClosed | 점선 |
+| 숙소 카탈로그 | DeleteRoomType | RoomTypeDeleted | 점선 |
+| 프로모션 | DeletePromotion | PromotionDeleted | 점선 |
+
+### 묶음 2. 거부 계열 3건
+
+| 이벤트 | 보드에서의 뜻 | 문서 계열의 현재 표현 |
+|---|---|---|
+| InventoryHoldRejected | 선점 거부됨 (재고 부족) | 06-4 v4의 InventoryShortage 예외. 11 API의 INVENTORY_UNAVAILABLE 오류 코드 |
+| BookingRequestRejected | 예약 요청 거부됨 (선점 거부, 인원 초과) | 06-4 v4의 OccupancyExceeded와 InventoryShortage 예외 |
+| RefundFailed | 환불 실패됨 | 08-3 C-4가 결정한 REFUND_PENDING 상태와 T2 순찰 |
+
+## 3. 범위 밖과 유지할 전제
+
+| 항목 | 처리 |
+|---|---|
+| task-S8과 그 R1 후보 9종 | 손대지 않는다. S8은 08-3 반영이고 이 Task는 09-1 델타다. 두 Task가 같은 파일의 같은 절을 동시에 고치면 어느 쪽 판이 정본인지 사라진다 |
+| S8 R1 후보 9종의 09-1 미반입 문구 | 이제 사실과 다르다. 이 Task가 고치지 않는다. S8의 반영 단계에서 그 문구를 반입 완료와 이 Task 참조로 바꾼다. 그때까지 두 벌이 다른 말을 하는 구간을 감수한다 |
+| 보드 자체의 수정 | 범위 밖. FigJam 보드를 열지 않는다. 결정 D-3이 갱신으로 나면 별도 작업이다 |
+| project-sync의 09-1 원문 | 읽기만 한다. 전사본이지만 반입된 뒤에는 원본 사본과 같은 취급이다 |
+| 11 API v3 | D-1이 수용일 때만 걸린다. 이 Task는 API 명세를 고치지 않고 걸리는 경로 목록만 결정표에 남긴다 |
+| 01 v20 승격 | 범위 밖 |
+| 확정 전제 | 06-2 v4와 06-4 v4가 정본이고 01은 참고다. task-S8과 같다 |
+
+## 4. 입력과 적용 규칙
+
+| 자료 | 절대경로 | 버전 또는 해시 | 읽을 범위 |
+|---|---|---|---|
+| 09-1 보드 v2 원문 | C:/Dev/potenup/99_projects/o2o/harness/project-sync/09-1-o2o-board-v2.md | sha256:9b73359b3a946bf9 | 전문 |
+| 01 참고 | C:/Dev/potenup/99_projects/o2o/harness/out/h2/01-o2o-ddd-plan.v20.md | sha256:5ff40a01743ddd00 | 1절 확정 전제와 Step 2 절만 |
+| 대상 02 v8 | C:/Dev/potenup/99_projects/o2o/document/02-o2o-feature-list.md | sha256:2a3d3ca2d8b63809 | 전문 |
+| 대상 03 v11 | C:/Dev/potenup/99_projects/o2o/document/03-o2o-event-storming.md | sha256:34a8544cba55728b | 전문 |
+| 대상 04 v9 | C:/Dev/potenup/99_projects/o2o/document/04-o2o-commands-actors.md | sha256:3ebf3af5b34b2b34 | 전문 |
+| 대상 05-2 | C:/Dev/potenup/99_projects/o2o/document/05-2-o2o-bounded-contexts.md | sha256:13cd622fc231ff10 | 2절 커맨드와 이벤트 배분표 |
+| 대상 05-3 v10 | C:/Dev/potenup/99_projects/o2o/document/05-3-o2o-glossary.md | sha256:62a87a62baf5846e | 전문 |
+| 대상 06-2 v4 | C:/Dev/potenup/99_projects/o2o/document/06-2-o2o-aggregates.md | sha256:113c6734b5525e1d | 전문 |
+| 대상 06-4 v4 | C:/Dev/potenup/99_projects/o2o/document/06-4-o2o-contracts.md | sha256:edacbe47d6d63e3f | 1-2 계약표와 전이표 |
+| 대상 06 보드 범례 v6 | C:/Dev/potenup/99_projects/o2o/document/06-o2o-board-legend.md | sha256:c8c944f82fb6911a | 전문 |
+| 대상 11 API v2 | C:/Dev/potenup/99_projects/o2o/document/11-o2o-api-spec.md | sha256:3f2613a77b649903 | 숙소, 객실타입, 프로모션 경로와 오류 코드 표 |
+| 근거 08-3 원문 | C:/Dev/potenup/99_projects/o2o/harness/project-sync/08-3-o2o-policies-v2-attack-review.md | sha256:060e4ef217b1fe97 | 6절 C-4와 8절 결정표 2번 |
+| 근거 08-1 원문 | C:/Dev/potenup/99_projects/o2o/harness/project-sync/08-1-o2o-policies-blind-review.md | sha256:6103bf1c05968e98 | RefundFailed 지적 행 |
+| 근거 사용자 결정표 | C:/Dev/potenup/99_projects/o2o/harness/decisions/decisions-08-3.md | sha256:1b8580aa86c18fd8 | 전문 |
+| 적용할 문서 양식 | C:/Dev/potenup/99_projects/o2o/harness/prompts/07-o2o-ptcf-prompt.v3.md | sha256:45e9c98c3bb1a94d | Format 절 F1부터 F16 |
+| 실제 평가 기준 | C:/Dev/potenup/99_projects/o2o/harness/prompts/eval-criteria-ddd.md | sha256:0ec4e54137d66085 | 축, 심각도, 출력 스키마 |
+
+07 v3은 후보다. task-S8과 같이 문체와 형식 조항만 적용하고 종료 문장 F16은 문서 산출물에 적용하지 않는다.
+
+## 5. A와 B 평가 허용 입력 (HR1)
+
+| 자료 | 절대경로 | 버전 또는 해시 | 읽을 범위 |
+|---|---|---|---|
+| 평가 대상 | 해당 없음 | 미기입. 생성 단계 뒤 fill 재실행 | 생성 단계가 확정한 후보 파일 목록. 후보 작업 공간은 C:/Dev/potenup/99_projects/o2o/harness/out/task-S2-R1/ |
+| 입력 팩 | C:/Dev/potenup/99_projects/o2o/harness/project-sync/o2o-review-input-pack.md | sha256:1608942c0815f911 | 전문 |
+| 이 작업 계약 | C:/Dev/potenup/99_projects/o2o/harness/tasks/task-S2.md | 자기 해시 없음 | 전문 |
+| 실제 평가 기준 | C:/Dev/potenup/99_projects/o2o/harness/prompts/eval-criteria-ddd.md | sha256:0ec4e54137d66085 | 축, 심각도, 출력 스키마 |
+| 대상이 참조하는 09-1 원문 | C:/Dev/potenup/99_projects/o2o/harness/project-sync/09-1-o2o-board-v2.md | sha256:9b73359b3a946bf9 | 전문 |
+
+이 표에 넣지 않는 것: 01 전체, 과거 감사 문서, 이전 평가 리포트, 사용자 결정표, harness/docs/ 전체, harness/state/ 전체, 생성 대화. 평가 폴더를 만들 때는 이 표만 보고 복사한다.
+
+입력 팩은 project-sync의 현재 판을 쓴다. task-S8 R1이 만든 v3 후보는 아직 승인 전이라 쓰지 않는다.
+
+평가 대상 행이 비어 있는 이유. 계약은 생성 전에 쓰는데 평가 대상은 생성 뒤에야 존재한다. 그래서 이 행은 생성 단계가 끝난 뒤 경로를 적고 fill을 다시 돌려 채운다. 양식 v3에서 처음 드러난 자리이고 troubleshooting.md에 기록했다.
+
+## 6. 정책 적용
+
+| 정책 ID 또는 쟁점 | 적용할 값 또는 판단 | 상태와 사용자 확인 |
+|---|---|---|
+| D-1 Close와 Delete 계열 10건의 v1 범위 | 미결. 7절에 안 둘과 추천 | 승인 필요. 대안 있음 |
+| D-2 거부 계열 3건의 표현 방식 | 미결. 7절에 안 셋과 추천 | 승인 필요. 대안 있음 |
+| D-3 보드를 09-07 결정으로 갱신할지 09-06 시점 기록으로 둘지 | 미결. 7절 | 승인 필요. 대안 있음 |
+| D-4 06 보드 범례에 v2 표기를 추가할지 | 미결. 7절 | 승인 필요. 대안 있음 |
+| 08-3 결정 1부터 11 | 전부 수용된 상태를 전제로 둔다. 이 Task는 뒤집지 않는다 | 확정. join5201, 2026-09-07 |
+| 11 API v2의 P01부터 P11 | D-1이 수용일 때만 P11 프로모션 종료 행이 걸린다 | D-1에 종속 |
+| 정책 번호 재배정 | 보드는 구 번호를 쓰고 04-5 v2는 신 번호를 쓴다. 이 Task는 번호를 바꾸지 않고 09-1 원문 10-2절의 대조표를 근거로 남긴다 | 이 계약에서 결정. 대안 없음. 번호 정본은 04-5이고 보드는 그 시점 기록이다 |
+
+## 7. 결정 4건의 안과 추천
+
+결정은 사용자가 한다. 아래는 판단 재료다.
+
+### D-1. Close와 Delete 계열 10건을 v1 범위에 넣는가
+
+| 안 | 내용 | 걸리는 문서 |
+|---|---|---|
+| 가 | 넣는다. 커맨드 22가 27로, 이벤트 22가 27로 | 02, 03, 04, 05-2, 05-3, 06-2, 06-4, 11 여덟 |
+| 나 | 넣지 않는다. 09-1과 03에 v1 범위 밖 판정과 근거를 남긴다 | 03 하나 |
+
+추천은 나다. 근거 셋이다. 첫째, 02 기능 목록에 숙소 종료나 삭제가 없다. 둘째, 11 API에 DELETE 경로가 하나도 없고 프로모션 종료조차 PATCH enabled=false로만 표현된다. 셋째, 06-3과 06-5와 08-1과 08-2와 08-3 어느 리뷰도 이 부재를 결함으로 지적하지 않았다.
+
+다만 숙소 판매 종료는 성격이 다르다. 판매 중인 날짜에 재고가 남아 있고 HELD 예약이 걸려 있는 상태에서 종료하면 핫스팟 6과 같은 자리의 경합이 생긴다. 나로 가더라도 v2 후보로 명시해 남긴다.
+
+### D-2. 거부 계열 3건을 도메인 이벤트로 두는가
+
+| 안 | 내용 | 이벤트 수 |
+|---|---|---|
+| 가 | 셋 다 도메인 이벤트로 올린다 | 22에서 25 |
+| 나 | 셋 다 현재 표현을 유지한다. 앞의 둘은 예외, RefundFailed는 REFUND_PENDING 상태 | 22 유지 |
+| 다 | 섞는다. 예를 들어 InventoryHoldRejected만 올린다 | 22에서 23 |
+
+추천은 나다. 근거 둘이다. 첫째, 06-4 v4가 이미 OccupancyExceeded와 InventoryShortage 예외로 명세했고 그 예외는 같은 트랜잭션 안의 롤백 신호라 발행할 이벤트가 남지 않는다. 둘째, RefundFailed를 이벤트로 올리면 08-3 C-4의 REFUND_PENDING 결정과 T2 순찰 설계가 뒤집힌다. 수용된 결정을 뒤집으려면 그 자체가 별도 판정이어야 한다.
+
+다에 해당하는 InventoryHoldRejected 단독 승격은 10-8 100행이 원래 잡아 둔 안이다. 이 경우 11 API의 INVENTORY_UNAVAILABLE 오류 코드와의 대응을 06-4에 명시해야 한다.
+
+### D-3. 보드를 갱신하는가
+
+| 안 | 내용 |
+|---|---|
+| 가 | 09-07 결정(확정 우선, SettlePayment, T2, 정책 번호 재배정)을 보드에 반영한다 |
+| 나 | 09-06 시점 기록으로 둔다. 06 범례가 영역 1부터 3을 시점 기록으로 두는 것과 같은 처리 |
+
+추천은 나다. 06 범례 3절이 이전 영역은 수정하지 않는다는 규칙을 이미 갖고 있고, 보드 v2도 같은 규칙 아래 두는 것이 일관된다. 대신 09-1 원문 10-2절이 무엇이 뒤처졌는지 네 행으로 적고 있으므로 추적은 유지된다.
+
+### D-4. 06 보드 범례에 v2 표기를 추가하는가
+
+| 안 | 내용 |
+|---|---|
+| 가 | 점선 테두리, 초록 카드 용도, 이 보드의 영역 번호 셋을 범례에 등재한다 |
+| 나 | 등재하지 않는다 |
+
+추천은 가다. 지금 초록은 범례에서 읽기 모델인데 보드에서는 다른 컨텍스트 호출자로 쓰여 같은 색이 두 뜻을 갖는다. 점선은 정의가 아예 없다. 범례의 목적이 색과 표기의 뜻을 한 곳에 고정하는 것이므로 이 상태가 유지되면 범례가 제 일을 못 한다.
+
+## 8. 결정별 반영 조건
+
+결정이 나면 아래 해당 행만 실행한다. 해당하지 않는 행은 만들지 않는다.
+
+| 결정과 값 | 만들 후보 | 확인 조건 |
+|---|---|---|
+| D-1 가 | 02, 03, 04, 05-2, 05-3, 06-2, 06-4, 11의 다음 판 여덟 | 커맨드와 이벤트 수가 여덟 문서에서 같은 값이고, 06-2에 Property와 RoomType 상태 전이가 서고, 11에 대응 경로가 생긴다 |
+| D-1 나 | 03의 다음 판 하나 | 03에 v1 범위 밖 판정과 근거 셋이 절로 서고, 숙소 판매 종료가 v2 후보로 명시된다 |
+| D-2 가 | 03, 04-5, 05-3, 06-1, 06-4의 다음 판 다섯 | 이벤트 25로 통일되고 구독자 없는 이벤트 수가 갱신되며 06-4에 발행 지점이 선다 |
+| D-2 나 | 03의 다음 판 하나 | 03에 셋의 표현 방식과 근거가 절로 서고, 06-4의 예외 이름과 08-3 C-4를 인용한다 |
+| D-2 다 | 03, 04-5, 05-3, 06-1, 06-4의 다음 판 다섯 | 위와 같되 승격 대상만. 11의 INVENTORY_UNAVAILABLE 대응이 06-4에 명시된다 |
+| D-3 가 | 없음. 보드 작업이라 별도 Task | 이 Task는 결정만 기록한다 |
+| D-3 나 | 06 보드 범례의 다음 판 하나 | 보드 v2가 09-06 시점 기록임을 범례가 명시한다 |
+| D-4 가 | 06 보드 범례의 다음 판 하나 | 점선, 초록 카드, 영역 번호 셋이 등재된다. D-3 나와 같은 판에 함께 낸다 |
+| D-4 나 | 없음 | 결정표에 거부 이유를 남긴다 |
+
+판 번호 규칙은 task-S8과 같다. 로컬 현재 판에 1을 더한다.
+
+## 9. 실행과 검증
+
+| 항목 | 내용 |
+|---|---|
+| 작업 디렉터리 | C:/Dev/potenup/99_projects/o2o |
+| 실행 환경 | Node 24.14.1. 환경변수 없음 |
+| 실행할 명령 | node harness/tools/check.mjs fill harness/tasks/task-S2.md 로 이 계약의 해시를 채우고 기록된 해시를 대조한다. 후보마다 node harness/tools/check.mjs g1 <후보> --type doc --end 로 종료 문장을 검사한다. 결정표는 반영 전에 node harness/tools/check.mjs g2 <결정표> --mode pre, 최종 확인에 --mode final로 두 번 돌린다 |
+| 테스트 DB | DB 사용 없음 |
+| 데이터 초기화 허용 범위 | 없음 |
+| 빌드 출력과 로그 경로 | 해당 없음 |
+| 계약 테스트 ID | 해당 없음. 문서 작업이다 |
+| A와 B 평가 범위 | A는 eval-criteria-ddd.md의 경계와 이벤트 집합 축. B는 공통 축 3개 |
+| 필수 검증을 실행하지 못했을 때 | 미실행 명령과 사유를 progress.md의 실패 원인 칸에 적고 결과를 halted로 기록한다. 통과로 기록하지 않는다 |
+
+G1을 통과하지 못한 후보를 평가에 넘기지 않고, G2를 통과하지 못한 결정표로 반영하지 않는다. task-S8과 같은 규칙이다.
+
+## 10. 승인과 진행
+
+| 항목 | 기록 |
+|---|---|
+| 작업 계약 승인 | 미승인 |
+| 마지막 성공 단계 | 계약 초안 |
+| 미해결 사항과 다음 작업 | 계약 승인과 결정 4건. 둘 다 사용자 판단이다 |
+| 최종 산출물과 버전 | 작업 후 기록 |
+| 실제 사용 시간 | 미측정 |
+| 최종 완료 판단 | 미판단 |
+
+작업 계약 승인과 최종 완료 승인은 구분한다. 이 양식을 작성했다는 사실만으로 승인하거나 실행한 것으로 처리하지 않는다.
