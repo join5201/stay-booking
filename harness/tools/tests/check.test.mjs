@@ -391,3 +391,87 @@ test('answer 지정 등급이 자동 판정을 이긴다. C로 지정하면 결�
   assert.equal(r.code, 0);
   assert.match(r.out, /등급 C \(지정\)/);
 });
+
+// ---------- answer ----------
+// 규격은 harness/prompts/answer-format.md다. fixture는 그 규격의 3절 골격에서 만들었다.
+// 검사기에 맞춰 만들면 코드가 규격을 오해한 것까지 통과한다 (HRV-07)
+
+test('answer A 통과. 경로를 쓴 턴은 자동으로 A가 되고 결과 절 다섯 행이 다 있다', () => {
+  const r = run(() => answer(prep('answer-a-pass.md')));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /등급 A \(자동\)/);
+});
+
+test('answer B 통과. Thought 절이 있으면 B가 된다', () => {
+  const r = run(() => answer(prep('answer-b-pass.md')));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /등급 B \(자동\)/);
+});
+
+test('answer C 통과. 짧은 확인 답변은 결과 절이 면제다', () => {
+  const r = run(() => answer(prep('answer-c-pass.md')));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /등급 C \(자동\)/);
+});
+
+test('answer 실패. 첫 줄이 제목이면 결론이 아니라 과정부터 나열한 것이다', () => {
+  const f = prep('answer-a-pass.md', (t) => t.replace(/^검사기 g1이.*$/m, '## 한 일'));
+  const r = run(() => answer(f));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /answer\.lead/);
+});
+
+test('answer 실패. 마지막 절 제목이 결과가 아니다', () => {
+  const f = prep('answer-a-pass.md', (t) => t.replace('## 결과', '## 다음 단계'));
+  const r = run(() => answer(f));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /answer\.result-section/);
+});
+
+test('answer 실패. 결과 절에 다섯 행 중 하나가 없다', () => {
+  const f = prep('answer-a-pass.md', (t) => t.replace(/^\| 원인 \|.*$/m, ''));
+  const r = run(() => answer(f));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /answer\.result-rows/);
+});
+
+test('answer 실패. 해당 없음만 적고 왜 해당 없는지를 안 적었다', () => {
+  const f = prep('answer-a-pass.md', (t) => t.replace(/^\| 문제 \|.*$/m, '| 문제 | 해당 없음 |'));
+  const r = run(() => answer(f));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /answer\.result-empty/);
+});
+
+test('answer 통과. 해당 없음에 이유가 붙으면 통과한다', () => {
+  const f = prep('answer-a-pass.md', (t) => t.replace(/^\| 문제 \|.*$/m, '| 문제 | 해당 없음. 결함 처리가 아니라 요청받은 조회였다 |'));
+  const r = run(() => answer(f));
+  assert.equal(r.code, 0);
+});
+
+test('answer 실패. 제목 밖 볼드는 답변에도 금지다', () => {
+  const f = prep('answer-a-pass.md', (t) => t.replace('쉽게 말하면', '**쉽게 말하면**'));
+  const r = run(() => answer(f));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /answer\.no-bold/);
+});
+
+test('answer 실패. 짧아도 경로를 쓰면 A로 올라가 결과 절을 요구한다', () => {
+  const f = prep('answer-c-pass.md', (t) => t + '\n\n값은 harness/prompts/answer-format.md에 있습니다.\n');
+  const r = run(() => answer(f));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /등급 A \(자동\)/);
+  assert.match(r.out, /answer\.result-section/);
+});
+
+test('answer 실패. 등급을 지정하면 자동 판정을 이긴다', () => {
+  const r = run(() => answer(prep('answer-c-pass.md'), { grade: 'A' }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /등급 A \(지정\)/);
+});
+
+test('answer 실패. 코드 울타리 안의 결과 제목은 절로 세지 않는다', () => {
+  const f = prep('answer-a-pass.md', (t) => t.replace('## 결과', '## 다음 단계') + '\n```\n## 결과\n```\n');
+  const r = run(() => answer(f));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /answer\.result-section/);
+});
