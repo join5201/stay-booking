@@ -2,7 +2,7 @@
 
 최초 작성: 2026-09-02
 최종 갱신: 2026-09-08 v2 (08-3 결정 반영: 정책 번호 재배정, T2 순찰 정책 신설, 구독자 없는 이벤트 20개, 4-3 세 유형 종결, 6절 이월 4건 종결)
-입력: 03-o2o-event-storming.md v12 이벤트 22개, 04-o2o-commands-actors.md v10 커맨드 23개, 08-3 6절 해결안 v2.1
+입력: 03-o2o-event-storming.md v13 이벤트 22개, 04-o2o-commands-actors.md v10 커맨드 23개, 08-3 6절 해결안 v2.1
 후속: Step 9 구현 매핑
 FigJam 보드: https://www.figma.com/board/ffhYVMh8awMBfqLinXFMDY 영역 3
 
