@@ -25,7 +25,7 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { fill, g1, g2 } from '../check.mjs';
+import { fill, g1, g2, answer } from '../check.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const FIX = path.join(HERE, 'fixtures');
@@ -319,4 +319,75 @@ test('g2 final 실패. 치명이 남으면 최종 완료 검사가 막는다', (
 test('g2 final 통과. 치명 0이고 반영본이 기록돼 있으면 통과', () => {
   const r = run(() => g2(prep('g2-pass.md'), { mode: 'final' }));
   assert.equal(r.code, 0);
+});
+
+// ---------- answer ----------
+// 골든은 harness/prompts/answer-format.md 3절 골격에서 만든다. 검사기에 맞춰 만들지 않는다.
+// 각 검사에 실패 케이스와 통과 케이스를 함께 붙인다. 금지만 테스트하면 가드가 허용 값까지 막는다
+
+test('answer A 통과. 파일 경로를 쓴 답변은 자동으로 A', () => {
+  const r = run(() => answer(prep('answer-a-pass.md')));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /등급 A \(자동\)/);
+});
+
+test('answer B 통과. Thought와 Observation이 있으면 자동으로 B', () => {
+  const r = run(() => answer(prep('answer-b-pass.md')));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /등급 B \(자동\)/);
+});
+
+test('answer C 통과. 짧은 단답은 결과 절이 면제다', () => {
+  const r = run(() => answer(prep('answer-c-pass.md')));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /등급 C \(자동\)/);
+});
+
+test('answer 실패. 마지막 절 제목이 결과가 아니다', () => {
+  const f = prep('answer-a-pass.md', (t) => t.replace('## 결과', '## 다음 단계'));
+  const r = run(() => answer(f));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /answer\.result-section/);
+});
+
+test('answer 실패. 결과 절에 원인 행이 없다', () => {
+  const f = prep('answer-a-pass.md', (t) => t.replace(/^\| 원인 \|.*$/m, ''));
+  const r = run(() => answer(f));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /answer\.result-rows/);
+});
+
+test('answer 실패. 해당 없음만 적고 이유를 안 적었다', () => {
+  const f = prep('answer-a-pass.md', (t) => t.replace(/^\| 문제 \|.*$/m, '| 문제 | 해당 없음 |'));
+  const r = run(() => answer(f));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /answer\.result-empty/);
+});
+
+test('answer 통과. 해당 없음에 이유가 붙으면 통과한다', () => {
+  const f = prep('answer-a-pass.md', (t) =>
+    t.replace(/^\| 문제 \|.*$/m, '| 문제 | 해당 없음. 이번 턴은 상태 확인만 했고 고친 것이 없다 |'));
+  const r = run(() => answer(f));
+  assert.equal(r.code, 0);
+});
+
+test('answer 실패. 첫 줄이 결론 문장이 아니라 제목이다', () => {
+  const f = prep('answer-a-pass.md', (t) => '# 작업 보고\n\n' + t);
+  const r = run(() => answer(f));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /answer\.lead/);
+});
+
+test('answer 실패. 제목 밖 볼드', () => {
+  const f = prep('answer-a-pass.md', (t) => t.replace('## 결과', '**중요**\n\n## 결과'));
+  const r = run(() => answer(f));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /answer\.no-bold/);
+});
+
+test('answer 지정 등급이 자동 판정을 이긴다. C로 지정하면 결과 절을 안 본다', () => {
+  const f = prep('answer-a-pass.md', (t) => t.replace('## 결과', '## 다음 단계'));
+  const r = run(() => answer(f, { grade: 'C' }));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /등급 C \(지정\)/);
 });
