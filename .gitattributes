@@ -8,3 +8,11 @@
 *.jpg binary
 *.jpeg binary
 *.pdf binary
+
+# 추가 전용 기록 파일은 양쪽 줄을 다 남긴다. 세션 셋이 같은 저장소에 쓰기 때문이다.
+# union은 추가된 줄의 순서를 보장하지 않는다(git 공식 문서 경고). 여기서 괜찮은 이유는
+# 행 첫 칸이 날짜시각이라 정렬로 복구되고, 이 파일들이 기존 행을 고치지 않는 규칙이기 때문이다.
+# README.md에는 걸지 않는다. 그 파일은 고쳐 쓰는 문서다.
+harness/state/progress.md merge=union
+harness/state/troubleshooting.md merge=union
+harness/state/knowledge.md merge=union
