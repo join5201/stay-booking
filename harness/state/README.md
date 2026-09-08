@@ -6,10 +6,12 @@
 
 | 파일 | 무엇을 적는가 |
 |---|---|
-| progress.md | 단계의 진행. 매 단계 끝에 한 행 |
+| progress.md | 단계의 진행. 아홉 칸, status 여섯 값. 2026-09-08 H5에서 확정 |
 | troubleshooting.md | 막힌 것과 원인. 해결 못 한 것도 적는다 |
 | knowledge.md | 재사용되는 지식. 확인한 출처 URL과 미확인 항목의 [추측] 태그 |
 
 파일 수정 이력은 두지 않는다. 2026-09-07 사용자 결정이다.
+
+progress.md의 행 형식과 status 값은 그 파일 머리에 있다. troubleshooting.md와 knowledge.md는 아직 임시 형식이며 실제 Task를 한 바퀴 돌린 뒤 고정한다.
 
 세 파일 모두 추가 전용이다. 기존 행을 고치지 않는다. done은 사용자 승인 행에서만 쓴다(HR5). 이 디렉터리는 평가 입력이 아니다(AGENTS.md E6).
