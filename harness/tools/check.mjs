@@ -10,12 +10,14 @@
 //   node harness/tools/check.mjs fill <양식파일> [--dry]
 //   node harness/tools/check.mjs g1 <후보파일> --type doc|api|code [--end "<문장>"] [--require "a,b"] [--artifact <경로>]
 //   node harness/tools/check.mjs g2 <결정표파일> [--mode pre|final]
+//   node harness/tools/check.mjs answer <답변파일> [--grade A|B|C]
 //   node --test harness/tools/tests/check.test.mjs
 //
 // 실행 예시
 //   node harness/tools/check.mjs fill harness/tasks/task-S8.md
 //   node harness/tools/check.mjs g1 harness/out/task-S8-R1/candidate.md --type doc
 //   node harness/tools/check.mjs g2 harness/decisions/task-S8-R1.md --mode pre
+//   node harness/tools/check.mjs answer /tmp/answer.md
 //
 // 통과 출력 예시
 //   PASS g1 harness/out/task-S8-R1/candidate.md
@@ -27,6 +29,13 @@
 //     [g2.report-truncated]     1  A 리포트의 요약 합계 3과 보조 표 행 2가 다르다
 //     검사 24건 중 2건 실패
 //   이 줄들을 그대로 재요청 프롬프트에 붙인다 (HR3).
+//
+// answer 실패 출력 예시 (종료 코드 1)
+//   FAIL answer /tmp/answer.md
+//     [answer.result-section]  40  마지막 절 제목이 결과가 아니다 (R4). 실제: 다음 단계
+//     검사 6건 중 1건 실패
+//     등급 A (자동)
+//   등급 줄이 뒤에 오는 것은 그것이 판정 결과지 실패가 아니기 때문이다
 //
 // 쓰기 정책
 //   g1과 g2는 아무 파일도 쓰지 않는다. 읽기만 한다.
@@ -292,20 +301,22 @@ function checkLinks(r, text, file) {
   if (staleOk) r.check('link.stale', 0, true, '');
 }
 
-function checkStyle(r, text) {
+// prefix는 검사 ID의 앞부분이다. 문서는 doc, 답변은 answer를 쓴다.
+// 같은 금지 기호를 두 벌 구현하면 한쪽만 고치는 사고가 난다
+function checkStyle(r, text, prefix = 'doc') {
   const lines = stripFences(text);
   const seen = { emdash: true, middot: true, bold: true };
   lines.forEach((line, i) => {
-    if (line.includes(EM_DASH)) { seen.emdash = false; r.check('doc.no-emdash', i + 1, false, '긴 줄표 사용 (F9)'); }
-    if (line.includes(MIDDLE_DOT)) { seen.middot = false; r.check('doc.no-middot', i + 1, false, '가운뎃점 사용 (F9)'); }
+    if (line.includes(EM_DASH)) { seen.emdash = false; r.check(`${prefix}.no-emdash`, i + 1, false, '긴 줄표 사용 (F9)'); }
+    if (line.includes(MIDDLE_DOT)) { seen.middot = false; r.check(`${prefix}.no-middot`, i + 1, false, '가운뎃점 사용 (F9)'); }
     if (!/^\s*#/.test(line)) {
       const b = line.match(/\*\*[^*\n]+\*\*/);
-      if (b) { seen.bold = false; r.check('doc.no-bold', i + 1, false, `제목 밖 볼드 ${b[0]} (F8)`); }
+      if (b) { seen.bold = false; r.check(`${prefix}.no-bold`, i + 1, false, `제목 밖 볼드 ${b[0]} (F8)`); }
     }
   });
-  if (seen.emdash) r.check('doc.no-emdash', 0, true, '');
-  if (seen.middot) r.check('doc.no-middot', 0, true, '');
-  if (seen.bold) r.check('doc.no-bold', 0, true, '');
+  if (seen.emdash) r.check(`${prefix}.no-emdash`, 0, true, '');
+  if (seen.middot) r.check(`${prefix}.no-middot`, 0, true, '');
+  if (seen.bold) r.check(`${prefix}.no-bold`, 0, true, '');
 }
 
 export function g1(file, { type, end, require: required = [], artifacts = [] } = {}) {
@@ -587,12 +598,100 @@ function findMisjudgeRecord(text, id) {
   return null;
 }
 
+// ---------- answer ----------
+// 답변 형식 R1부터 R4. 규격은 harness/prompts/answer-format.md, 근거는 harness/docs/10-9
+//
+// 왜 필요한가: 규칙만 있고 재는 장치가 없으면 두 답변 연속으로 샌다. 실제로 샜다.
+// 다만 R1 무게중심과 R3 쉬운 말은 기계가 못 잰다. 여기서 재는 것은 R4 결과 절과,
+// 결과 절의 행을 고정해 잴 수 있게 바꾼 R2뿐이다. 통과가 곧 품질은 아니다
+
+const RESULT_ROWS = ['문제', '원인', '해결책', '파일 변경', '다음에 필요한 것'];
+const OPTIONAL_RESULT_ROWS = ['문제', '원인', '해결책']; // 해당 없음을 쓸 수 있는 행
+const NOT_APPLICABLE = '해당 없음';
+const GRADE_C_LIMIT = 1200; // 실측 표본이 없어 정한 첫 판. 오탐이 나오면 조정한다
+
+// 파일 경로를 언급했는가. URL은 먼저 지운다. 지우지 않으면 문서 링크가 경로로 잡힌다
+function mentionsPath(text) {
+  const t = text.replace(/https?:\/\/\S+/g, ' ');
+  if (/[A-Za-z]:\/[\w./-]+/.test(t)) return true;
+  if (/(?:^|[\s(`|,])[\w.-]+\/[\w./-]*\.\w{1,5}\b/.test(t)) return true;
+  return /(?:^|[\s(`|,])[\w.-]+\/[\w.-]+\/[\w.-]*/.test(t);
+}
+
+function autoGrade(text) {
+  if (mentionsPath(text)) return 'A';
+  if (/^\s*#{0,6}\s*(Thought|Observation)\b/m.test(text)) return 'B';
+  if (text.trim().length < GRADE_C_LIMIT) return 'C';
+  return 'B';
+}
+
+// 마지막 절 제목. 코드 울타리 안의 제목은 세지 않는다
+function lastHeading(text) {
+  const lines = stripFences(text);
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const m = lines[i].match(/^#{1,6}\s+(.+?)\s*$/);
+    if (m) return { line: i + 1, title: m[1].trim() };
+  }
+  return null;
+}
+
+export function answer(file, { grade } = {}) {
+  const r = new Report('answer', file);
+  const text = fs.readFileSync(file, 'utf8');
+
+  const g = grade || autoGrade(text);
+  r.check('answer.grade', 1, ['A', 'B', 'C'].includes(g), `등급이 A, B, C 중 하나가 아니다: ${g}`);
+  // 등급은 판정 결과지 실패가 아니다. 그래서 PASS 또는 FAIL 줄 뒤에 붙인다
+  const finish = () => { const code = r.print(); console.log(`  등급 ${g}${grade ? ' (지정)' : ' (자동)'}`); return code; };
+
+  checkStyle(r, text, 'answer');
+
+  if (g === 'C') return finish(); // C 등급은 결과 절이 면제다. R3만 사람이 본다
+
+  // R1. 첫 줄은 결론 한 문장이다. 제목이나 표나 목록으로 시작하면 과정부터 나열한 것이다
+  const lines = stripFences(text);
+  const firstIdx = lines.findIndex((l) => l.trim() !== '');
+  const first = firstIdx < 0 ? '' : lines[firstIdx].trim();
+  r.check('answer.lead', firstIdx + 1, first !== '' && !/^[#|>]/.test(first) && !/^[-*+]\s/.test(first),
+    '첫 줄이 결론 문장이 아니다. 제목과 표와 목록은 실패 (R1)');
+
+  // R4. 마지막 절 제목이 결과다
+  const head = lastHeading(text);
+  r.check('answer.result-section', head ? head.line : 1, !!head && head.title === '결과',
+    `마지막 절 제목이 결과가 아니다 (R4). 실제: ${head ? head.title : '절 제목 없음'}`);
+  if (!head || head.title !== '결과') return finish();
+
+  // R2. 결과 절의 다섯 행. 자유 서술이면 못 재지만 행 이름이 고정이면 잰다
+  const body = text.split('\n').slice(head.line).join('\n');
+  const found = new Map();
+  for (const t of parseTables(body)) {
+    for (const row of t.rows) {
+      if (row.cells.length >= 2) found.set(row.cells[0], { value: row.cells[1], line: head.line + row.line });
+    }
+  }
+  for (const name of RESULT_ROWS) {
+    r.check('answer.result-rows', head.line, found.has(name), `결과 절에 ${name} 행이 없다 (R2)`);
+  }
+
+  // 해당 없음은 쓸 수 있지만 왜 해당 없는지를 같은 칸에 적는다. 안 그러면 빈칸 채우기가 된다
+  for (const name of OPTIONAL_RESULT_ROWS) {
+    const cell = found.get(name);
+    if (!cell) continue;
+    const v = cell.value.trim();
+    if (!v.startsWith(NOT_APPLICABLE)) continue;
+    r.check('answer.result-empty', cell.line, v.length > NOT_APPLICABLE.length + 2,
+      `${name} 행이 해당 없음뿐이다. 왜 해당 없는지를 같은 칸에 적는다 (R2)`);
+  }
+
+  return finish();
+}
+
 // ---------- CLI ----------
 
 export function main(argv) {
   const [cmd, file, ...rest] = argv;
   if (!cmd || !file) {
-    console.error('사용법: node harness/tools/check.mjs <fill|g1|g2> <파일> [옵션]');
+    console.error('사용법: node harness/tools/check.mjs <fill|g1|g2|answer> <파일> [옵션]');
     return 2;
   }
   if (!fs.existsSync(file)) { console.error(`파일이 없다: ${file}`); return 2; }
@@ -604,10 +703,12 @@ export function main(argv) {
     else if (rest[i] === '--artifact') opt.artifacts.push(rest[++i]);
     else if (rest[i] === '--mode') opt.mode = rest[++i];
     else if (rest[i] === '--dry') opt.dry = true;
+    else if (rest[i] === '--grade') opt.grade = rest[++i];
   }
   if (cmd === 'fill') return fill(file, opt);
   if (cmd === 'g1') return g1(file, opt);
   if (cmd === 'g2') return g2(file, opt);
+  if (cmd === 'answer') return answer(file, opt);
   console.error(`알 수 없는 명령: ${cmd}`);
   return 2;
 }
