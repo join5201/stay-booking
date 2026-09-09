@@ -6,6 +6,9 @@ import org.springframework.stereotype.Repository;
 
 import com.o2o.catalog.domain.RoomType;
 import com.o2o.catalog.domain.RoomTypeRepository;
+import com.o2o.shared.PageQuery;
+import com.o2o.shared.PageResult;
+import com.o2o.shared.PropertyId;
 import com.o2o.shared.RoomTypeId;
 
 /**
@@ -28,5 +31,12 @@ public class JpaRoomTypeRepository implements RoomTypeRepository {
     @Override
     public Optional<RoomType> findById(RoomTypeId roomTypeId) {
         return jpaRepository.findById(roomTypeId.value());
+    }
+
+    /** CAT-09. 숙소 하나에 속한 객실 타입 목록이다 */
+    @Override
+    public PageResult<RoomType> findByPropertyId(PropertyId propertyId, PageQuery pageQuery) {
+        return SpringPage.toResult(jpaRepository.findAllByPropertyId(
+                propertyId.value(), SpringPage.toPageable(pageQuery)));
     }
 }

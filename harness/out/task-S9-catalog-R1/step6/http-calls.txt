@@ -1,0 +1,53 @@
+# 6단계 로컬 HTTP 호출 기록
+# 계약 8절 6단계의 완료 조건이다. gradlew bootRun으로 띄운 실제 서버에 curl로 쳤다.
+# 일시: 2026-09-09 15:30:34, 서버: http://127.0.0.1:8080, DB: o2o_catalog_test (127.0.0.1:3307)
+# 본문에 한글이 있는 요청은 UTF-8 파일로 보낸다. 셸이 인라인 인자를 변환해 400이 난다.
+
+== CAT-01 POST /api/v1/properties (HOST) ==
+HTTP/1.1 201 
+Location: /api/v1/properties/prop_65d4b6630deb49938fd32b6e233097e9
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Wed, 09 Sep 2026 06:30:34 GMT
+
+{"id":"prop_65d4b6630deb49938fd32b6e233097e9","hostId":"host_001","name":"HTTP 확인 스테이","regionCode":"SEOUL","address":"서울특별시 종로구 예시로 11","description":"","version":0,"createdAt":"2026-09-09T06:30:34.947Z","updatedAt":"2026-09-09T06:30:34.947Z"}
+
+== CAT-03 GET /api/v1/properties/prop_65d4b6630deb49938fd32b6e233097e9 (인증 없음) ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 276
+Date: Wed, 09 Sep 2026 06:30:35 GMT
+
+{"id":"prop_65d4b6630deb49938fd32b6e233097e9","hostId":"host_001","name":"HTTP 확인 스테이","regionCode":"SEOUL","address":"서울특별시 종로구 예시로 11","description":"","version":0,"createdAt":"2026-09-09T06:30:34.947Z","updatedAt":"2026-09-09T06:30:34.947Z"}
+== CAT-06 POST /api/v1/properties/prop_65d4b6630deb49938fd32b6e233097e9/room-types (HOST) ==
+HTTP/1.1 201 
+Location: /api/v1/room-types/room_918472071ef947f780a9a39f5253deeb
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Wed, 09 Sep 2026 06:30:35 GMT
+
+{"id":"room_918472071ef947f780a9a39f5253deeb","propertyId":"prop_65d4b6630deb49938fd32b6e233097e9","name":"스탠다드 더블","maxOccupancy":2,"description":"2인 객실","version":0,"createdAt":"2026-09-09T06:30:35.398Z","updatedAt":"2026-09-09T06:30:35.398Z"}
+
+== CAT-08 GET /api/v1/room-types/room_918472071ef947f780a9a39f5253deeb (인증 없음) ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 263
+Date: Wed, 09 Sep 2026 06:30:35 GMT
+
+{"id":"room_918472071ef947f780a9a39f5253deeb","propertyId":"prop_65d4b6630deb49938fd32b6e233097e9","name":"스탠다드 더블","maxOccupancy":2,"description":"2인 객실","version":0,"createdAt":"2026-09-09T06:30:35.398Z","updatedAt":"2026-09-09T06:30:35.398Z"}
+== C10 헤더 없음 ==
+status 401
+{"code":"ACTOR_REQUIRED","message":"필요한 개발 행위자가 없거나 미등록입니다.","traceId":"trace_708d02c60d1e47279a61559967e6194b","details":[]}
+== C10 역할 불일치 (guest_001) ==
+status 403
+
+== C9 명세에 없는 필드 ==
+status 400
+
+== CAT-03 없는 숙소 ==
+HTTP/1.1 404 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Wed, 09 Sep 2026 06:30:36 GMT
+
+{"code":"RESOURCE_NOT_FOUND","message":"자원을 찾을 수 없습니다.","traceId":"trace_52582bf88df7440fb7aedbbb742b67a6","details":[]}

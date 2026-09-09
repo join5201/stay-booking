@@ -1,6 +1,10 @@
 package com.o2o.catalog.infrastructure;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.o2o.catalog.domain.Property;
 
@@ -13,6 +17,15 @@ import com.o2o.catalog.domain.Property;
  *
  * 식별자 타입이 String인 이유는 Property가 식별자를 문자열 열로 저장하기 때문이다.
  * 그 결정의 이유는 Property 머리 주석에 있다.
+ *
+ * 조회 조건을 메서드 이름 규칙이 아니라 JPQL로 적는다. 이름 규칙은 임베더블 속성을 탈 때
+ * 해석이 갈릴 수 있고 그 실패가 컴파일이 아니라 컨텍스트 기동에서 난다.
  */
 public interface PropertyJpaRepository extends JpaRepository<Property, String> {
+
+    @Query("select p from Property p where p.region.code = :regionCode")
+    Page<Property> findAllByRegionCode(@Param("regionCode") String regionCode, Pageable pageable);
+
+    @Query("select p from Property p where p.hostId = :hostId")
+    Page<Property> findAllByHostId(@Param("hostId") String hostId, Pageable pageable);
 }
