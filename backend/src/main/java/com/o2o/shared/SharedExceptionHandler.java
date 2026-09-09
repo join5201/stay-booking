@@ -55,4 +55,25 @@ public class SharedExceptionHandler {
         return ResponseEntity.badRequest()
                 .body(ErrorResponse.of("INVALID_REQUEST", "요청 본문을 읽을 수 없습니다."));
     }
+
+    /**
+     * 수정 버전 불일치. 11 에러 응답 표의 409 VERSION_CONFLICT다.
+     * 2026-09-09 결정으로 동시 수정을 낙관적 잠금으로 처리하기로 했고 그 거절이 여기로 온다.
+     * 8-2절 C4가 이 경로를 검사한다.
+     */
+    @ExceptionHandler(VersionConflictException.class)
+    public ResponseEntity<ErrorResponse> handleVersionConflict(VersionConflictException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of("VERSION_CONFLICT", "수정 버전이 일치하지 않습니다."));
+    }
+
+    /**
+     * 쪽 나눔 값의 범위 위반. 11 공통 목록과 날짜 범위가 잘못된 범위를 400으로 적는다.
+     * PageQuery가 던지는 것을 여기서 받는다. 8-2절 C7이 이 경로를 검사한다.
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException e) {
+        return ResponseEntity.badRequest()
+                .body(ErrorResponse.of("INVALID_REQUEST", "요청 값의 범위가 올바르지 않습니다."));
+    }
 }

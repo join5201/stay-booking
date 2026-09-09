@@ -20,6 +20,10 @@ public class ActorRegistry {
 
     private static final Map<String, ActorRole> FIXTURE = Map.of(
             "host_001", ActorRole.HOST,
+            // host_002는 11이 든 예시 넷에 없다. 소유권 검사에 소유자가 둘 필요해서 더했다.
+            // P07이 이 fixture의 용도를 로컬 역할과 소유권 테스트로 적고 11도 예시라고만 적는다.
+            // 검증 ID T02가 다른 HOST의 숙소 수정을 보라고 요구하는데 HOST가 하나면 못 만든다
+            "host_002", ActorRole.HOST,
             "operator_001", ActorRole.OPERATOR,
             "guest_001", ActorRole.GUEST,
             "mock_001", ActorRole.MOCK_SYSTEM);
