@@ -186,6 +186,37 @@ test('fill 통과. 자기 해시 없음은 허용 값이다', () => {
   assert.equal(r.code, 0);
 });
 
+// ---------- 양식 대조 (이슈 29) ----------
+// 양식이 오르면 이미 승인된 계약은 그 자리에 멈춘다. 승인은 그 시점 양식 기준이라
+// 나중 절이 자동으로 붙지 않는다. task-S8이 v2에 멈춘 채 이틀 막혔다
+
+test('fill 통과. 양식의 절을 다 갖추고 판도 같다', () => {
+  const r = run(() => fill(prep('form-pass.md'), { dry: true }));
+  assert.equal(r.code, 0);
+  assert.doesNotMatch(r.out, /양식 판이 다르다/);
+});
+
+test('fill 실패. 양식의 절이 계약에 없다', () => {
+  const f = prep('form-pass.md', (t) => t.replace('## A와 B 평가 허용 입력 (HR1)', '## 딴 절'));
+  const r = run(() => fill(f, { dry: true }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /fill\.form-sections/);
+});
+
+test('fill 통과하되 경고. 선언한 양식 판이 낡았다', () => {
+  const f = prep('form-pass.md', (t) => t.replace('task-contract.md v6', 'task-contract.md v3'));
+  const r = run(() => fill(f, { dry: true }));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /양식 판이 다르다\. 선언 v3, 현재 v6/);
+});
+
+test('fill 실패. 양식 줄이 없는 파일을 가리킨다', () => {
+  const f = prep('form-pass.md', (t) => t.replace('harness/prompts/task-contract.md', 'harness/prompts/없는양식.md'));
+  const r = run(() => fill(f, { dry: true }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /fill\.form-path/);
+});
+
 // ---------- g1 doc ----------
 
 test('g1 doc 통과. 펜스 안 기호는 제외된다', () => {

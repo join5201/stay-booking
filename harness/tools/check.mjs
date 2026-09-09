@@ -98,6 +98,19 @@ function pathTokens(v) {
   return [...v.matchAll(/(?:^|[\s,])((?:[\w.-]+\/)+[\w.-]+)/g)].map((m) => m[1]);
 }
 
+// 양식 대조 (이슈 29). 계약 머리의 양식 줄이 어느 양식의 어느 판을 따르는지 밝힌다.
+// 양식이 오르면 이미 승인된 계약은 그 자리에 멈춘다. 승인은 그 시점 양식 기준이라
+// 나중 절이 자동으로 붙지 않는다. task-S8이 v2에 멈춘 채 이틀 막혔다
+const FORM_LINE = /^양식:\s*(\S+)\s+v(\d+)/m;
+const FORM_VER = /^버전:\s*\S+\s+v(\d+)/m;
+// 절 제목에서 번호와 괄호 주석을 떼고 뼈대만 남긴다. 계약은 번호를 붙이고 양식은 안 붙인다
+function sectionKey(line) {
+  return line.replace(/^#+\s*/, '').replace(/^[\d-]+\.\s*/, '').replace(/\s*\(.*$/, '').trim();
+}
+function sectionKeys(text) {
+  return text.split('\n').filter((l) => /^## /.test(l)).map(sectionKey);
+}
+
 const EM_DASH = '—';
 const MIDDLE_DOT = '·';
 const DEFAULT_END = 'Step {N} 산출물 제출. 다음 지시를 기다린다.';
@@ -309,7 +322,35 @@ export function fill(file, { dry = false } = {}) {
     }
   }
 
+  // 4. 양식 대조 (이슈 29). 양식 줄이 있는 문서만 본다
+  const formDrift = [];
+  const fm = text.match(FORM_LINE);
+  if (fm) {
+    const formPath = path.join(ROOT, fm[1]);
+    if (!isFile(formPath)) {
+      r.check('fill.form-path', 1, false, `양식 줄이 가리키는 파일이 없다: ${fm[1]}`);
+    } else {
+      const formText = fs.readFileSync(formPath, 'utf8');
+      const cur = (formText.match(FORM_VER) || [])[1];
+      if (cur && cur !== fm[2]) formDrift.push(`선언 v${fm[2]}, 현재 v${cur}`);
+      // 절 검사는 작업 계약에만 건다. 다른 양식은 인스턴스가 절을 접어 쓰는 경우가 있다
+      if (/task-contract\.md$/.test(fm[1])) {
+        const want = sectionKeys(formText);
+        const have = sectionKeys(text);
+        for (const w of want) {
+          const ok = have.some((h) => h.includes(w) || w.includes(h));
+          r.check('fill.form-sections', 1, ok,
+            `양식 ${fm[1]}의 절이 이 문서에 없다: ${w}. 양식이 오른 뒤 계약을 안 따라 올린 것이다`);
+        }
+      }
+    }
+  }
+
   const code = r.print();
+  if (formDrift.length) {
+    console.log(`  경고. 양식 판이 다르다. ${formDrift.join(', ')}`);
+    console.log('  승인은 그 시점 양식 기준이다. 새 절이 자동으로 붙지 않으니 훑어보라 (이슈 29)');
+  }
   if (deferred.length) {
     console.log(`  생성 후 기입 ${deferred.length}건. 줄 ${deferred.join(', ')}`);
     console.log('  이 행이 남아 있는 동안에는 평가 요청 단계로 가지 않는다');

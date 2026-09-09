@@ -1,6 +1,6 @@
 # 작업 계약 task-S2
 
-양식: harness/prompts/task-contract.md v3 (2026-09-08)
+양식: harness/prompts/task-contract.md v6 (2026-09-09)
 최초 작성: 2026-09-08
 최종 갱신: 2026-09-08 (승인과 결정 4건 기재. 5절 평가 대상 두 행 기입, 6절 정책 적용 갱신, 10절 진행 갱신)
 
