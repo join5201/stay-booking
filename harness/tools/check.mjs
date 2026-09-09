@@ -80,6 +80,37 @@ const ROOT = path.resolve(HERE, '..', '..');
 // fill이 절대 쓰지 않는 곳. 원본과 이력이다
 const PROTECTED = ['document', path.join('harness', 'project-sync'), path.join('harness', 'docs')];
 
+// 경로 규약 (이슈 26). 양식의 경로 칸은 저장소 상대경로다. 절대경로도 읽지만 경고한다.
+// 절대경로를 쓰면 그 값이 특정 폴더를 가리켜 worktree마다 다른 파일을 해시한다.
+// 조용히 남의 파일을 해시하는 쪽이 못 찾는 쪽보다 나쁘다
+const ABS_RE = /^[A-Za-z]:\//;
+
+// 경로 칸의 값 하나를 실제 경로로 푼다. 두 번째 원소는 절대경로 표기 여부다
+function resolvePath(v) {
+  if (ABS_RE.test(v)) return [v, true];
+  return [path.join(ROOT, v), false];
+}
+
+// 경로 칸에서 경로로 보이는 토큰을 뽑는다. 절대경로가 있으면 그것만, 없으면 상대경로를 본다
+function pathTokens(v) {
+  const abs = [...v.matchAll(/[A-Za-z]:\/[^\s,)]+/g)].map((m) => m[0]);
+  if (abs.length) return abs;
+  return [...v.matchAll(/(?:^|[\s,])((?:[\w.-]+\/)+[\w.-]+)/g)].map((m) => m[1]);
+}
+
+// 양식 대조 (이슈 29). 계약 머리의 양식 줄이 어느 양식의 어느 판을 따르는지 밝힌다.
+// 양식이 오르면 이미 승인된 계약은 그 자리에 멈춘다. 승인은 그 시점 양식 기준이라
+// 나중 절이 자동으로 붙지 않는다. task-S8이 v2에 멈춘 채 이틀 막혔다
+const FORM_LINE = /^양식:\s*(\S+)\s+v(\d+)/m;
+const FORM_VER = /^버전:\s*\S+\s+v(\d+)/m;
+// 절 제목에서 번호와 괄호 주석을 떼고 뼈대만 남긴다. 계약은 번호를 붙이고 양식은 안 붙인다
+function sectionKey(line) {
+  return line.replace(/^#+\s*/, '').replace(/^[\d-]+\.\s*/, '').replace(/\s*\(.*$/, '').trim();
+}
+function sectionKeys(text) {
+  return text.split('\n').filter((l) => /^## /.test(l)).map(sectionKey);
+}
+
 const EM_DASH = '—';
 const MIDDLE_DOT = '·';
 const DEFAULT_END = 'Step {N} 산출물 제출. 다음 지시를 기다린다.';
@@ -207,26 +238,29 @@ export function fill(file, { dry = false } = {}) {
   // 1. 버전 또는 해시 칸. 비어 있으면 채우고, 값이 있으면 실제 바이트와 대조한다 (HRV-06)
   const filled = [];
   const deferred = [];
+  const absPaths = new Set(); // 절대경로 표기를 쓴 줄. 실패가 아니라 경고다 (이슈 26)
   const lines = text.split('\n');
   for (const t of parseTables(text)) {
     const header = t.rows[0];
     if (!header) continue;
-    const pathCol = header.cells.findIndex((c) => c.includes('절대경로'));
+    const pathCol = header.cells.findIndex((c) => c.includes('경로'));
     const hashCol = header.cells.findIndex((c) => c.includes('버전 또는 해시'));
     if (pathCol < 0 || hashCol < 0) continue;
     for (const row of t.rows.slice(1)) {
       const target = row.cells[pathCol];
       const hash = row.cells[hashCol];
-      if (!target || !/^[A-Za-z]:\//.test(target)) continue;
-      if (!isFile(target)) continue; // 없는 경로와 폴더는 아래 경로 검사가 보고한다
+      if (!target || target === DEFERRED || /^\{\{/.test(target) || target === '해당 없음') continue;
+      const [abs, wasAbs] = resolvePath(target);
+      if (wasAbs) absPaths.add(row.line);
+      if (!isFile(abs)) continue; // 없는 경로와 폴더는 아래 경로 검사가 보고한다
       // 자기 자신의 해시는 적는 순간 틀린다. 적으면 파일이 바뀌고 파일이 바뀌면 해시가 바뀐다.
       // 허용 값은 NO_SELF_HASH 하나다
-      if (path.resolve(target) === path.resolve(file)) {
+      if (path.resolve(abs) === path.resolve(file)) {
         r.check('fill.self-hash', row.line, hash === NO_SELF_HASH,
           `이 파일이 자기 해시를 적으려 한다. 버전 칸을 ${NO_SELF_HASH}으로 두고 승인 커밋으로 가리킨다`);
         continue;
       }
-      const digest = sha256(target);
+      const digest = sha256(abs);
       const isBlank = !hash || /^\{\{.*\}\}$/.test(hash);
       if (!isBlank) {
         // 기록된 값을 건너뛰지 않는다. 입력이 바뀌면 실패시킨다
@@ -234,7 +268,7 @@ export function fill(file, { dry = false } = {}) {
         r.check('fill.hash-recorded', row.line, !!rec, `버전 칸에 sha256이 없다: ${hash}`);
         if (rec) {
           r.check('fill.hash-stale', row.line, digest.startsWith(rec),
-            `기록된 해시가 실제와 다르다: ${rel(target)}. 기록 ${rec}, 실제 ${digest.slice(0, rec.length)}`);
+            `기록된 해시가 실제와 다르다: ${rel(abs)}. 기록 ${rec}, 실제 ${digest.slice(0, rec.length)}`);
         }
         continue;
       }
@@ -242,7 +276,7 @@ export function fill(file, { dry = false } = {}) {
       const cells = lines[idx].trim().replace(/^\|/, '').replace(/\|$/, '').split('|');
       cells[hashCol] = ` sha256:${digest.slice(0, 16)} `;
       lines[idx] = '|' + cells.join('|') + '|';
-      filled.push({ line: row.line, target: rel(target), digest: digest.slice(0, 16) });
+      filled.push({ line: row.line, target: rel(abs), digest: digest.slice(0, 16) });
     }
   }
   if (filled.length) {
@@ -262,30 +296,68 @@ export function fill(file, { dry = false } = {}) {
   for (const t of parseTables(text)) {
     const header = t.rows[0];
     if (!header) continue;
-    const pathCol = header.cells.findIndex((c) => c.includes('절대경로'));
+    const pathCol = header.cells.findIndex((c) => c.includes('경로'));
     if (pathCol < 0) continue;
     for (const row of t.rows.slice(1)) {
       const v = row.cells[pathCol];
       if (!v || /^\{\{/.test(v) || v === '해당 없음') continue;
       if (v === DEFERRED) { deferred.push(row.line); continue; }
-      for (const m of v.matchAll(/[A-Za-z]:\/[^\s,)]+/g)) {
-        const exists = fs.existsSync(m[0]);
-        r.check('fill.path-exists', row.line, exists, `파일이 없다: ${m[0]}`);
+      const toks = pathTokens(v);
+      r.check('fill.path-shape', row.line, toks.length > 0,
+        `경로로 읽을 값이 없다. 저장소 상대경로를 적는다: ${v}`);
+      for (const tok of toks) {
+        if (/^[/\\]/.test(tok) || tok.split('/').includes('..')) {
+          r.check('fill.path-shape', row.line, false, `저장소 상대경로가 아니다: ${tok}`);
+          continue;
+        }
+        const [abs, wasAbs] = resolvePath(tok);
+        if (wasAbs) absPaths.add(row.line);
+        const exists = fs.existsSync(abs);
+        r.check('fill.path-exists', row.line, exists, `파일이 없다: ${tok}`);
         if (exists) {
-          r.check('fill.path-is-file', row.line, isFile(m[0]),
-            `폴더는 해시를 계산할 수 없다. 파일을 적거나 생성 후 기입으로 두라: ${m[0]}`);
+          r.check('fill.path-is-file', row.line, isFile(abs),
+            `폴더는 해시를 계산할 수 없다. 파일을 적거나 생성 후 기입으로 두라: ${tok}`);
         }
       }
-      if (!/[A-Za-z]:\//.test(v)) {
-        r.check('fill.path-absolute', row.line, false, `절대경로가 아니다: ${v}`);
+    }
+  }
+
+  // 4. 양식 대조 (이슈 29). 양식 줄이 있는 문서만 본다
+  const formDrift = [];
+  const fm = text.match(FORM_LINE);
+  if (fm) {
+    const formPath = path.join(ROOT, fm[1]);
+    if (!isFile(formPath)) {
+      r.check('fill.form-path', 1, false, `양식 줄이 가리키는 파일이 없다: ${fm[1]}`);
+    } else {
+      const formText = fs.readFileSync(formPath, 'utf8');
+      const cur = (formText.match(FORM_VER) || [])[1];
+      if (cur && cur !== fm[2]) formDrift.push(`선언 v${fm[2]}, 현재 v${cur}`);
+      // 절 검사는 작업 계약에만 건다. 다른 양식은 인스턴스가 절을 접어 쓰는 경우가 있다
+      if (/task-contract\.md$/.test(fm[1])) {
+        const want = sectionKeys(formText);
+        const have = sectionKeys(text);
+        for (const w of want) {
+          const ok = have.some((h) => h.includes(w) || w.includes(h));
+          r.check('fill.form-sections', 1, ok,
+            `양식 ${fm[1]}의 절이 이 문서에 없다: ${w}. 양식이 오른 뒤 계약을 안 따라 올린 것이다`);
+        }
       }
     }
   }
 
   const code = r.print();
+  if (formDrift.length) {
+    console.log(`  경고. 양식 판이 다르다. ${formDrift.join(', ')}`);
+    console.log('  승인은 그 시점 양식 기준이다. 새 절이 자동으로 붙지 않으니 훑어보라 (이슈 29)');
+  }
   if (deferred.length) {
     console.log(`  생성 후 기입 ${deferred.length}건. 줄 ${deferred.join(', ')}`);
     console.log('  이 행이 남아 있는 동안에는 평가 요청 단계로 가지 않는다');
+  }
+  if (absPaths.size) {
+    console.log(`  경고. 절대경로 표기 ${absPaths.size}줄. 줄 ${[...absPaths].sort((a, b) => a - b).join(', ')}`);
+    console.log('  절대경로는 worktree마다 다른 파일을 가리킨다. 저장소 상대경로로 바꾸라 (이슈 26)');
   }
   if (filled.length) {
     console.log(`  sha256 기입 ${filled.length}건${dry ? ' (dry, 저장 안 함)' : ''}`);
@@ -492,7 +564,7 @@ function readSpec(text, spec) {
   if (!hashRow) return null;
   const pathRow = spec.pathLabel ? lookup(text, spec.pathLabel) : hashRow;
   if (!pathRow) return null;
-  const paths = [...pathRow.value.matchAll(/[A-Za-z]:\/[^\s,)]+/g)].map((x) => x[0]);
+  const paths = pathTokens(pathRow.value);
   const hashes = [...hashRow.value.matchAll(/sha256:([0-9a-f]{8,64})/g)].map((x) => x[1]);
   return { paths, hashes, line: hashRow.line, pathLine: pathRow.line };
 }

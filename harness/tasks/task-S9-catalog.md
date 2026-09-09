@@ -1,6 +1,6 @@
 # 작업 계약 task-S9-catalog
 
-양식: harness/prompts/task-contract.md v5 (2026-09-08)
+양식: harness/prompts/task-contract.md v6 (2026-09-09)
 최초 작성: 2026-09-08
 최종 갱신: 2026-09-09 최종 완료 (카탈로그 백엔드 아홉 API. 이 Task 종료)
 

@@ -74,11 +74,33 @@ test('fill 실패. 빈칸 잔존', () => {
   assert.match(r.out, /fill\.placeholder/);
 });
 
-test('fill 실패. 절대경로가 아니다', () => {
-  const f = prep('fill-pass.md', (t) => t.replace(ROOT + '/document/', 'document/'));
-  const r = run(() => fill(f));
+// 이슈 26. 경로 칸은 저장소 상대경로다. 절대경로는 받아 주되 경고한다.
+// 통과 케이스와 실패 케이스와 경고 케이스를 짝으로 붙인다. 금지만 테스트하면 가드가 허용 값까지 막는다
+test('fill 통과. 저장소 상대경로', () => {
+  const r = run(() => fill(prep('fill-pass.md'), { dry: true }));
+  assert.equal(r.code, 0);
+  assert.doesNotMatch(r.out, /절대경로 표기/);
+});
+
+test('fill 통과. 절대경로도 받지만 경고한다', () => {
+  const f = prep('fill-pass.md', (t) => t.replace(/\| (document|harness)\//g, `| ${ROOT}/$1/`));
+  const r = run(() => fill(f, { dry: true }));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /절대경로 표기 2줄/);
+});
+
+test('fill 실패. 저장소 밖을 가리키는 상대경로', () => {
+  const f = prep('fill-pass.md', (t) => t.replace('document/01-o2o-ddd-plan.md', '../document/01-o2o-ddd-plan.md'));
+  const r = run(() => fill(f, { dry: true }));
   assert.equal(r.code, 1);
-  assert.match(r.out, /fill\.path-absolute/);
+  assert.match(r.out, /fill\.path-shape/);
+});
+
+test('fill 실패. 경로로 읽을 값이 없다', () => {
+  const f = prep('fill-pass.md', (t) => t.replace('document/01-o2o-ddd-plan.md', '어디에도없음'));
+  const r = run(() => fill(f, { dry: true }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /fill\.path-shape/);
 });
 
 test('fill 실패. 파일이 없다', () => {
@@ -118,7 +140,7 @@ test('fill 실패. 버전 칸에 sha256이 아닌 값이 있으면 잡는다', (
 
 // 폴더 경로에서 크래시하던 것을 검사 실패로 바꿨다
 test('fill 실패. 폴더 경로는 해시를 계산할 수 없다', () => {
-  const f = prep('fill-pass.md', (t) => t.replace(ROOT + '/document/01-o2o-ddd-plan.md', ROOT + '/document'));
+  const f = prep('fill-pass.md', (t) => t.replace('document/01-o2o-ddd-plan.md', 'harness/prompts'));
   const r = run(() => fill(f, { dry: true }));
   assert.equal(r.code, 1);
   assert.match(r.out, /fill\.path-is-file/);
@@ -126,7 +148,7 @@ test('fill 실패. 폴더 경로는 해시를 계산할 수 없다', () => {
 
 test('fill 통과. 생성 후 기입은 빈칸이 아니라 유예다', () => {
   const f = prep('fill-pass.md', (t) =>
-    t.replace(`| 01 전체 | ${ROOT}/document/01-o2o-ddd-plan.md | {{필수}} | 전문 |`,
+    t.replace('| 01 전체 | document/01-o2o-ddd-plan.md | {{필수}} | 전문 |',
       '| 평가 대상 | 생성 후 기입 | 생성 후 기입 | 전체 |'));
   const r = run(() => fill(f, { dry: true }));
   assert.equal(r.code, 0);
@@ -162,6 +184,37 @@ test('fill 통과. 자기 해시 없음은 허용 값이다', () => {
   ].join('\n'), 'utf8');
   const r = run(() => fill(dst, { dry: true }));
   assert.equal(r.code, 0);
+});
+
+// ---------- 양식 대조 (이슈 29) ----------
+// 양식이 오르면 이미 승인된 계약은 그 자리에 멈춘다. 승인은 그 시점 양식 기준이라
+// 나중 절이 자동으로 붙지 않는다. task-S8이 v2에 멈춘 채 이틀 막혔다
+
+test('fill 통과. 양식의 절을 다 갖추고 판도 같다', () => {
+  const r = run(() => fill(prep('form-pass.md'), { dry: true }));
+  assert.equal(r.code, 0);
+  assert.doesNotMatch(r.out, /양식 판이 다르다/);
+});
+
+test('fill 실패. 양식의 절이 계약에 없다', () => {
+  const f = prep('form-pass.md', (t) => t.replace('## A와 B 평가 허용 입력 (HR1)', '## 딴 절'));
+  const r = run(() => fill(f, { dry: true }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /fill\.form-sections/);
+});
+
+test('fill 통과하되 경고. 선언한 양식 판이 낡았다', () => {
+  const f = prep('form-pass.md', (t) => t.replace('task-contract.md v6', 'task-contract.md v3'));
+  const r = run(() => fill(f, { dry: true }));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /양식 판이 다르다\. 선언 v3, 현재 v6/);
+});
+
+test('fill 실패. 양식 줄이 없는 파일을 가리킨다', () => {
+  const f = prep('form-pass.md', (t) => t.replace('harness/prompts/task-contract.md', 'harness/prompts/없는양식.md'));
+  const r = run(() => fill(f, { dry: true }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /fill\.form-path/);
 });
 
 // ---------- g1 doc ----------
