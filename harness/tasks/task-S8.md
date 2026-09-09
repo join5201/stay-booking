@@ -2,7 +2,7 @@
 
 양식: harness/prompts/task-contract.md v5 (2026-09-08)
 최초 작성: 2026-09-08
-최종 갱신: 2026-09-08 (양식 v2에서 v5로. A와 B 평가 허용 입력 절 신설. 승인 시점에는 그 절이 양식에 없었다)
+최종 갱신: 2026-09-09 (평가 대상 03 v13 기입, 생성용 입력의 03을 v11에서 v12로. task-S2가 v12로 착지해 이 Task의 바닥이 바뀌었다)
 
 이 계약은 2026-09-08에 승인됐다. 승인 원문은 진행 한 줄이다.
 
@@ -82,7 +82,7 @@
 | 대상 06-2 설명 | C:/Dev/potenup/99_projects/o2o/document/06-2-o2o-aggregates-explained.md | sha256:c1607d414af91b93 | 전문 |
 | 대상 04-5 v1 | C:/Dev/potenup/99_projects/o2o/harness/project-sync/04-5-o2o-policies-draft.md | sha256:a99b36c86c567240 | 전문 |
 | 대상 04 v9 | C:/Dev/potenup/99_projects/o2o/document/04-o2o-commands-actors.md | sha256:3ebf3af5b34b2b34 | 전문 |
-| 대상 03 v11 | C:/Dev/potenup/99_projects/o2o/document/03-o2o-event-storming.md | sha256:34a8544cba55728b | 전문 |
+| 대상 03 v12 | C:/Dev/potenup/99_projects/o2o/document/03-o2o-event-storming.md | sha256:3334e5a73cb8f896 | 전문 |
 | 대상 02 v8 | C:/Dev/potenup/99_projects/o2o/document/02-o2o-feature-list.md | sha256:2a3d3ca2d8b63809 | 전문 |
 | 대상 06-1 | C:/Dev/potenup/99_projects/o2o/document/06-1-o2o-context-map.md | sha256:95bc2b1079d3b739 | 전문 |
 | 대상 05-3 v10 | C:/Dev/potenup/99_projects/o2o/document/05-3-o2o-glossary.md | sha256:62a87a62baf5846e | 전문 |
@@ -102,7 +102,7 @@
 | 평가 대상 06-2 v5 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/06-2-o2o-aggregates.v5.md | sha256:d260e2d76196eb0f | 전문 |
 | 평가 대상 04-5 v2 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/04-5-o2o-policies-draft.v2.md | sha256:7435d1e4f714070c | 전문 |
 | 평가 대상 04 v10 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/04-o2o-commands-actors.v10.md | sha256:fa0463666b950db6 | 전문 |
-| 평가 대상 03 v13 | 생성 후 기입 | 생성 후 기입 | 전문 |
+| 평가 대상 03 v13 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/03-o2o-event-storming.v13.md | sha256:36dd7d4dd5e6a04f | 전문 |
 | 평가 대상 02 v9 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/02-o2o-feature-list.v9.md | sha256:ee9bcf474a8f9f8a | 전문 |
 | 평가 대상 06-1 v2 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/06-1-o2o-context-map.v2.md | sha256:90c016f3ec3e7c9a | 전문 |
 | 평가 대상 05-3 v11 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/05-3-o2o-glossary.v11.md | sha256:276f6cf7cc25805b | 전문 |
