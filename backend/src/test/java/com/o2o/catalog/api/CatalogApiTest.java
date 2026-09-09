@@ -10,6 +10,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -33,6 +36,8 @@ class CatalogApiTest {
 
     private static final String HOST = "host_001";
     private static final String GUEST = "guest_001";
+    // 응답을 문자열 포함으로 보면 필드 이름만 확인된다. 값과 타입을 보려면 파싱해야 한다
+    private static final JsonMapper JSON = JsonMapper.builder().build();
 
     private final HttpClient client = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(5)).build();
@@ -262,6 +267,126 @@ class CatalogApiTest {
 
         assertEquals(403, res.statusCode(), res.body());
         assertTrue(res.body().contains("ACCESS_DENIED"), res.body());
+    }
+
+    // ---------- 응답 모델의 값과 타입 ----------
+
+    @Test
+    void 응답_아홉_필드의_타입과_값이_명세대로다() throws Exception {
+        // 전에는 필드 이름이 문자열에 있는지만 봤다. 그러면 version에 문자열이 들어가도 통과한다.
+        // 11 응답 모델 Property의 타입 열까지 본다
+        String body = """
+                {"name":"타입 확인","regionCode":"SEOUL","address":"서울특별시 중구 예시로 20","description":"설명"}
+                """;
+
+        HttpResponse<String> res = send("POST", "/api/v1/properties", HOST, body);
+        JsonNode json = JSON.readTree(res.body());
+
+        assertEquals(201, res.statusCode(), res.body());
+        assertTrue(json.get("id").isString(), "id가 문자열이 아니다");
+        assertTrue(json.get("id").stringValue().length() <= 64, "id가 64자를 넘는다");
+        assertEquals("host_001", json.get("hostId").stringValue());
+        assertEquals("타입 확인", json.get("name").stringValue());
+        assertEquals("SEOUL", json.get("regionCode").stringValue());
+        assertEquals("서울특별시 중구 예시로 20", json.get("address").stringValue());
+        assertEquals("설명", json.get("description").stringValue());
+        assertTrue(json.get("version").isIntegralNumber(), "version이 정수가 아니다");
+        assertEquals(0, json.get("version").asInt(), "등록 직후 version은 0이다");
+    }
+
+    @Test
+    void 시각이_UTC_소수점_셋_형식이다() throws Exception {
+        // 11 공통 요청과 응답 규칙의 YYYY-MM-DDTHH:mm:ss.SSSZ다. 이 형식을 맞추려고
+        // ApiTime을 따로 뒀는데 그것이 맞게 도는지 보는 테스트가 없었다
+        String body = """
+                {"name":"시각 확인","regionCode":"SEOUL","address":"서울특별시 중구 예시로 21","description":""}
+                """;
+
+        JsonNode json = JSON.readTree(send("POST", "/api/v1/properties", HOST, body).body());
+
+        String pattern = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z";
+        assertTrue(json.get("createdAt").stringValue().matches(pattern),
+                "createdAt 형식이 다르다: " + json.get("createdAt").stringValue());
+        assertTrue(json.get("updatedAt").stringValue().matches(pattern),
+                "updatedAt 형식이 다르다: " + json.get("updatedAt").stringValue());
+    }
+
+    @Test
+    void 객실_타입_응답_여덟_필드의_타입과_값이_명세대로다() throws Exception {
+        String propertyId = registerProperty("객실 타입 확인용");
+        String body = """
+                {"name":"스탠다드 트윈","maxOccupancy":3,"description":"3인 객실"}
+                """;
+
+        HttpResponse<String> res = send(
+                "POST", "/api/v1/properties/" + propertyId + "/room-types", HOST, body);
+        JsonNode json = JSON.readTree(res.body());
+
+        assertEquals(201, res.statusCode(), res.body());
+        assertEquals(propertyId, json.get("propertyId").stringValue());
+        assertEquals("스탠다드 트윈", json.get("name").stringValue());
+        assertTrue(json.get("maxOccupancy").isIntegralNumber(), "maxOccupancy가 정수가 아니다");
+        assertEquals(3, json.get("maxOccupancy").asInt());
+        assertEquals(0, json.get("version").asInt());
+    }
+
+    // ---------- 경계값. 11 필드표의 상한 ----------
+
+    private String propertyBody(String name, String regionCode, String address, String description) {
+        return """
+                {"name":"%s","regionCode":"%s","address":"%s","description":"%s"}
+                """.formatted(name, regionCode, address, description);
+    }
+
+    @Test
+    void 이름은_100자까지_받고_101자는_거절한다() throws Exception {
+        String ok = propertyBody("가".repeat(100), "SEOUL", "주소", "");
+        String tooLong = propertyBody("가".repeat(101), "SEOUL", "주소", "");
+
+        assertEquals(201, send("POST", "/api/v1/properties", HOST, ok).statusCode());
+        assertEquals(400, send("POST", "/api/v1/properties", HOST, tooLong).statusCode());
+    }
+
+    @Test
+    void 지역_코드는_32자까지_받고_33자는_거절한다() throws Exception {
+        String ok = propertyBody("지역 경계", "A".repeat(32), "주소", "");
+        String tooLong = propertyBody("지역 경계", "A".repeat(33), "주소", "");
+
+        assertEquals(201, send("POST", "/api/v1/properties", HOST, ok).statusCode());
+        assertEquals(400, send("POST", "/api/v1/properties", HOST, tooLong).statusCode());
+    }
+
+    @Test
+    void 주소는_300자까지_받고_301자는_거절한다() throws Exception {
+        String ok = propertyBody("주소 경계", "SEOUL", "가".repeat(300), "");
+        String tooLong = propertyBody("주소 경계", "SEOUL", "가".repeat(301), "");
+
+        assertEquals(201, send("POST", "/api/v1/properties", HOST, ok).statusCode());
+        assertEquals(400, send("POST", "/api/v1/properties", HOST, tooLong).statusCode());
+    }
+
+    @Test
+    void 설명은_2000자까지_받고_2001자는_거절한다() throws Exception {
+        String ok = propertyBody("설명 경계", "SEOUL", "주소", "가".repeat(2000));
+        String tooLong = propertyBody("설명 경계", "SEOUL", "주소", "가".repeat(2001));
+
+        assertEquals(201, send("POST", "/api/v1/properties", HOST, ok).statusCode());
+        assertEquals(400, send("POST", "/api/v1/properties", HOST, tooLong).statusCode());
+    }
+
+    @Test
+    void 최대_인원은_100까지_받고_101은_거절한다() throws Exception {
+        String propertyId = registerProperty("인원 경계용");
+        String ok = """
+                {"name":"단체실","maxOccupancy":100,"description":""}
+                """;
+        String tooMany = """
+                {"name":"초과실","maxOccupancy":101,"description":""}
+                """;
+        String path = "/api/v1/properties/" + propertyId + "/room-types";
+
+        assertEquals(201, send("POST", path, HOST, ok).statusCode());
+        assertEquals(400, send("POST", path, HOST, tooMany).statusCode());
     }
 
     @Test

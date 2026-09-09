@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.o2o.catalog.application.CatalogApplicationServiceTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-09-09T06:14:49.821Z" hostname="BOOK-QD5U7FFOBT" time="0.083">
+<testsuite name="com.o2o.catalog.application.CatalogApplicationServiceTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-09-09T06:47:21.751Z" hostname="BOOK-QD5U7FFOBT" time="0.209">
   <properties/>
-  <testcase name="소유자는_인자로_받은_행위자다()" classname="com.o2o.catalog.application.CatalogApplicationServiceTest" time="0.015"/>
-  <testcase name="없는_숙소에_객실_타입을_등록하면_거절한다()" classname="com.o2o.catalog.application.CatalogApplicationServiceTest" time="0.008"/>
-  <testcase name="등록한_숙소를_다시_조회할_수_있다()" classname="com.o2o.catalog.application.CatalogApplicationServiceTest" time="0.01"/>
-  <testcase name="있는_숙소에_객실_타입을_등록하면_생성한다()" classname="com.o2o.catalog.application.CatalogApplicationServiceTest" time="0.013"/>
-  <testcase name="남의_숙소에_객실_타입을_등록하면_거절한다()" classname="com.o2o.catalog.application.CatalogApplicationServiceTest" time="0.008"/>
-  <testcase name="없는_숙소를_조회하면_거절한다()" classname="com.o2o.catalog.application.CatalogApplicationServiceTest" time="0.009"/>
-  <system-out><![CDATA[2026-09-09T15:14:49.824+09:00  INFO 104388 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.catalog.application.CatalogApplicationServiceTest]: CatalogApplicationServiceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-2026-09-09T15:14:49.834+09:00  INFO 104388 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.catalog.application.CatalogApplicationServiceTest
-2026-09-09T15:14:49.836+09:00  INFO 104388 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.catalog.application.CatalogApplicationServiceTest]: CatalogApplicationServiceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-2026-09-09T15:14:49.836+09:00  INFO 104388 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.catalog.application.CatalogApplicationServiceTest
+  <testcase name="소유자는_인자로_받은_행위자다()" classname="com.o2o.catalog.application.CatalogApplicationServiceTest" time="0.028"/>
+  <testcase name="없는_숙소에_객실_타입을_등록하면_거절한다()" classname="com.o2o.catalog.application.CatalogApplicationServiceTest" time="0.016"/>
+  <testcase name="등록한_숙소를_다시_조회할_수_있다()" classname="com.o2o.catalog.application.CatalogApplicationServiceTest" time="0.016"/>
+  <testcase name="숙소를_등록하면_PropertyRegistered를_발행한다()" classname="com.o2o.catalog.application.CatalogApplicationServiceTest" time="0.013"/>
+  <testcase name="있는_숙소에_객실_타입을_등록하면_생성한다()" classname="com.o2o.catalog.application.CatalogApplicationServiceTest" time="0.02"/>
+  <testcase name="등록이_거절되면_이벤트를_발행하지_않는다()" classname="com.o2o.catalog.application.CatalogApplicationServiceTest" time="0.014"/>
+  <testcase name="남의_숙소에_객실_타입을_등록하면_거절한다()" classname="com.o2o.catalog.application.CatalogApplicationServiceTest" time="0.015"/>
+  <testcase name="없는_숙소를_조회하면_거절한다()" classname="com.o2o.catalog.application.CatalogApplicationServiceTest" time="0.014"/>
+  <testcase name="객실_타입을_등록하면_RoomTypeRegistered를_발행한다()" classname="com.o2o.catalog.application.CatalogApplicationServiceTest" time="0.023"/>
+  <system-out><![CDATA[2026-09-09T15:47:21.755+09:00  INFO 98756 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.catalog.application.CatalogApplicationServiceTest]: CatalogApplicationServiceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-09T15:47:21.775+09:00  INFO 98756 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.catalog.application.CatalogApplicationServiceTest
+2026-09-09T15:47:21.777+09:00  INFO 98756 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.catalog.application.CatalogApplicationServiceTest]: CatalogApplicationServiceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-09T15:47:21.777+09:00  INFO 98756 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.catalog.application.CatalogApplicationServiceTest
 ]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>
