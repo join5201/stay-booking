@@ -22,5 +22,6 @@
 | 10-7-o2o-harness-pdf-crosscheck.md | PDF 8종 대조 |
 | 10-8-o2o-harness-recheck.md | 로컬 문서 기준 재대조 |
 | 10-9-o2o-harness-answer-format-plan.md | 답변 형식 R1부터 R4의 적용 계획 v2. 2026-09-08 사용자 승인 (2026-09-08 추가) |
+| 10-10-o2o-harness-worktree-split.md | 세션별 worktree 분리. 배치와 절차와 남는 제약 (2026-09-09 추가) |
 
 주의: 여기 있는 결정은 이력이다. 결정의 정본은 harness/decisions/다(harness/decisions/README.md).
