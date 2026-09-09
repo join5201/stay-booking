@@ -1,6 +1,6 @@
 # 작업 계약 task-S8
 
-양식: harness/prompts/task-contract.md v5 (2026-09-08)
+양식: harness/prompts/task-contract.md v6 (2026-09-09)
 최초 작성: 2026-09-08
 최종 갱신: 2026-09-09 (R1 평가 반영. InventoryHoldRejected 미결을 종결로 갱신. 평가 대상 03 v13 기입, 생성용 입력의 03을 v11에서 v12로)
 

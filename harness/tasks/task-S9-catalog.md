@@ -1,6 +1,6 @@
 # 작업 계약 task-S9-catalog
 
-양식: harness/prompts/task-contract.md v5 (2026-09-08)
+양식: harness/prompts/task-contract.md v6 (2026-09-09)
 최초 작성: 2026-09-08
 최종 갱신: 2026-09-09 개정 2 신설 (백엔드를 다 세운 뒤 프론트로. 아래 0-3절. 승인 대기)
 
