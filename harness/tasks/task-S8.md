@@ -1,8 +1,8 @@
 # 작업 계약 task-S8
 
-양식: harness/prompts/task-contract.md v2 (2026-09-08)
+양식: harness/prompts/task-contract.md v5 (2026-09-08)
 최초 작성: 2026-09-08
-최종 갱신: 2026-09-08 (초안. 정책 적용 표의 승인 필요 두 행을 대안 없음으로 정정. 승인 대기)
+최종 갱신: 2026-09-08 (양식 v2에서 v5로. A와 B 평가 허용 입력 절 신설. 승인 시점에는 그 절이 양식에 없었다)
 
 이 계약은 2026-09-08에 승인됐다. 승인 원문은 진행 한 줄이다.
 
@@ -34,7 +34,7 @@
 | 문서 | 로컬 현재 | 08-3 목표 | 이 Task의 판 |
 |---|---|---|---|
 | 02 기능 목록 | v8 | v8 | v9 |
-| 03 이벤트 스토밍 | v11 | v11 | v12 |
+| 03 이벤트 스토밍 | v11 | v11 | v13 |
 | 04 커맨드와 액터 | v9 | v9 | v10 |
 | 04-5 정책 초안 | 로컬에 없음 | v2 | v2 |
 | 05-3 용어 사전 | v10 | v11 | v11 |
@@ -59,7 +59,7 @@
 | 06-2 v5 | C-1, C-2, C-4의 애그리거트 쪽 | Payment 애그리거트에 kind와 settledAt과 settledBy, 잠금 순서가 검사 전 루트 잠금 절에 반영, 애그리거트가 PG를 호출하지 않는다는 문장 |
 | 04-5 v2 | C-1의 T2 순찰 정책 | 정책 목록에 T2 행 추가. 정책 수와 커버리지 검사 결과 갱신 |
 | 04 v10 | C-1의 SettlePayment | 커맨드 22개가 23개로. SettlePayment의 액터와 이벤트 매핑 행 |
-| 03 v12 | C-7 R4 문언 | R4 문언이 먼저 커밋되는 것과 확정 우선으로 교체. InventoryHoldRejected 추가는 09-1 미반입이라 미결로 표시 |
+| 03 v13 | C-7 R4 문언 | R4 문언이 먼저 커밋되는 것과 확정 우선으로 교체. InventoryHoldRejected 추가는 09-1 미반입이라 미결로 표시 |
 | 02 v9 | C-7의 3-3 문장 | 3-3 문장이 R4와 같은 문언으로 |
 | 06-1 v2 | 08-2 F 확인필요 3의 종결 결과 | R6 흐르는 것에 SettlePayment와 T1 T2 조회 추가, R6 근거 문구 수정, 구독자 없는 이벤트 17개를 20개로. 최종 갱신 줄 신설 |
 | 05-3 v11 | C-1, C-4, C-5의 용어 | 정산 표식, 고아 승인, ORPHAN, REFUND_PENDING, 환불 멱등키 다섯 항목이 정의와 소유 컨텍스트를 갖고 등재 |
@@ -91,6 +91,33 @@
 | 실제 평가 기준 | C:/Dev/potenup/99_projects/o2o/harness/prompts/eval-criteria-ddd.md | sha256:0ec4e54137d66085 | 축, 심각도, 출력 스키마 |
 
 07 v3은 후보다. 승인 전이므로 이 Task에서는 문체와 형식 조항만 적용하고 종료 문장 F16은 문서 산출물에 적용하지 않는다. 설계 문서는 대화 응답이 아니라서 종료 문장이 붙을 자리가 없다. g1 실행 시 --end 옵션으로 각 문서의 마지막 줄 규칙을 따로 준다.
+
+## A와 B 평가 허용 입력 (HR1, 2026-09-08 신설)
+
+위 표는 생성자가 읽을 목록이다. 평가자에게 넘기는 목록은 이 표다. 두 표를 같은 것으로 취급하면 감사 문서와 결정표가 평가 폴더로 들어간다.
+
+| 자료 | 절대경로 | 버전 또는 해시 | 읽을 범위 |
+|---|---|---|---|
+| 평가 대상 06-4 v5 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/06-4-o2o-contracts.v5.md | sha256:c32cc10985cb86c2 | 전문 |
+| 평가 대상 06-2 v5 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/06-2-o2o-aggregates.v5.md | sha256:d260e2d76196eb0f | 전문 |
+| 평가 대상 04-5 v2 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/04-5-o2o-policies-draft.v2.md | sha256:7435d1e4f714070c | 전문 |
+| 평가 대상 04 v10 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/04-o2o-commands-actors.v10.md | sha256:fa0463666b950db6 | 전문 |
+| 평가 대상 03 v13 | 생성 후 기입 | 생성 후 기입 | 전문 |
+| 평가 대상 02 v9 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/02-o2o-feature-list.v9.md | sha256:ee9bcf474a8f9f8a | 전문 |
+| 평가 대상 06-1 v2 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/06-1-o2o-context-map.v2.md | sha256:90c016f3ec3e7c9a | 전문 |
+| 평가 대상 05-3 v11 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/05-3-o2o-glossary.v11.md | sha256:276f6cf7cc25805b | 전문 |
+| 평가 대상 입력 팩 v3 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/o2o-review-input-pack.v3.md | sha256:41d7582034ad30da | 전문 |
+| 입력 팩 | C:/Dev/potenup/99_projects/o2o/harness/project-sync/o2o-review-input-pack.md | sha256:1608942c0815f911 | 전문 |
+| 이 작업 계약 | C:/Dev/potenup/99_projects/o2o/harness/tasks/task-S8.md | 자기 해시 없음 | 전문 |
+| 실제 평가 기준 | C:/Dev/potenup/99_projects/o2o/harness/prompts/eval-criteria-ddd.md | sha256:0ec4e54137d66085 | 축, 심각도, 출력 스키마 |
+
+이 표에 넣지 않는 것: 01 전체, 과거 감사 문서, 이전 평가 리포트, 사용자 결정표, harness/docs/ 전체, harness/state/ 전체, 생성 대화. 평가 폴더를 만들 때는 이 표만 보고 복사한다.
+
+08-1과 08-2와 08-3을 넣지 않는다. 셋 다 과거 감사 문서이고 양식의 제외 목록 두 번째 항목에 해당한다. decisions-08-3.md도 사용자 결정표라 넣지 않는다. 위 생성용 표에는 넷이 다 있는데 그것은 생성자가 읽을 목록이기 때문이다. 08-3의 무엇이 어디로 갔어야 하는지는 이 계약의 반영 대상 표가 알려 준다. 평가자는 그 표와 후보를 대조하지 원본 감사 문서를 대조하지 않는다. 그것이 블라인드 평가다.
+
+입력 팩이 두 줄인 것은 오기가 아니다. 아래 입력 팩 행은 project-sync의 현재 판이고 배경 자료다. 위 평가 대상 입력 팩 v3은 이번에 만든 후보이고 평가 대상이다. 배경까지 후보로 주면 평가자가 자기가 평가할 문서를 배경으로 삼는다.
+
+평가 대상 03은 생성 후 기입이다. task-S2가 03 v12를 가져가기로 2026-09-08 확정돼 이 Task의 03은 v13이고, v13은 task-S2 반영본 위에서 다시 만든다. 그때까지 이 행은 채우지 않는다. 이 행이 남아 있는 동안에는 평가 요청 단계로 가지 않는다.
 
 ## 정책 적용
 
