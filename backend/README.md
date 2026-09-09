@@ -21,7 +21,11 @@ Java 17도 로컬에 있으나(Temurin 17.0.18) 툴체인은 21이다. PATH의 j
 
 ## 2. 처음 한 번 하는 준비
 
-환경변수 셋을 backend/.env에 적는다. 이 파일은 추적하지 않는다. 값은 로컬 테스트용이고 저장소에 올리지 않는다.
+backend/env.example을 backend/.env로 복사하고 값을 채운다. .env는 추적하지 않는다. 값은 로컬 테스트용이고 저장소에 올리지 않는다.
+
+```
+cp backend/env.example backend/.env
+```
 
 | 이름 | 무엇 |
 |---|---|
@@ -29,9 +33,7 @@ Java 17도 로컬에 있으나(Temurin 17.0.18) 툴체인은 21이다. PATH의 j
 | O2O_MYSQL_USER | 애플리케이션이 붙을 계정 이름 |
 | O2O_MYSQL_PASSWORD | 그 계정의 비밀번호 |
 
-파일 형식은 한 줄에 이름=값이다.
-
-이 저장소에 본보기 파일을 두지 않는 이유가 있다. .claude/settings.json의 deny 규칙이 Edit(**/.env.*)로 .env.example까지 막는다. 비밀 값이 섞여 나가는 것을 막는 규칙이라 우회하지 않고 이름만 여기 적는다.
+본보기 파일 이름에 앞 점이 없는 이유가 있다. .claude/settings.json의 deny가 Edit(**/.env.*)로 .env로 시작하는 모든 파일을 막는다. 그 규칙을 좁혀 예외를 만들면 나중에 생기는 새 접미사가 안 막힌다. 규칙은 넓게 두고 본보기 파일만 그 패턴 밖으로 뺐다. 이슈 39.
 
 ## 3. 실행
 
