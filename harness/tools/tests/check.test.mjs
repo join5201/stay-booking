@@ -74,11 +74,33 @@ test('fill 실패. 빈칸 잔존', () => {
   assert.match(r.out, /fill\.placeholder/);
 });
 
-test('fill 실패. 절대경로가 아니다', () => {
-  const f = prep('fill-pass.md', (t) => t.replace(ROOT + '/document/', 'document/'));
-  const r = run(() => fill(f));
+// 이슈 26. 경로 칸은 저장소 상대경로다. 절대경로는 받아 주되 경고한다.
+// 통과 케이스와 실패 케이스와 경고 케이스를 짝으로 붙인다. 금지만 테스트하면 가드가 허용 값까지 막는다
+test('fill 통과. 저장소 상대경로', () => {
+  const r = run(() => fill(prep('fill-pass.md'), { dry: true }));
+  assert.equal(r.code, 0);
+  assert.doesNotMatch(r.out, /절대경로 표기/);
+});
+
+test('fill 통과. 절대경로도 받지만 경고한다', () => {
+  const f = prep('fill-pass.md', (t) => t.replace(/\| (document|harness)\//g, `| ${ROOT}/$1/`));
+  const r = run(() => fill(f, { dry: true }));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /절대경로 표기 2줄/);
+});
+
+test('fill 실패. 저장소 밖을 가리키는 상대경로', () => {
+  const f = prep('fill-pass.md', (t) => t.replace('document/01-o2o-ddd-plan.md', '../document/01-o2o-ddd-plan.md'));
+  const r = run(() => fill(f, { dry: true }));
   assert.equal(r.code, 1);
-  assert.match(r.out, /fill\.path-absolute/);
+  assert.match(r.out, /fill\.path-shape/);
+});
+
+test('fill 실패. 경로로 읽을 값이 없다', () => {
+  const f = prep('fill-pass.md', (t) => t.replace('document/01-o2o-ddd-plan.md', '어디에도없음'));
+  const r = run(() => fill(f, { dry: true }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /fill\.path-shape/);
 });
 
 test('fill 실패. 파일이 없다', () => {
@@ -118,7 +140,7 @@ test('fill 실패. 버전 칸에 sha256이 아닌 값이 있으면 잡는다', (
 
 // 폴더 경로에서 크래시하던 것을 검사 실패로 바꿨다
 test('fill 실패. 폴더 경로는 해시를 계산할 수 없다', () => {
-  const f = prep('fill-pass.md', (t) => t.replace(ROOT + '/document/01-o2o-ddd-plan.md', ROOT + '/document'));
+  const f = prep('fill-pass.md', (t) => t.replace('document/01-o2o-ddd-plan.md', 'harness/prompts'));
   const r = run(() => fill(f, { dry: true }));
   assert.equal(r.code, 1);
   assert.match(r.out, /fill\.path-is-file/);
@@ -126,7 +148,7 @@ test('fill 실패. 폴더 경로는 해시를 계산할 수 없다', () => {
 
 test('fill 통과. 생성 후 기입은 빈칸이 아니라 유예다', () => {
   const f = prep('fill-pass.md', (t) =>
-    t.replace(`| 01 전체 | ${ROOT}/document/01-o2o-ddd-plan.md | {{필수}} | 전문 |`,
+    t.replace('| 01 전체 | document/01-o2o-ddd-plan.md | {{필수}} | 전문 |',
       '| 평가 대상 | 생성 후 기입 | 생성 후 기입 | 전체 |'));
   const r = run(() => fill(f, { dry: true }));
   assert.equal(r.code, 0);
