@@ -66,9 +66,14 @@ public class CatalogApplicationService {
      * 확인한다고 적는다. 06-4 1-4도 컨텍스트를 넘는 선행조건을 앱 서비스에 둔다.
      * I14는 여기서 검사하지 않는다. 그것은 RoomType이 지킨다. 8-1절 C2가 이 경로를 검사한다.
      */
-    public RoomType registerRoomType(PropertyId propertyId, String name, int maxOccupancy,
-                                     String description) {
-        if (!propertyRepository.existsById(propertyId)) {
+    public RoomType registerRoomType(HostId hostId, PropertyId propertyId, String name,
+                                     int maxOccupancy, String description) {
+        // 11 CAT-06 처리 규칙이 부모 숙소의 소유자를 검사하라고 적는다. 없는 숙소와
+        // 남의 숙소를 같은 예외로 묶는 근거는 11 인증과 접근 제어다. 다른 사용자 소유
+        // 자원은 404이고 자원 정보를 흘리지 않는다. 8-1절 C6이 이 경로를 본다
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new PropertyNotFoundException(propertyId));
+        if (!property.hostId().equals(hostId)) {
             throw new PropertyNotFoundException(propertyId);
         }
         Instant now = Instant.now(clock);

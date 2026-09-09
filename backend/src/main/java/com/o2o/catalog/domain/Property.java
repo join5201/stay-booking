@@ -54,6 +54,13 @@ public class Property {
     @Column(name = "description", nullable = false, length = 2000)
     private String description;
 
+    // 11 응답 모델 Property가 version을 필수 필드로 적어서 6단계에 넣었다. 계약 2-2절은
+    // 6-2단계까지 넣지도 빼지도 말라고 하지만 그러면 CAT-01과 CAT-03의 응답이 명세와
+    // 달라진다. 지금은 값을 늘리는 경로가 없어 0에 머문다. 늘리는 방식을 낙관적 잠금으로
+    // 할지 손으로 대조할지가 2-2절의 확인필요이고 그 결정은 6-2단계 전에 받는다
+    @Column(name = "version", nullable = false)
+    private long version;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -71,6 +78,7 @@ public class Property {
         this.region = region;
         this.address = address;
         this.description = description;
+        this.version = 0L;
         this.createdAt = now;
         this.updatedAt = now;
     }
@@ -106,6 +114,10 @@ public class Property {
 
     public String description() {
         return description;
+    }
+
+    public long version() {
+        return version;
     }
 
     public Instant createdAt() {

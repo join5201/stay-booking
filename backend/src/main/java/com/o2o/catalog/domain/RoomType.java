@@ -42,6 +42,10 @@ public class RoomType {
     @Column(name = "description", nullable = false, length = 2000)
     private String description;
 
+    // Property의 같은 필드와 같은 이유다. 11 응답 모델 RoomType이 필수로 적는다
+    @Column(name = "version", nullable = false)
+    private long version;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -58,6 +62,7 @@ public class RoomType {
         this.name = name;
         this.maxOccupancy = maxOccupancy;
         this.description = description;
+        this.version = 0L;
         this.createdAt = now;
         this.updatedAt = now;
     }
@@ -93,6 +98,10 @@ public class RoomType {
 
     public String description() {
         return description;
+    }
+
+    public long version() {
+        return version;
     }
 
     public Instant createdAt() {
