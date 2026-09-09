@@ -3,16 +3,19 @@ package com.o2o.catalog.application;
 import java.time.Clock;
 import java.time.Instant;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.o2o.catalog.domain.Address;
 import com.o2o.catalog.domain.Property;
 import com.o2o.catalog.domain.PropertyNotFoundException;
+import com.o2o.catalog.domain.PropertyRegistered;
 import com.o2o.catalog.domain.PropertyRepository;
 import com.o2o.catalog.domain.Region;
 import com.o2o.catalog.domain.RoomType;
 import com.o2o.catalog.domain.RoomTypeNotFoundException;
+import com.o2o.catalog.domain.RoomTypeRegistered;
 import com.o2o.catalog.domain.RoomTypeRepository;
 import com.o2o.shared.HostId;
 import com.o2o.shared.PropertyId;
@@ -35,13 +38,16 @@ public class CatalogApplicationService {
 
     private final PropertyRepository propertyRepository;
     private final RoomTypeRepository roomTypeRepository;
+    private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
 
     public CatalogApplicationService(PropertyRepository propertyRepository,
                                      RoomTypeRepository roomTypeRepository,
+                                     ApplicationEventPublisher eventPublisher,
                                      Clock clock) {
         this.propertyRepository = propertyRepository;
         this.roomTypeRepository = roomTypeRepository;
+        this.eventPublisher = eventPublisher;
         this.clock = clock;
     }
 
@@ -56,7 +62,12 @@ public class CatalogApplicationService {
         Instant now = Instant.now(clock);
         Property property = Property.register(hostId, name, Region.of(regionCode),
                 Address.of(address), description, now);
-        return propertyRepository.save(property);
+        Property saved = propertyRepository.save(property);
+        // 06-4 1-2 registerProperty의 Post 열이 PropertyRegistered 발행을 적는다.
+        // 같은 트랜잭션 안에서 발행하는 근거는 06-2 4절이다. 그 절의 커밋 후 발행 규칙은
+        // 적용 경로를 예약의 생성과 확정과 만료 셋으로 열거하고 카탈로그는 그 열거에 없다
+        eventPublisher.publishEvent(PropertyRegistered.of(saved));
+        return saved;
     }
 
     /**
@@ -78,7 +89,10 @@ public class CatalogApplicationService {
         }
         Instant now = Instant.now(clock);
         RoomType roomType = RoomType.register(propertyId, name, maxOccupancy, description, now);
-        return roomTypeRepository.save(roomType);
+        RoomType saved = roomTypeRepository.save(roomType);
+        // 06-4 1-2 registerRoomType의 Post 열
+        eventPublisher.publishEvent(RoomTypeRegistered.of(saved));
+        return saved;
     }
 
     /**
