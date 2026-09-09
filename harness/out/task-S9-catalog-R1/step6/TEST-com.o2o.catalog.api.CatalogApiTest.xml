@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.catalog.api.CatalogApiTest" tests="16" skipped="0" failures="0" errors="0" timestamp="2026-09-09T06:14:42.799Z" hostname="BOOK-QD5U7FFOBT" time="6.471">
+  <properties/>
+  <testcase name="C10_역할이_다르면_403이다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.702"/>
+  <testcase name="C6_body에_hostId를_넣으면_거절한다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.013"/>
+  <testcase name="C9_maxOccupancy가_0이면_400이다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.176"/>
+  <testcase name="CAT_08_등록한_객실_타입을_인증_없이_조회한다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.064"/>
+  <testcase name="C9_정상_body는_통과한다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.02"/>
+  <testcase name="C9_명세에_없는_필드를_보내면_400이다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.007"/>
+  <testcase name="CAT_06_객실_타입을_등록하면_201과_Location이_온다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.034"/>
+  <testcase name="CAT_03_등록한_숙소를_인증_없이_조회한다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.028"/>
+  <testcase name="CAT_01_숙소를_등록하면_201과_Location이_온다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.019"/>
+  <testcase name="C6_남의_숙소에_객실_타입을_등록하면_404다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.022"/>
+  <testcase name="C10_헤더가_없으면_401이다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.006"/>
+  <testcase name="C10_공개_조회는_헤더_없이_된다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.028"/>
+  <testcase name="C6_응답의_hostId는_헤더_행위자다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.019"/>
+  <testcase name="CAT_03_없는_숙소는_404이고_코드가_RESOURCE_NOT_FOUND다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.02"/>
+  <testcase name="C10_미등록_행위자면_401이다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.007"/>
+  <testcase name="C9_필수_필드가_빠지면_400이고_어느_필드인지_알려준다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.006"/>
+  <system-out><![CDATA[15:14:42.988 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.o2o.catalog.api.CatalogApiTest]: CatalogApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+15:14:43.116 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.catalog.api.CatalogApiTest
+15:14:43.211 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.o2o.catalog.api.CatalogApiTest]: CatalogApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+15:14:43.211 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.catalog.api.CatalogApiTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.1)
+
+2026-09-09T15:14:43.638+09:00  INFO 104388 --- [    Test worker] com.o2o.catalog.api.CatalogApiTest       : Starting CatalogApiTest using Java 21.0.11 with PID 104388 (started by user in C:\Dev\potenup\99_projects\o2o\backend)
+2026-09-09T15:14:43.640+09:00  INFO 104388 --- [    Test worker] com.o2o.catalog.api.CatalogApiTest       : No active profile set, falling back to 1 default profile: "default"
+2026-09-09T15:14:44.249+09:00  INFO 104388 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-09-09T15:14:44.310+09:00  INFO 104388 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 50 ms. Found 2 JPA repository interfaces.
+2026-09-09T15:14:44.993+09:00  INFO 104388 --- [    Test worker] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 0 (http)
+2026-09-09T15:14:45.020+09:00  INFO 104388 --- [    Test worker] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-09-09T15:14:45.020+09:00  INFO 104388 --- [    Test worker] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.24]
+2026-09-09T15:14:45.103+09:00  INFO 104388 --- [    Test worker] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 1439 ms
+2026-09-09T15:14:45.376+09:00  INFO 104388 --- [    Test worker] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-09-09T15:14:45.454+09:00  INFO 104388 --- [    Test worker] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.4.5.Final
+2026-09-09T15:14:45.977+09:00  INFO 104388 --- [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-09-09T15:14:46.016+09:00  INFO 104388 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-09-09T15:14:46.269+09:00  INFO 104388 --- [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@2f5a092e
+2026-09-09T15:14:46.272+09:00  INFO 104388 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-09-09T15:14:46.379+09:00  INFO 104388 --- [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://127.0.0.1:3307/o2o_catalog_test]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 9.7.2
+	Default catalog/schema: o2o_catalog_test/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-09-09T15:14:47.317+09:00  INFO 104388 --- [    Test worker] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-09-09T15:14:47.460+09:00  INFO 104388 --- [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-09T15:14:47.532+09:00  INFO 104388 --- [    Test worker] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-09-09T15:14:47.686+09:00  WARN 104388 --- [    Test worker] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-09-09T15:14:48.039+09:00  INFO 104388 --- [    Test worker] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 51947 (http) with context path '/'
+2026-09-09T15:14:48.046+09:00  INFO 104388 --- [    Test worker] com.o2o.catalog.api.CatalogApiTest       : Started CatalogApiTest in 4.674 seconds (process running for 6.085)
+2026-09-09T15:14:48.499+09:00  INFO 104388 --- [o-auto-1-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-09-09T15:14:48.499+09:00  INFO 104388 --- [o-auto-1-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-09-09T15:14:48.501+09:00  INFO 104388 --- [o-auto-1-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+]]></system-out>
+  <system-err><![CDATA[Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+WARNING: A Java agent has been loaded dynamically (C:\Users\user\.gradle\caches\modules-2\files-2.1\net.bytebuddy\byte-buddy-agent\1.18.11\82212e5b3633e7a65fca8bec525762cfb6c9bae4\byte-buddy-agent-1.18.11.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+]]></system-err>
+</testsuite>

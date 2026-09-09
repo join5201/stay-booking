@@ -43,7 +43,18 @@ class CatalogApplicationServiceTest {
         PropertyId 없는_숙소 = PropertyId.of("prop_없는것");
 
         assertThrows(PropertyNotFoundException.class,
-                () -> catalogApplicationService.registerRoomType(없는_숙소, "스탠다드", 2, ""));
+                () -> catalogApplicationService.registerRoomType(HOST, 없는_숙소, "스탠다드", 2, ""));
+    }
+
+    @Test
+    void 남의_숙소에_객실_타입을_등록하면_거절한다() {
+        // C6의 앱 서비스 몫 둘째. 11 인증과 접근 제어가 다른 사용자 소유 자원을 404로 적는다.
+        // 없는 숙소와 같은 예외를 쓰는 것이 자원 정보를 흘리지 않는다는 그 규칙이다
+        Property 남의_숙소 = catalogApplicationService.registerProperty(
+                HostId.of("host_002"), "남의 스테이", "SEOUL", "서울특별시 중구 예시로 1", "");
+
+        assertThrows(PropertyNotFoundException.class,
+                () -> catalogApplicationService.registerRoomType(HOST, 남의_숙소.id(), "스탠다드", 2, ""));
     }
 
     @Test
@@ -53,7 +64,7 @@ class CatalogApplicationServiceTest {
                 HOST, "서울 스테이", "SEOUL", "서울특별시 종로구 예시로 10", "");
 
         RoomType roomType = catalogApplicationService.registerRoomType(
-                property.id(), "스탠다드 더블", 2, "2인 객실");
+                HOST, property.id(), "스탠다드 더블", 2, "2인 객실");
 
         assertNotNull(roomType.id());
         assertEquals(property.id(), roomType.propertyId());
