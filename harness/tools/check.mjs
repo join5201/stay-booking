@@ -30,6 +30,22 @@
 //     검사 24건 중 2건 실패
 //   이 줄들을 그대로 재요청 프롬프트에 붙인다 (HR3).
 //
+// g1 code 실행 예시 (2026-09-09 D-1 다)
+//   node harness/tools/check.mjs g1 backend/src/test/java/com/o2o/catalog/domain/RoomTypeTest.java \
+//     --type code --artifact backend/build/test-results/test/TEST-com.o2o.catalog.domain.RoomTypeTest.xml
+//
+// g1 code 통과 출력 예시
+//   PASS g1 backend/.../RoomTypeTest.java
+//     검사 6건 통과
+//     테스트 4건, 실패 0, 오류 0, 건너뜀 0
+//
+// g1 code 실패 출력 예시 (종료 코드 1)
+//   FAIL g1 backend/.../RoomTypeTest.java
+//     [code.tests-passed]  0  실패 1건 오류 0건
+//     검사 6건 중 1건 실패
+//     테스트 4건, 실패 1, 오류 0, 건너뜀 0
+//   결과 파일이 JUnit XML이 아니면 code.artifact-machine-readable이 먼저 걸린다
+//
 // answer 실패 출력 예시 (종료 코드 1)
 //   FAIL answer /tmp/answer.md
 //     [answer.result-section]  40  마지막 절 제목이 결과가 아니다 (R4). 실제: 다음 단계
@@ -319,9 +335,28 @@ function checkStyle(r, text, prefix = 'doc') {
   if (seen.bold) r.check(`${prefix}.no-bold`, 0, true, '');
 }
 
+// 결과 파일에서 실행 수와 실패 수와 오류 수와 건너뛴 수 넷을 읽는다 (D-1 다).
+// JUnit XML만 읽는다. 다른 형식을 추측으로 읽으면 그 형식이 바뀌었을 때 조용히 통과시킨다.
+// testsuite가 여럿이면 합산한다. Gradle이 테스트 클래스마다 파일 하나를 낸다.
+function readTestCounts(file) {
+  let text;
+  try { text = fs.readFileSync(file, 'utf8'); } catch { return null; }
+  const tags = text.match(/<testsuite\b[^>]*>/g);
+  if (!tags) return null;
+  const sum = { tests: 0, failures: 0, errors: 0, skipped: 0 };
+  for (const tag of tags) {
+    for (const k of Object.keys(sum)) {
+      const m = tag.match(new RegExp(`\\b${k}="(\\d+)"`));
+      if (m) sum[k] += Number(m[1]);
+    }
+  }
+  return sum;
+}
+
 export function g1(file, { type, end, require: required = [], artifacts = [] } = {}) {
   const r = new Report('g1', file);
   const text = fs.readFileSync(file, 'utf8');
+  let countSummary = null;
 
   if (type === 'doc') {
     r.check('doc.date-created', 1, /^최초 작성:/m.test(text), '최초 작성 줄이 없다 (F5)');
@@ -345,9 +380,12 @@ export function g1(file, { type, end, require: required = [], artifacts = [] } =
     checkStyle(r, text);
     checkLinks(r, text, file);
   } else if (type === 'code') {
-    // 존재 확인까지다. 결과 파일이 있다는 사실을 테스트 성공으로 해석하지 않는다.
-    // 실제 성공 판정은 첫 코드 Task에서 eval-criteria-code.md v1과 함께 정한다 (HRV-09 코드분 이월)
+    // 2026-09-09 task-S9-catalog 결정 D-1 다로 존재 확인에서 숫자 판정으로 올렸다.
+    // 파일이 있다는 사실을 성공으로 읽지 않는다. 실패한 빌드 로그도 파일이기 때문이다.
+    // 판정 범위는 계약 0-2절이 넷으로 한정했다. 실행 수, 실패 수, 오류 수, 건너뛴 수.
     r.check('code.artifact-given', 0, artifacts.length > 0, '--artifact로 빌드와 테스트 결과 파일을 지정해야 한다');
+    let parsed = 0;
+    const total = { tests: 0, failures: 0, errors: 0, skipped: 0 };
     for (const a of artifacts) {
       const ok = fs.existsSync(a) && fs.statSync(a).size > 0;
       r.check('code.artifact-exists', 0, ok, `결과 파일이 없거나 비어 있다: ${a}`);
@@ -356,13 +394,31 @@ export function g1(file, { type, end, require: required = [], artifacts = [] } =
         const isSource = /\.(mjs|js|ts|java|tsx|jsx)$/.test(a);
         r.check('code.artifact-not-source', 0, !(insideRepo && isSource),
           `소스 파일을 결과 파일로 지정했다: ${a}`);
+        const counts = readTestCounts(a);
+        if (counts) {
+          parsed++;
+          for (const k of Object.keys(total)) total[k] += counts[k];
+        }
       }
+    }
+    // 로그 파일만 붙이고 기계 판독 결과를 빼면 숫자를 못 읽는다. 그 상태를 통과로 두면
+    // D-1 다가 없던 일이 된다
+    r.check('code.artifact-machine-readable', 0, parsed > 0,
+      '기계 판독 결과 파일이 하나도 없다. JUnit XML을 --artifact로 지정한다 (D-1 다)');
+    if (parsed > 0) {
+      // 실행 수 0을 통과로 두면 테스트를 다 지워도 초록이 뜬다
+      r.check('code.tests-run', 0, total.tests > 0, '실행된 테스트가 0건이다');
+      r.check('code.tests-passed', 0, total.failures + total.errors === 0,
+        `실패 ${total.failures}건 오류 ${total.errors}건`);
+      countSummary = `  테스트 ${total.tests}건, 실패 ${total.failures}, 오류 ${total.errors}, 건너뜀 ${total.skipped}`;
     }
   } else {
     console.error('사용법 오류: --type은 doc, api, code 중 하나');
     return 2;
   }
-  return r.print();
+  const rc = r.print();
+  if (countSummary) console.log(countSummary);
+  return rc;
 }
 
 // ---------- 원본 리포트 파서 (HRV-01, 02) ----------

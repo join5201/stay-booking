@@ -218,11 +218,59 @@ test('g1 api 실패. 응답 절 없음', () => {
   assert.match(r.out, /api\.section/);
 });
 
-test('g1 code 통과. 결과 파일이 있다', () => {
+// D-1 다 (2026-09-09). 존재 확인이 아니라 결과 파일의 숫자를 읽는다
+const junitXml = (name, { tests, failures = 0, errors = 0, skipped = 0 }) =>
+  `<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="${name}" tests="${tests}" `
+  + `skipped="${skipped}" failures="${failures}" errors="${errors}"></testsuite>\n`;
+
+test('g1 code 통과. 결과 파일의 실패 수가 0이다', () => {
+  const a = path.join(TMP, 'TEST-pass.xml');
+  fs.writeFileSync(a, junitXml('com.o2o.PassTest', { tests: 4 }));
+  const r = run(() => g1(prep('g1-api-pass.md'), { type: 'code', artifacts: [a] }));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /테스트 4건, 실패 0, 오류 0, 건너뜀 0/);
+});
+
+test('g1 code 실패. 결과 파일에 실패가 있다', () => {
+  const a = path.join(TMP, 'TEST-fail.xml');
+  fs.writeFileSync(a, junitXml('com.o2o.FailTest', { tests: 2, failures: 1 }));
+  const r = run(() => g1(prep('g1-api-pass.md'), { type: 'code', artifacts: [a] }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /code\.tests-passed/);
+});
+
+test('g1 code 실패. 결과 파일에 오류가 있다', () => {
+  const a = path.join(TMP, 'TEST-error.xml');
+  fs.writeFileSync(a, junitXml('com.o2o.ErrorTest', { tests: 2, errors: 1 }));
+  const r = run(() => g1(prep('g1-api-pass.md'), { type: 'code', artifacts: [a] }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /code\.tests-passed/);
+});
+
+test('g1 code 실패. 실행된 테스트가 0건이다', () => {
+  const a = path.join(TMP, 'TEST-empty.xml');
+  fs.writeFileSync(a, junitXml('com.o2o.EmptyTest', { tests: 0 }));
+  const r = run(() => g1(prep('g1-api-pass.md'), { type: 'code', artifacts: [a] }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /code\.tests-run/);
+});
+
+test('g1 code 실패. 로그만 있고 기계 판독 결과가 없다', () => {
   const a = path.join(TMP, 'build.log');
   fs.writeFileSync(a, 'BUILD SUCCESSFUL\n');
   const r = run(() => g1(prep('g1-api-pass.md'), { type: 'code', artifacts: [a] }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /code\.artifact-machine-readable/);
+});
+
+test('g1 code 통과. 결과 파일 여럿을 합산한다', () => {
+  const a1 = path.join(TMP, 'TEST-sum1.xml');
+  const a2 = path.join(TMP, 'TEST-sum2.xml');
+  fs.writeFileSync(a1, junitXml('com.o2o.OneTest', { tests: 3 }));
+  fs.writeFileSync(a2, junitXml('com.o2o.TwoTest', { tests: 5, skipped: 1 }));
+  const r = run(() => g1(prep('g1-api-pass.md'), { type: 'code', artifacts: [a1, a2] }));
   assert.equal(r.code, 0);
+  assert.match(r.out, /테스트 8건, 실패 0, 오류 0, 건너뜀 1/);
 });
 
 test('g1 code 실패. 결과 파일이 없다', () => {

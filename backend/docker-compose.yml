@@ -1,0 +1,36 @@
+# O2O 카탈로그 테스트용 MySQL 컨테이너
+#
+# 왜 이 파일이 필요한가: 로컬에 mysql 클라이언트가 없고 3306은 다른 서버가 이미 쓰고 있다.
+# 명령 한 줄로 띄우면 값이 세션마다 달라진다. 이 파일이 같은 값으로 다시 띄우게 한다.
+#
+# 실행 예시
+#   docker compose -f backend/docker-compose.yml up -d
+#   docker compose -f backend/docker-compose.yml ps
+#   docker compose -f backend/docker-compose.yml down
+#
+# 실패 시 출력 예시
+#   error during connect: ... dockerDesktopLinuxEngine: The system cannot find the file specified.
+#     Docker Desktop이 꺼져 있다. 켜고 다시 실행한다.
+#
+#   Error response from daemon: driver failed programming external connectivity ... 0.0.0.0:3307
+#     3307을 다른 프로세스가 쓰고 있다. ports 왼쪽 값을 바꾸고 이 파일과 작업 계약 9절에 적는다.
+#
+#   error while interpolating services.mysql.environment.[]: required variable O2O_MYSQL_PASSWORD is missing
+#     환경변수가 없다. backend/.env.example을 보고 backend/.env를 만든다.
+#
+# 비밀번호는 이 파일에 적지 않는다. backend/.env 또는 셸 환경변수로 준다. .env는 추적하지 않는다.
+# 이미지 태그는 2026-09-08 확인값이다. Docker Hub에서 mysql:lts가 가리키던 판이 9.7.2였다.
+# 볼륨을 두지 않는다. 이 DB는 테스트용이고 작업 계약 9절이 초기화 허용 범위를
+# o2o_catalog_test 안으로 한정한다. 컨테이너를 내리면 데이터도 같이 사라지는 편이 그 범위에 맞다.
+
+services:
+  mysql:
+    image: mysql:9.7.2
+    container_name: o2o-catalog-mysql
+    ports:
+      - "127.0.0.1:3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${O2O_MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: o2o_catalog_test
+      MYSQL_USER: ${O2O_MYSQL_USER}
+      MYSQL_PASSWORD: ${O2O_MYSQL_PASSWORD}
