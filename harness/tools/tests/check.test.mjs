@@ -25,7 +25,7 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { fill, g1, g2, answer } from '../check.mjs';
+import { fill, g1, g2, answer, scopeKind, skipReason } from '../check.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const FIX = path.join(HERE, 'fixtures');
@@ -508,4 +508,47 @@ test('answer 실패. 코드 울타리 안의 결과 제목은 절로 세지 않�
   const r = run(() => answer(f));
   assert.equal(r.code, 1);
   assert.match(r.out, /answer\.result-section/);
+});
+
+// ---------- 적용 범위 (10-14 2-3절 A4) ----------
+// 왜 필요한가: 이 선언이 없으면 harness/docs/ 문서에 g1 doc을 돌렸을 때 종료 문장
+// 검사가 전원 실패한다. 검사기의 범위 문제를 산출물의 결함으로 읽게 만드는 고장이다.
+// 범위 밖은 통과와 다르게 센다. 검사를 안 돌린 것과 돌려서 통과한 것을 가르기 위해서다.
+
+test('scopeKind. 경로 앞자리가 파일 성격을 정한다', () => {
+  assert.equal(scopeKind(path.join(ROOT, 'document/01-x.md')), 'step');
+  assert.equal(scopeKind(path.join(ROOT, 'harness/out/task-S8-R1/candidate.md')), 'step');
+  assert.equal(scopeKind(path.join(ROOT, 'harness/docs/10-9-x.md')), 'harness-doc');
+  assert.equal(scopeKind(path.join(ROOT, 'harness/prompts/generate.md')), 'harness-doc');
+});
+
+// 테스트는 임시 폴더에 fixture를 쓴다. 그 파일이 성격을 얻으면 기존 73건이 달라진다
+test('scopeKind. 저장소 밖 파일은 성격이 없다', () => {
+  assert.equal(scopeKind(path.join(TMP, 'x.md')), null);
+});
+
+test('skipReason. 하네스 문서의 종료 문장만 범위 밖이다', () => {
+  assert.ok(skipReason(path.join(ROOT, 'harness/docs/10-9-x.md'), 'doc.end-sentence'));
+  assert.equal(skipReason(path.join(ROOT, 'harness/out/r/candidate.md'), 'doc.end-sentence'), null);
+  assert.equal(skipReason(path.join(ROOT, 'harness/docs/10-9-x.md'), 'doc.date-created'), null);
+});
+
+test('g1 doc. 하네스 문서는 종료 문장을 범위 밖으로 센다', () => {
+  const f = path.join(ROOT, 'harness/docs/10-9-o2o-harness-answer-format-plan.md');
+  const r = run(() => g1(f, { type: 'doc' }));
+  assert.match(r.out, /범위 밖 1건/);
+  assert.doesNotMatch(r.out, /\[doc\.end-sentence\]/);
+});
+
+test('g1 doc. Step 산출물 자리에서는 종료 문장 검사가 살아 있다', () => {
+  const f = path.join(ROOT, 'harness/out');
+  assert.equal(skipReason(path.join(f, 'x/candidate.md'), 'doc.end-sentence'), null);
+});
+
+test('g1 doc. 통과 출력이 검사 이름을 다 적는다', () => {
+  const r = run(() => g1(prep('g1-doc-pass.md'), { type: 'doc' }));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /doc\.date-created/);
+  assert.match(r.out, /doc\.end-sentence/);
+  assert.doesNotMatch(r.out, /범위 밖/);
 });

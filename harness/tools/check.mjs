@@ -22,6 +22,17 @@
 // 통과 출력 예시
 //   PASS g1 harness/out/task-S8-R1/candidate.md
 //     검사 8건 통과
+//       doc.date-created doc.date-updated doc.no-emdash doc.no-middot doc.no-bold
+//       doc.end-sentence link.exists link.stale
+//   이름을 다 적는 이유는 그 명령이 무엇을 보는지 실행 한 번으로 알기 위해서다 (10-14 2-3절 A2).
+//
+// 범위 밖 출력 예시
+//   PASS g1 harness/docs/10-9-o2o-harness-answer-format-plan.md
+//     검사 7건 통과
+//       doc.date-created doc.date-updated doc.no-emdash doc.no-middot doc.no-bold link.exists link.stale
+//     범위 밖 1건
+//       doc.end-sentence  하네스 문서는 Step 산출물이 아니라 고정 종료 문장이 없다 (10-14 3절)
+//   범위 밖은 통과로 세지 않는다. 검사를 안 돌린 것과 돌려서 통과한 것을 가른다 (10-14 2-3절 A4).
 //
 // 실패 출력 예시 (종료 코드 1)
 //   FAIL g2 harness/decisions/task-S8-R1.md
@@ -37,6 +48,8 @@
 // g1 code 통과 출력 예시
 //   PASS g1 backend/.../RoomTypeTest.java
 //     검사 6건 통과
+//       code.artifact-given code.artifact-exists code.artifact-not-source
+//       code.artifact-machine-readable code.tests-run code.tests-passed
 //     테스트 4건, 실패 0, 오류 0, 건너뜀 0
 //
 // g1 code 실패 출력 예시 (종료 코드 1)
@@ -200,10 +213,60 @@ function findTableByHeaders(text, needed) {
   return null;
 }
 
+// 적용 범위 선언 (10-14 2-3절 A4). promptfoo는 설정 파일이 어느 테스트에 어느 assert를
+// 거는지 적어서 범위가 데이터다. 우리는 --type을 사람이 고르므로 경로로 성격을 못 박는다.
+// 이것이 없으면 harness/docs/ 문서에 g1 doc을 돌렸을 때 종료 문장 검사가 전원 실패한다.
+const SCOPE = [
+  ['document/', 'step'],
+  ['harness/out/', 'step'],
+  ['harness/docs/', 'harness-doc'],
+  ['harness/prompts/', 'harness-doc'],
+];
+
+// 성격별로 적용하지 않는 검사와 그 이유. 범위 밖은 통과가 아니라 따로 센다.
+const OUT_OF_SCOPE = {
+  'harness-doc': {
+    'doc.end-sentence': '하네스 문서는 Step 산출물이 아니라 고정 종료 문장이 없다 (10-14 3절)',
+  },
+};
+
+// 저장소 밖 파일은 성격이 없다. 테스트가 임시 폴더에 쓰므로 그 경우 기존 동작을 그대로 둔다.
+export function scopeKind(file) {
+  const p = rel(file);
+  for (const [prefix, kind] of SCOPE) if (p.startsWith(prefix)) return kind;
+  return null;
+}
+
+export function skipReason(file, id) {
+  const kind = scopeKind(file);
+  return (kind && OUT_OF_SCOPE[kind] && OUT_OF_SCOPE[kind][id]) || null;
+}
+
+// 목록이 길어지면 줄을 접는다. g2는 검사가 27건이라 한 줄에 다 넣으면 못 읽는다
+function wrapNames(items, width = 96, indent = '    ') {
+  const lines = [];
+  let cur = '';
+  for (const it of items) {
+    if (cur && cur.length + 1 + it.length > width) { lines.push(cur); cur = it; }
+    else cur = cur ? `${cur} ${it}` : it;
+  }
+  if (cur) lines.push(cur);
+  return lines.map((l) => indent + l);
+}
+
 class Report {
-  constructor(cmd, file) { this.cmd = cmd; this.file = file; this.fails = []; this.count = 0; }
+  constructor(cmd, file) {
+    this.cmd = cmd; this.file = file; this.fails = []; this.count = 0;
+    this.names = []; this.skips = [];
+  }
   check(name, line, ok, msg) {
+    const why = skipReason(this.file, name);
+    if (why) {
+      if (!this.skips.some((s) => s.name === name)) this.skips.push({ name, why });
+      return;
+    }
     this.count++;
+    if (!this.names.includes(name)) this.names.push(name);
     if (!ok) this.fails.push({ name, line, msg });
   }
   print() {
@@ -211,6 +274,8 @@ class Report {
     if (this.fails.length === 0) {
       console.log(`PASS ${this.cmd} ${f}`);
       console.log(`  검사 ${this.count}건 통과`);
+      for (const l of wrapNames(this.names)) console.log(l);
+      this.printSkips();
       return 0;
     }
     console.log(`FAIL ${this.cmd} ${f}`);
@@ -219,7 +284,14 @@ class Report {
       console.log(`  [${x.name}]${' '.repeat(w - x.name.length)} ${x.line}  ${x.msg}`);
     }
     console.log(`  검사 ${this.count}건 중 ${this.fails.length}건 실패`);
+    this.printSkips();
     return 1;
+  }
+
+  printSkips() {
+    if (this.skips.length === 0) return;
+    console.log(`  범위 밖 ${this.skips.length}건`);
+    for (const s of this.skips) console.log(`    ${s.name}  ${s.why}`);
   }
 }
 
