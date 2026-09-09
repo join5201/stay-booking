@@ -139,13 +139,28 @@ node harness/tools/check.mjs g2 <이 파일> --mode pre를 돌리고 사람이 �
 | 코드 작업의 직접 실행 근거 | 해당 없음 |
 | 평가 대상 소스와 테스트의 무변경 확인 | 해당 없음 |
 | 검증 미완료 사항 | 셋. S8-R1-B-07의 상위 배분 문서 대비 전수 확인, R4 기산점 문언, Property 루트 유지 여부. apply-report.md 7절 |
-| 사용자 최종 완료 판단과 날짜 | 미기입 |
+| 사용자 최종 완료 판단과 날짜 | 완료. join5201, 2026-09-09 |
 | 실제 판단 및 확인에 사용한 시간 | 미측정 |
 
 위 표의 값 칸에는 값만 적는다. 설명을 덧붙이면 g2가 그 문장 전체를 값으로 읽는다. 2026-09-09 task-S2에서 실제로 걸렸다.
 
-반영본은 2026-09-09 사용자 승인을 받았다. 최종 완료 확정은 별개이며 아직 받지 않았다.
+반영본은 2026-09-09 사용자 승인을 받았고 같은 날 최종 완료도 확정됐다.
+
+확정본이 착지한 자리 여덟이다.
+
+| 02-o2o-feature-list | document/02-o2o-feature-list.md | sha256:89c36d3211281b02 |
+| 03-o2o-event-storming | document/03-o2o-event-storming.md | sha256:61e18b8a2a007f0f |
+| 04-o2o-commands-actors | document/04-o2o-commands-actors.md | sha256:be3b0be9ec121c87 |
+| 04-5-o2o-policies-draft | document/04-5-o2o-policies-draft.md | sha256:52cc18198afb5c52 |
+| 05-3-o2o-glossary | document/05-3-o2o-glossary.md | sha256:14a7d2c93914ebeb |
+| 06-1-o2o-context-map | document/06-1-o2o-context-map.md | sha256:ba7b0c01427a93d2 |
+| 06-2-o2o-aggregates | document/06-2-o2o-aggregates.md | sha256:dcd6ef80d2438a40 |
+| 06-4-o2o-contracts | document/06-4-o2o-contracts.md | sha256:45a32dd34e3d9d0f |
+
+04-5는 document/에 없던 파일이라 신설이다. 계약이 project-sync v1을 입력으로 v2 후보를 만들어 document/로 옮긴다고 적었다.
+
+입력 팩 v3은 착지하지 못했다. 자리가 harness/project-sync/o2o-review-input-pack.md인데 그 폴더는 모델이 쓸 수 없다. CLAUDE.md 3-1의 반입 절차대로 사람이 옮긴다. 그때까지 project-sync의 입력 팩은 v2다.
 
 S8-R1-B-07 하나는 반영하지 못했다. 허용 입력에 상위 배분 문서와 기준판이 없어야 닫히는데 그것을 넣으려면 남은 재평가 1회를 써야 한다. 수용은 했고 조치는 못 한 상태이며 apply-report.md 4절과 7절에 그렇게 적었다. 수용을 반영 완료로 읽지 않는다.
 
-이 판으로 Task 완료를 주장하지 않는다.
+이 판은 완료 확정을 받았다. 확정본 여덟이 document/에 있고 입력 팩 v3의 project-sync 반입 하나가 사람 손에 남았다.
