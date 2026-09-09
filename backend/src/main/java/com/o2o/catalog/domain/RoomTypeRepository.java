@@ -2,6 +2,9 @@ package com.o2o.catalog.domain;
 
 import java.util.Optional;
 
+import com.o2o.shared.PageQuery;
+import com.o2o.shared.PageResult;
+import com.o2o.shared.PropertyId;
 import com.o2o.shared.RoomTypeId;
 
 /**
@@ -13,4 +16,9 @@ public interface RoomTypeRepository {
     RoomType save(RoomType roomType);
 
     Optional<RoomType> findById(RoomTypeId roomTypeId);
+
+    /**
+     * CAT-09. 설계 근거: 11 객실 타입 CAT-09. 숙소 하나에 속한 객실 타입 목록이다.
+     */
+    PageResult<RoomType> findByPropertyId(PropertyId propertyId, PageQuery pageQuery);
 }

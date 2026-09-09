@@ -11,13 +11,17 @@ import com.o2o.catalog.domain.Address;
 import com.o2o.catalog.domain.Property;
 import com.o2o.catalog.domain.PropertyNotFoundException;
 import com.o2o.catalog.domain.PropertyRegistered;
+import com.o2o.catalog.domain.PropertyUpdated;
 import com.o2o.catalog.domain.PropertyRepository;
 import com.o2o.catalog.domain.Region;
 import com.o2o.catalog.domain.RoomType;
 import com.o2o.catalog.domain.RoomTypeNotFoundException;
 import com.o2o.catalog.domain.RoomTypeRegistered;
+import com.o2o.catalog.domain.RoomTypeUpdated;
 import com.o2o.catalog.domain.RoomTypeRepository;
 import com.o2o.shared.HostId;
+import com.o2o.shared.PageQuery;
+import com.o2o.shared.PageResult;
 import com.o2o.shared.PropertyId;
 import com.o2o.shared.RoomTypeId;
 
@@ -93,6 +97,83 @@ public class CatalogApplicationService {
         // 06-4 1-2 registerRoomType의 Post 열
         eventPublisher.publishEvent(RoomTypeRegistered.of(saved));
         return saved;
+    }
+
+    /**
+     * CAT-02. 설계 근거: 11 숙소 CAT-02, 06-4 1-2 updateProperty.
+     *
+     * 소유자 검사가 먼저다. 11 인증과 접근 제어가 다른 사용자 소유 자원을 404로 적는다.
+     * 버전 대조는 애그리거트가 한다. 06-4 1-4가 규칙 검증을 그쪽에 둔다.
+     */
+    public Property updateProperty(HostId hostId, PropertyId propertyId, long expectedVersion,
+                                   String name, String regionCode, String address,
+                                   String description) {
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new PropertyNotFoundException(propertyId));
+        if (!property.hostId().equals(hostId)) {
+            throw new PropertyNotFoundException(propertyId);
+        }
+        property.update(expectedVersion, name,
+                regionCode == null ? null : Region.of(regionCode),
+                address == null ? null : Address.of(address),
+                description, Instant.now(clock));
+        Property saved = propertyRepository.save(property);
+        // 06-4 1-2 updateProperty의 Post 열
+        eventPublisher.publishEvent(PropertyUpdated.of(saved));
+        return saved;
+    }
+
+    /**
+     * CAT-07. 설계 근거: 11 객실 타입 CAT-07, 06-4 1-2 updateRoomType.
+     *
+     * 소유자는 부모 숙소가 갖고 있다. 06-2 1절이 RoomType의 내부 요소를 maxOccupancy와
+     * PropertyId로만 적어서 객실 타입 자체에는 소유자가 없다. 그래서 부모를 한 번 읽는다.
+     */
+    public RoomType updateRoomType(HostId hostId, RoomTypeId roomTypeId, long expectedVersion,
+                                   String name, Integer maxOccupancy, String description) {
+        RoomType roomType = roomTypeRepository.findById(roomTypeId)
+                .orElseThrow(() -> new RoomTypeNotFoundException(roomTypeId));
+        Property property = propertyRepository.findById(roomType.propertyId())
+                .orElseThrow(() -> new RoomTypeNotFoundException(roomTypeId));
+        if (!property.hostId().equals(hostId)) {
+            throw new RoomTypeNotFoundException(roomTypeId);
+        }
+        roomType.update(expectedVersion, name, maxOccupancy, description, Instant.now(clock));
+        RoomType saved = roomTypeRepository.save(roomType);
+        // 06-4 1-2 updateRoomType의 Post 열
+        eventPublisher.publishEvent(RoomTypeUpdated.of(saved));
+        return saved;
+    }
+
+    /**
+     * CAT-04. 설계 근거: 11 숙소 CAT-04. 인증이 불필요하고 지역 코드는 선택이다.
+     */
+    @Transactional(readOnly = true)
+    public PageResult<Property> listProperties(String regionCode, PageQuery pageQuery) {
+        return propertyRepository.findAll(regionCode, pageQuery);
+    }
+
+    /**
+     * CAT-05. 설계 근거: 11 숙소 CAT-05 처리 규칙.
+     * 행위자의 hostId로 범위를 제한한다. hostId 쿼리는 받지 않으므로 인자가 하나뿐이다.
+     */
+    @Transactional(readOnly = true)
+    public PageResult<Property> listHostProperties(HostId hostId, PageQuery pageQuery) {
+        return propertyRepository.findByHostId(hostId, pageQuery);
+    }
+
+    /**
+     * CAT-09. 설계 근거: 11 객실 타입 CAT-09.
+     *
+     * 부모 숙소의 존재를 먼저 본다. 11 인증과 접근 제어가 중첩 경로의 부모와 자식 관계도
+     * 확인하라고 적는다. 없는 숙소 아래를 조회하면 빈 목록이 아니라 404다.
+     */
+    @Transactional(readOnly = true)
+    public PageResult<RoomType> listRoomTypes(PropertyId propertyId, PageQuery pageQuery) {
+        if (!propertyRepository.existsById(propertyId)) {
+            throw new PropertyNotFoundException(propertyId);
+        }
+        return roomTypeRepository.findByPropertyId(propertyId, pageQuery);
     }
 
     /**

@@ -5,10 +5,12 @@ import java.net.URI;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.o2o.catalog.application.CatalogApplicationService;
@@ -16,6 +18,7 @@ import com.o2o.catalog.domain.Property;
 import com.o2o.shared.Actor;
 import com.o2o.shared.ActorResolver;
 import com.o2o.shared.ActorRole;
+import com.o2o.shared.PageQuery;
 import com.o2o.shared.PropertyId;
 
 import jakarta.validation.Valid;
@@ -67,5 +70,34 @@ public class PropertyController {
     public PropertyResponse get(@PathVariable String propertyId) {
         return PropertyResponse.from(
                 catalogApplicationService.getProperty(PropertyId.of(propertyId)));
+    }
+
+    /**
+     * CAT-02 숙소 수정. 인증 HOST이고 대상 숙소의 소유자여야 한다.
+     * 버전 대조로 동시 수정을 막는다. 불일치는 409 VERSION_CONFLICT다(계약 2-2절).
+     */
+    @PatchMapping("/{propertyId}")
+    public PropertyResponse update(
+            @RequestHeader(value = "X-Dev-Actor-Id", required = false) String actorId,
+            @PathVariable String propertyId,
+            @Valid @RequestBody UpdatePropertyRequest request) {
+        Actor actor = actorResolver.require(actorId, ActorRole.HOST);
+        return PropertyResponse.from(catalogApplicationService.updateProperty(
+                actor.asHostId(), PropertyId.of(propertyId), request.version(),
+                request.name(), request.regionCode(), request.address(), request.description()));
+    }
+
+    /**
+     * CAT-04 숙소 목록 조회. 인증 불필요. 지역 코드는 선택이다.
+     * page와 size의 기본값과 상한은 PageQuery가 갖고 있다. 11 공통 목록과 날짜 범위.
+     */
+    @GetMapping
+    public PageResponse<PropertyResponse> list(
+            @RequestParam(required = false) String regionCode,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        return PageResponse.from(
+                catalogApplicationService.listProperties(regionCode, PageQuery.of(page, size)),
+                PropertyResponse::from);
     }
 }

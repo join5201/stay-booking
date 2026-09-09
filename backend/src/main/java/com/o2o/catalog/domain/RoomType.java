@@ -4,6 +4,7 @@ import java.time.Instant;
 
 import com.o2o.shared.PropertyId;
 import com.o2o.shared.RoomTypeId;
+import com.o2o.shared.VersionConflictException;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,8 +14,8 @@ import jakarta.persistence.Table;
 /**
  * 객실 타입 애그리거트 루트. 설계 근거: 06-2 1절 RoomType 행, 06-2 6절 카탈로그 CRC.
  *
- * CRC의 책임 두 줄에 대응한다. 소속 숙소와 이름과 최대 인원을 알고, 객실 타입을 등록하며
- * I14를 검사한다. 수정은 CAT-07에 걸려 개정 1로 이월했다.
+ * CRC의 책임 두 줄에 대응한다. 소속 숙소와 이름과 최대 인원을 알고, 객실 타입을 등록하고
+ * 수정하며 I14를 검사한다. 수정은 개정 2로 이번 바퀴에 들어와 6-2단계에서 붙었다.
  *
  * 이 애그리거트가 지키는 불변식은 I14 하나다(06-2 3-1, 06-4 1-1). 최대 인원은 0보다 크다.
  * 검사 위치가 여기인 근거는 06-4 1-4다. 규칙 검증은 애그리거트와 값 객체가 한다.
@@ -78,6 +79,35 @@ public class RoomType {
             throw new InvalidOccupancyException(maxOccupancy);
         }
         return new RoomType(RoomTypeId.newId(), propertyId, name, maxOccupancy, description, now);
+    }
+
+    /**
+     * CAT-07. 설계 근거: 06-4 1-2 updateRoomType. Invariant가 인원 양수(I14)이고 하향을 허용한다.
+     *
+     * 하향 허용의 근거는 같은 행의 괄호다. 기존 예약에 영향이 없다고 적는다. 11 CAT-07 처리
+     * 규칙도 최대 인원 수정은 신규 예약에 적용한다고 적는다. 그래서 내리는 값을 막지 않는다.
+     *
+     * 버전 대조는 Property.update와 같다. 계약 2-2절.
+     */
+    public void update(long expectedVersion, String name, Integer maxOccupancy,
+                       String description, Instant now) {
+        if (this.version != expectedVersion) {
+            throw new VersionConflictException(expectedVersion, this.version);
+        }
+        if (maxOccupancy != null) {
+            if (maxOccupancy <= 0) {
+                throw new InvalidOccupancyException(maxOccupancy);
+            }
+            this.maxOccupancy = maxOccupancy;
+        }
+        if (name != null) {
+            this.name = name;
+        }
+        if (description != null) {
+            this.description = description;
+        }
+        this.version = this.version + 1;
+        this.updatedAt = now;
     }
 
     public RoomTypeId id() {
