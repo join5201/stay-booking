@@ -14,12 +14,12 @@
 | 작업 유형 | 설계 문서 |
 | 목표 | 09-1 보드 v2와 설계 문서 계열의 델타 13건을 판정하고, 수용분만 반영한 후보를 만든다 |
 | 대상 API ID | 결정 D-1이 수용이면 11 API의 숙소, 객실타입, 프로모션 경로. 그 전에는 해당 없음 |
-| 완료 기준 | 결정 4건이 C:/Dev/potenup/99_projects/o2o/harness/decisions/decisions-09-1.md에서 전부 값을 갖고, 수용분을 반영한 후보가 node harness/tools/check.mjs g1 --type doc를 통과하며, 거부분은 같은 결정표에 거부 이유와 함께 남는다 |
-| 변경 허용 파일과 범위 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S2-R1/ 아래 후보와 C:/Dev/potenup/99_projects/o2o/harness/decisions/decisions-09-1.md 둘뿐이다. document/와 harness/project-sync/는 읽기만 한다 |
+| 완료 기준 | 결정 4건이 harness/decisions/decisions-09-1.md에서 전부 값을 갖고, 수용분을 반영한 후보가 node harness/tools/check.mjs g1 --type doc를 통과하며, 거부분은 같은 결정표에 거부 이유와 함께 남는다 |
+| 변경 허용 파일과 범위 | harness/out/task-S2-R1/ 아래 후보와 harness/decisions/decisions-09-1.md 둘뿐이다. document/와 harness/project-sync/는 읽기만 한다 |
 | 범위 밖과 유지할 전제 | 아래 3절 |
 | 기준 버전 | 4절 입력 표의 해시. node harness/tools/check.mjs fill이 채운다 |
-| 후보 작업 공간 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S2-R1/ |
-| 결과 기록 경로 | C:/Dev/potenup/99_projects/o2o/harness/state/progress.md |
+| 후보 작업 공간 | harness/out/task-S2-R1/ |
+| 결과 기록 경로 | harness/state/progress.md |
 
 ## 1. 이 Task가 task-S8과 다른 점
 
@@ -35,7 +35,7 @@ task-S8은 이미 내려진 결정 11건을 문서에 반영하는 작업이었�
 
 ## 2. 판정할 델타 13건
 
-출처는 C:/Dev/potenup/99_projects/o2o/harness/project-sync/09-1-o2o-board-v2.md 10-1절이다. 커맨드 5개와 이벤트 8개다.
+출처는 harness/project-sync/09-1-o2o-board-v2.md 10-1절이다. 커맨드 5개와 이벤트 8개다.
 
 ### 묶음 1. Close와 Delete 계열 10건
 
@@ -69,37 +69,39 @@ task-S8은 이미 내려진 결정 11건을 문서에 반영하는 작업이었�
 
 ## 4. 입력과 적용 규칙
 
-| 자료 | 절대경로 | 버전 또는 해시 | 읽을 범위 |
+경로 칸은 저장소 상대경로다 (2026-09-09 이슈 26). 절대경로를 쓰면 그 값이 특정 폴더를 가리켜 worktree마다 다른 파일을 해시한다. check.mjs fill이 상대경로를 저장소 루트 기준으로 풀고, 절대경로도 읽지만 경고를 낸다.
+
+| 자료 | 경로 | 버전 또는 해시 | 읽을 범위 |
 |---|---|---|---|
-| 09-1 보드 v2 원문 | C:/Dev/potenup/99_projects/o2o/harness/project-sync/09-1-o2o-board-v2.md | sha256:9b73359b3a946bf9 | 전문 |
-| 01 참고 | C:/Dev/potenup/99_projects/o2o/harness/out/h2/01-o2o-ddd-plan.v20.md | sha256:5ff40a01743ddd00 | 1절 확정 전제와 Step 2 절만 |
-| 대상 02 v8 | C:/Dev/potenup/99_projects/o2o/document/02-o2o-feature-list.md | sha256:2a3d3ca2d8b63809 | 전문 |
-| 대상 03 v11 | C:/Dev/potenup/99_projects/o2o/document/03-o2o-event-storming.md | sha256:34a8544cba55728b | 전문 |
-| 대상 04 v9 | C:/Dev/potenup/99_projects/o2o/document/04-o2o-commands-actors.md | sha256:3ebf3af5b34b2b34 | 전문 |
-| 대상 05-2 | C:/Dev/potenup/99_projects/o2o/document/05-2-o2o-bounded-contexts.md | sha256:13cd622fc231ff10 | 2절 커맨드와 이벤트 배분표 |
-| 대상 05-3 v10 | C:/Dev/potenup/99_projects/o2o/document/05-3-o2o-glossary.md | sha256:62a87a62baf5846e | 전문 |
-| 대상 06-2 v4 | C:/Dev/potenup/99_projects/o2o/document/06-2-o2o-aggregates.md | sha256:113c6734b5525e1d | 전문 |
-| 대상 06-4 v4 | C:/Dev/potenup/99_projects/o2o/document/06-4-o2o-contracts.md | sha256:edacbe47d6d63e3f | 1-2 계약표와 전이표 |
-| 대상 06 보드 범례 v6 | C:/Dev/potenup/99_projects/o2o/document/06-o2o-board-legend.md | sha256:c8c944f82fb6911a | 전문 |
-| 대상 11 API v2 | C:/Dev/potenup/99_projects/o2o/document/11-o2o-api-spec.md | sha256:3f2613a77b649903 | 숙소, 객실타입, 프로모션 경로와 오류 코드 표 |
-| 근거 08-3 원문 | C:/Dev/potenup/99_projects/o2o/harness/project-sync/08-3-o2o-policies-v2-attack-review.md | sha256:060e4ef217b1fe97 | 6절 C-4와 8절 결정표 2번 |
-| 근거 08-1 원문 | C:/Dev/potenup/99_projects/o2o/harness/project-sync/08-1-o2o-policies-blind-review.md | sha256:6103bf1c05968e98 | RefundFailed 지적 행 |
-| 근거 사용자 결정표 | C:/Dev/potenup/99_projects/o2o/harness/decisions/decisions-08-3.md | sha256:1b8580aa86c18fd8 | 전문 |
-| 적용할 문서 양식 | C:/Dev/potenup/99_projects/o2o/harness/prompts/07-o2o-ptcf-prompt.v3.md | sha256:45e9c98c3bb1a94d | Format 절 F1부터 F16 |
-| 실제 평가 기준 | C:/Dev/potenup/99_projects/o2o/harness/prompts/eval-criteria-ddd.md | sha256:0ec4e54137d66085 | 축, 심각도, 출력 스키마 |
+| 09-1 보드 v2 원문 | harness/project-sync/09-1-o2o-board-v2.md | sha256:9b73359b3a946bf9 | 전문 |
+| 01 참고 | harness/out/h2/01-o2o-ddd-plan.v20.md | sha256:5ff40a01743ddd00 | 1절 확정 전제와 Step 2 절만 |
+| 대상 02 v8 | document/02-o2o-feature-list.md | sha256:2a3d3ca2d8b63809 | 전문 |
+| 대상 03 v11 | document/03-o2o-event-storming.md | sha256:34a8544cba55728b | 전문 |
+| 대상 04 v9 | document/04-o2o-commands-actors.md | sha256:3ebf3af5b34b2b34 | 전문 |
+| 대상 05-2 | document/05-2-o2o-bounded-contexts.md | sha256:13cd622fc231ff10 | 2절 커맨드와 이벤트 배분표 |
+| 대상 05-3 v10 | document/05-3-o2o-glossary.md | sha256:62a87a62baf5846e | 전문 |
+| 대상 06-2 v4 | document/06-2-o2o-aggregates.md | sha256:113c6734b5525e1d | 전문 |
+| 대상 06-4 v4 | document/06-4-o2o-contracts.md | sha256:edacbe47d6d63e3f | 1-2 계약표와 전이표 |
+| 대상 06 보드 범례 v6 | document/06-o2o-board-legend.md | sha256:c8c944f82fb6911a | 전문 |
+| 대상 11 API v2 | document/11-o2o-api-spec.md | sha256:3f2613a77b649903 | 숙소, 객실타입, 프로모션 경로와 오류 코드 표 |
+| 근거 08-3 원문 | harness/project-sync/08-3-o2o-policies-v2-attack-review.md | sha256:060e4ef217b1fe97 | 6절 C-4와 8절 결정표 2번 |
+| 근거 08-1 원문 | harness/project-sync/08-1-o2o-policies-blind-review.md | sha256:6103bf1c05968e98 | RefundFailed 지적 행 |
+| 근거 사용자 결정표 | harness/decisions/decisions-08-3.md | sha256:1b8580aa86c18fd8 | 전문 |
+| 적용할 문서 양식 | harness/prompts/07-o2o-ptcf-prompt.v3.md | sha256:45e9c98c3bb1a94d | Format 절 F1부터 F16 |
+| 실제 평가 기준 | harness/prompts/eval-criteria-ddd.md | sha256:0ec4e54137d66085 | 축, 심각도, 출력 스키마 |
 
 07 v3은 후보다. task-S8과 같이 문체와 형식 조항만 적용하고 종료 문장 F16은 문서 산출물에 적용하지 않는다.
 
 ## 5. A와 B 평가 허용 입력 (HR1)
 
-| 자료 | 절대경로 | 버전 또는 해시 | 읽을 범위 |
+| 자료 | 경로 | 버전 또는 해시 | 읽을 범위 |
 |---|---|---|---|
-| 평가 대상 03 v12 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S2-R1/03-o2o-event-storming.v12.md | sha256:fb5f6495beab1e2d | 전문 |
-| 평가 대상 06 범례 v7 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S2-R1/06-o2o-board-legend.v7.md | sha256:0d194ba393d07638 | 전문 |
-| 입력 팩 | C:/Dev/potenup/99_projects/o2o/harness/project-sync/o2o-review-input-pack.md | sha256:1608942c0815f911 | 전문 |
-| 이 작업 계약 | C:/Dev/potenup/99_projects/o2o/harness/tasks/task-S2.md | 자기 해시 없음 | 전문 |
-| 실제 평가 기준 | C:/Dev/potenup/99_projects/o2o/harness/prompts/eval-criteria-ddd.md | sha256:0ec4e54137d66085 | 축, 심각도, 출력 스키마 |
-| 대상이 참조하는 09-1 원문 | C:/Dev/potenup/99_projects/o2o/harness/project-sync/09-1-o2o-board-v2.md | sha256:9b73359b3a946bf9 | 전문 |
+| 평가 대상 03 v12 | harness/out/task-S2-R1/03-o2o-event-storming.v12.md | sha256:fb5f6495beab1e2d | 전문 |
+| 평가 대상 06 범례 v7 | harness/out/task-S2-R1/06-o2o-board-legend.v7.md | sha256:0d194ba393d07638 | 전문 |
+| 입력 팩 | harness/project-sync/o2o-review-input-pack.md | sha256:1608942c0815f911 | 전문 |
+| 이 작업 계약 | harness/tasks/task-S2.md | 자기 해시 없음 | 전문 |
+| 실제 평가 기준 | harness/prompts/eval-criteria-ddd.md | sha256:0ec4e54137d66085 | 축, 심각도, 출력 스키마 |
+| 대상이 참조하는 09-1 원문 | harness/project-sync/09-1-o2o-board-v2.md | sha256:9b73359b3a946bf9 | 전문 |
 
 이 표에 넣지 않는 것: 01 전체, 과거 감사 문서, 이전 평가 리포트, 사용자 결정표, harness/docs/ 전체, harness/state/ 전체, 생성 대화. 평가 폴더를 만들 때는 이 표만 보고 복사한다.
 

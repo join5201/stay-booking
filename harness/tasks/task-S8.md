@@ -15,11 +15,11 @@
 | 목표 | 08-3 결정 11건을 설계 문서 9종에 반영한 후보를 만든다 |
 | 대상 API ID | 해당 없음. 11 API v3 대조는 이 Task 밖이다 |
 | 완료 기준 | 아래 반영 대상 표의 문서별 확인 조건 9행을 전부 만족하고, 후보 9개가 node harness/tools/check.mjs g1 --type doc를 통과한다 |
-| 변경 허용 파일과 범위 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/ 아래 후보 9개만. document/와 harness/project-sync/는 읽기만 한다 |
+| 변경 허용 파일과 범위 | harness/out/task-S8-R1/ 아래 후보 9개만. document/와 harness/project-sync/는 읽기만 한다 |
 | 범위 밖과 유지할 전제 | 정책 축 재검증은 이 Task의 평가 라운드로 갈음한다. Step 9, 코드, 11 API v3 대조, 01 v20 승격은 범위 밖. 확정 전제는 06-2 v4와 06-4 v4가 정본이고 01은 참고다 |
 | 기준 버전 | 아래 입력 표의 해시. node harness/tools/check.mjs fill이 채운다 |
-| 후보 작업 공간 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/ |
-| 결과 기록 경로 | C:/Dev/potenup/99_projects/o2o/harness/state/progress.md |
+| 후보 작업 공간 | harness/out/task-S8-R1/ |
+| 결과 기록 경로 | harness/state/progress.md |
 
 ## 이 계약이 먼저 정하는 것
 
@@ -73,26 +73,28 @@
 
 ## 입력과 적용 규칙
 
-| 자료 | 절대경로 | 버전 또는 해시 | 읽을 범위 |
+경로 칸은 저장소 상대경로다 (2026-09-09 이슈 26). 절대경로를 쓰면 그 값이 특정 폴더를 가리켜 worktree마다 다른 파일을 해시한다. check.mjs fill이 상대경로를 저장소 루트 기준으로 풀고, 절대경로도 읽지만 경고를 낸다.
+
+| 자료 | 경로 | 버전 또는 해시 | 읽을 범위 |
 |---|---|---|---|
-| 01 참고 | C:/Dev/potenup/99_projects/o2o/harness/out/h2/01-o2o-ddd-plan.v20.md | sha256:5ff40a01743ddd00 | 1절 확정 전제와 Step 8 절만 |
-| 08-3 원문 | C:/Dev/potenup/99_projects/o2o/harness/project-sync/08-3-o2o-policies-v2-attack-review.md | sha256:060e4ef217b1fe97 | 6절 C-1부터 C-12, 7절 반영 목록, 8절 결정표 |
-| 08-2 원문 | C:/Dev/potenup/99_projects/o2o/harness/project-sync/08-2-o2o-policies-resolution-review.md | sha256:5f5da9f2db768266 | 6절 해결안 v2, 7절 반영 목록 |
-| 08-1 원문 | C:/Dev/potenup/99_projects/o2o/harness/project-sync/08-1-o2o-policies-blind-review.md | sha256:6103bf1c05968e98 | 7절 해결안 |
-| 사용자 결정표 | C:/Dev/potenup/99_projects/o2o/harness/decisions/decisions-08-3.md | sha256:1b8580aa86c18fd8 | 전문 |
-| 대상 06-4 v4 | C:/Dev/potenup/99_projects/o2o/document/06-4-o2o-contracts.md | sha256:edacbe47d6d63e3f | 전문 |
-| 대상 06-4 설명 | C:/Dev/potenup/99_projects/o2o/document/06-4-o2o-contracts-explained.md | sha256:3b4c9e463af5de17 | 전문 |
-| 대상 06-2 v4 | C:/Dev/potenup/99_projects/o2o/document/06-2-o2o-aggregates.md | sha256:113c6734b5525e1d | 전문 |
-| 대상 06-2 설명 | C:/Dev/potenup/99_projects/o2o/document/06-2-o2o-aggregates-explained.md | sha256:c1607d414af91b93 | 전문 |
-| 대상 04-5 v1 | C:/Dev/potenup/99_projects/o2o/harness/project-sync/04-5-o2o-policies-draft.md | sha256:a99b36c86c567240 | 전문 |
-| 대상 04 v9 | C:/Dev/potenup/99_projects/o2o/document/04-o2o-commands-actors.md | sha256:3ebf3af5b34b2b34 | 전문 |
-| 대상 03 v12 | C:/Dev/potenup/99_projects/o2o/document/03-o2o-event-storming.md | sha256:3334e5a73cb8f896 | 전문 |
-| 대상 02 v8 | C:/Dev/potenup/99_projects/o2o/document/02-o2o-feature-list.md | sha256:2a3d3ca2d8b63809 | 전문 |
-| 대상 06-1 | C:/Dev/potenup/99_projects/o2o/document/06-1-o2o-context-map.md | sha256:95bc2b1079d3b739 | 전문 |
-| 대상 05-3 v10 | C:/Dev/potenup/99_projects/o2o/document/05-3-o2o-glossary.md | sha256:62a87a62baf5846e | 전문 |
-| 대상 입력 팩 v2 | C:/Dev/potenup/99_projects/o2o/harness/project-sync/o2o-review-input-pack.md | sha256:1608942c0815f911 | 전문 |
-| 적용할 문서 양식 | C:/Dev/potenup/99_projects/o2o/harness/prompts/07-o2o-ptcf-prompt.v3.md | sha256:45e9c98c3bb1a94d | Format 절 F1부터 F16 |
-| 실제 평가 기준 | C:/Dev/potenup/99_projects/o2o/harness/prompts/eval-criteria-ddd.md | sha256:0ec4e54137d66085 | 축, 심각도, 출력 스키마 |
+| 01 참고 | harness/out/h2/01-o2o-ddd-plan.v20.md | sha256:5ff40a01743ddd00 | 1절 확정 전제와 Step 8 절만 |
+| 08-3 원문 | harness/project-sync/08-3-o2o-policies-v2-attack-review.md | sha256:060e4ef217b1fe97 | 6절 C-1부터 C-12, 7절 반영 목록, 8절 결정표 |
+| 08-2 원문 | harness/project-sync/08-2-o2o-policies-resolution-review.md | sha256:5f5da9f2db768266 | 6절 해결안 v2, 7절 반영 목록 |
+| 08-1 원문 | harness/project-sync/08-1-o2o-policies-blind-review.md | sha256:6103bf1c05968e98 | 7절 해결안 |
+| 사용자 결정표 | harness/decisions/decisions-08-3.md | sha256:1b8580aa86c18fd8 | 전문 |
+| 대상 06-4 v4 | document/06-4-o2o-contracts.md | sha256:edacbe47d6d63e3f | 전문 |
+| 대상 06-4 설명 | document/06-4-o2o-contracts-explained.md | sha256:3b4c9e463af5de17 | 전문 |
+| 대상 06-2 v4 | document/06-2-o2o-aggregates.md | sha256:113c6734b5525e1d | 전문 |
+| 대상 06-2 설명 | document/06-2-o2o-aggregates-explained.md | sha256:c1607d414af91b93 | 전문 |
+| 대상 04-5 v1 | harness/project-sync/04-5-o2o-policies-draft.md | sha256:a99b36c86c567240 | 전문 |
+| 대상 04 v9 | document/04-o2o-commands-actors.md | sha256:3ebf3af5b34b2b34 | 전문 |
+| 대상 03 v12 | document/03-o2o-event-storming.md | sha256:3334e5a73cb8f896 | 전문 |
+| 대상 02 v8 | document/02-o2o-feature-list.md | sha256:2a3d3ca2d8b63809 | 전문 |
+| 대상 06-1 | document/06-1-o2o-context-map.md | sha256:95bc2b1079d3b739 | 전문 |
+| 대상 05-3 v10 | document/05-3-o2o-glossary.md | sha256:62a87a62baf5846e | 전문 |
+| 대상 입력 팩 v2 | harness/project-sync/o2o-review-input-pack.md | sha256:1608942c0815f911 | 전문 |
+| 적용할 문서 양식 | harness/prompts/07-o2o-ptcf-prompt.v3.md | sha256:45e9c98c3bb1a94d | Format 절 F1부터 F16 |
+| 실제 평가 기준 | harness/prompts/eval-criteria-ddd.md | sha256:0ec4e54137d66085 | 축, 심각도, 출력 스키마 |
 
 07 v3은 후보다. 승인 전이므로 이 Task에서는 문체와 형식 조항만 적용하고 종료 문장 F16은 문서 산출물에 적용하지 않는다. 설계 문서는 대화 응답이 아니라서 종료 문장이 붙을 자리가 없다. g1 실행 시 --end 옵션으로 각 문서의 마지막 줄 규칙을 따로 준다.
 
@@ -100,20 +102,20 @@
 
 위 표는 생성자가 읽을 목록이다. 평가자에게 넘기는 목록은 이 표다. 두 표를 같은 것으로 취급하면 감사 문서와 결정표가 평가 폴더로 들어간다.
 
-| 자료 | 절대경로 | 버전 또는 해시 | 읽을 범위 |
+| 자료 | 경로 | 버전 또는 해시 | 읽을 범위 |
 |---|---|---|---|
-| 평가 대상 06-4 v5 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/06-4-o2o-contracts.v5.md | sha256:c32cc10985cb86c2 | 전문 |
-| 평가 대상 06-2 v5 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/06-2-o2o-aggregates.v5.md | sha256:d260e2d76196eb0f | 전문 |
-| 평가 대상 04-5 v2 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/04-5-o2o-policies-draft.v2.md | sha256:7435d1e4f714070c | 전문 |
-| 평가 대상 04 v10 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/04-o2o-commands-actors.v10.md | sha256:fa0463666b950db6 | 전문 |
-| 평가 대상 03 v13 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/03-o2o-event-storming.v13.md | sha256:36dd7d4dd5e6a04f | 전문 |
-| 평가 대상 02 v9 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/02-o2o-feature-list.v9.md | sha256:ee9bcf474a8f9f8a | 전문 |
-| 평가 대상 06-1 v2 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/06-1-o2o-context-map.v2.md | sha256:90c016f3ec3e7c9a | 전문 |
-| 평가 대상 05-3 v11 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/05-3-o2o-glossary.v11.md | sha256:276f6cf7cc25805b | 전문 |
-| 평가 대상 입력 팩 v3 | C:/Dev/potenup/99_projects/o2o/harness/out/task-S8-R1/o2o-review-input-pack.v3.md | sha256:41d7582034ad30da | 전문 |
-| 입력 팩 | C:/Dev/potenup/99_projects/o2o/harness/project-sync/o2o-review-input-pack.md | sha256:1608942c0815f911 | 전문 |
-| 이 작업 계약 | C:/Dev/potenup/99_projects/o2o/harness/tasks/task-S8.md | 자기 해시 없음 | 전문 |
-| 실제 평가 기준 | C:/Dev/potenup/99_projects/o2o/harness/prompts/eval-criteria-ddd.md | sha256:0ec4e54137d66085 | 축, 심각도, 출력 스키마 |
+| 평가 대상 06-4 v5 | harness/out/task-S8-R1/06-4-o2o-contracts.v5.md | sha256:c32cc10985cb86c2 | 전문 |
+| 평가 대상 06-2 v5 | harness/out/task-S8-R1/06-2-o2o-aggregates.v5.md | sha256:d260e2d76196eb0f | 전문 |
+| 평가 대상 04-5 v2 | harness/out/task-S8-R1/04-5-o2o-policies-draft.v2.md | sha256:7435d1e4f714070c | 전문 |
+| 평가 대상 04 v10 | harness/out/task-S8-R1/04-o2o-commands-actors.v10.md | sha256:fa0463666b950db6 | 전문 |
+| 평가 대상 03 v13 | harness/out/task-S8-R1/03-o2o-event-storming.v13.md | sha256:36dd7d4dd5e6a04f | 전문 |
+| 평가 대상 02 v9 | harness/out/task-S8-R1/02-o2o-feature-list.v9.md | sha256:ee9bcf474a8f9f8a | 전문 |
+| 평가 대상 06-1 v2 | harness/out/task-S8-R1/06-1-o2o-context-map.v2.md | sha256:90c016f3ec3e7c9a | 전문 |
+| 평가 대상 05-3 v11 | harness/out/task-S8-R1/05-3-o2o-glossary.v11.md | sha256:276f6cf7cc25805b | 전문 |
+| 평가 대상 입력 팩 v3 | harness/out/task-S8-R1/o2o-review-input-pack.v3.md | sha256:41d7582034ad30da | 전문 |
+| 입력 팩 | harness/project-sync/o2o-review-input-pack.md | sha256:1608942c0815f911 | 전문 |
+| 이 작업 계약 | harness/tasks/task-S8.md | 자기 해시 없음 | 전문 |
+| 실제 평가 기준 | harness/prompts/eval-criteria-ddd.md | sha256:0ec4e54137d66085 | 축, 심각도, 출력 스키마 |
 
 이 표에 넣지 않는 것: 01 전체, 과거 감사 문서, 이전 평가 리포트, 사용자 결정표, harness/docs/ 전체, harness/state/ 전체, 생성 대화. 평가 폴더를 만들 때는 이 표만 보고 복사한다.
 
