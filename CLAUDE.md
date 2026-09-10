@@ -95,7 +95,7 @@ backend와 frontend를 service/로 감싸지 않는다. 설계 문서 어디에�
 |---|---|---|
 | document/ | O2O 서비스 베이스 설계 문서 | 된다 |
 | harness/prompts/ | 실행 중 읽는 양식과 평가 기준 | 기준 파일만 |
-| harness/docs/ | 하네스 설계 근거와 결정 이력 | 안 된다 |
+| harness/docs/ | 하네스 설계 근거와 결정 이력. 10-15만 규칙 본문 | 안 된다 |
 
 전체 배치
 
