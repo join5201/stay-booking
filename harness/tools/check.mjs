@@ -230,7 +230,9 @@ function parseTables(text) {
       if (!cur) { cur = { rows: [] }; tables.push(cur); }
       if (/^\s*\|[\s|:-]+\|\s*$/.test(line)) return;
       cur.rows.push({ line: i + 1, cells: splitCells(line) });
-    } else if (line.trim() !== '') {
+    } else {
+      // 빈 줄도 표를 끊는다. 마크다운이 그렇게 읽는다. 안 끊으면 빈 줄로 나뉜 표 둘이
+      // 한 표가 되고, 뒤 표의 머리글이 앞 표의 행으로 읽혀 칸 수가 틀린 것처럼 나온다
       cur = null;
     }
   });
@@ -268,6 +270,8 @@ function findTableByHeaders(text, needed) {
 // 거는지 적어서 범위가 데이터다. 우리는 --type을 사람이 고르므로 경로로 성격을 못 박는다.
 // 이것이 없으면 harness/docs/ 문서에 g1 doc을 돌렸을 때 종료 문장 검사가 전원 실패한다.
 const SCOPE = [
+  // 앞자리가 아니라 파일 하나를 짚는다. 이 파일만 머리글이 자랐다 (이슈 93)
+  ['harness/state/progress.md', 'progress-log'],
   ['document/', 'step'],
   ['harness/out/', 'step'],
   ['harness/docs/', 'harness-doc'],
@@ -276,6 +280,9 @@ const SCOPE = [
 
 // 성격별로 적용하지 않는 검사와 그 이유. 범위 밖은 통과가 아니라 따로 센다.
 const OUT_OF_SCOPE = {
+  'progress-log': {
+    'doc.table-cells': '머리글이 12칸으로 자랐고 그 전 행은 아홉 칸이다. 추가 전용이라 기존 행을 못 고친다 (CLAUDE.md 4-1)',
+  },
   'harness-doc': {
     'doc.end-sentence': '하네스 문서는 Step 산출물이 아니라 고정 종료 문장이 없다 (10-14 3절)',
   },

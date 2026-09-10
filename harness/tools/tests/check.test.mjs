@@ -537,6 +537,14 @@ test('skipReason. 하네스 문서의 종료 문장만 범위 밖이다', () => 
   assert.equal(skipReason(path.join(ROOT, 'harness/docs/10-9-x.md'), 'doc.date-created'), null);
 });
 
+// 이슈 93. progress.md만 머리글이 자라서 옛 행의 칸이 모자란다. 다른 기록 파일은 그대로 본다
+test('skipReason. 표 칸 수는 progress.md에서만 범위 밖이다', () => {
+  assert.ok(skipReason(path.join(ROOT, 'harness/state/progress.md'), 'doc.table-cells'));
+  assert.equal(skipReason(path.join(ROOT, 'harness/state/troubleshooting.md'), 'doc.table-cells'), null);
+  assert.equal(skipReason(path.join(ROOT, 'harness/state/knowledge.md'), 'doc.table-cells'), null);
+  assert.equal(skipReason(path.join(ROOT, 'harness/state/progress.md'), 'doc.date-created'), null);
+});
+
 test('g1 doc. 하네스 문서는 종료 문장을 범위 밖으로 센다', () => {
   const f = path.join(ROOT, 'harness/docs/10-9-o2o-harness-answer-format-plan.md');
   const r = run(() => g1(f, { type: 'doc' }));
