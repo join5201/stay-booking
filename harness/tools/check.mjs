@@ -18,6 +18,7 @@
 //   node harness/tools/check.mjs g1 harness/out/task-S8-R1/candidate.md --type doc
 //   node harness/tools/check.mjs g2 harness/decisions/task-S8-R1.md --mode pre
 //   node harness/tools/check.mjs answer /tmp/answer.md
+//   node harness/tools/check.mjs sweep harness/docs --type doc
 //
 // 통과 출력 예시
 //   PASS g1 harness/out/task-S8-R1/candidate.md
@@ -33,6 +34,17 @@
 //     범위 밖 1건
 //       doc.end-sentence  하네스 문서는 Step 산출물이 아니라 고정 종료 문장이 없다 (10-14 3절)
 //   범위 밖은 통과로 세지 않는다. 검사를 안 돌린 것과 돌려서 통과한 것을 가른다 (10-14 2-3절 A4).
+//
+// 쓸기 출력 예시 (종료 코드 1)
+//   FAIL g1 harness/docs/README.md
+//     [doc.date-created] 1  최초 작성 줄이 없다 (F5)
+//     [doc.date-updated] 1  최종 갱신 줄이 없다 (F5)
+//     검사 7건 중 2건 실패
+//   FAIL sweep harness/docs --type doc
+//     문서 13개 중 12개 통과
+//     실패 1개
+//       harness/docs/README.md
+//   통과한 파일은 이름도 안 찍는다. 스물일곱 개를 돌려도 읽히는 출력이어야 한다 (10-14 8-4절 D1).
 //
 // 실패 출력 예시 (종료 코드 1)
 //   FAIL g2 harness/decisions/task-S8-R1.md
@@ -269,9 +281,10 @@ class Report {
     if (!this.names.includes(name)) this.names.push(name);
     if (!ok) this.fails.push({ name, line, msg });
   }
-  print() {
+  print(quiet = false) {
     const f = rel(this.file);
     if (this.fails.length === 0) {
+      if (quiet) return 0;
       console.log(`PASS ${this.cmd} ${f}`);
       console.log(`  검사 ${this.count}건 통과`);
       for (const l of wrapNames(this.names)) console.log(l);
@@ -497,7 +510,7 @@ function readTestCounts(file) {
   return sum;
 }
 
-export function g1(file, { type, end, require: required = [], artifacts = [] } = {}) {
+export function g1(file, { type, end, require: required = [], artifacts = [], quiet = false } = {}) {
   const r = new Report('g1', file);
   const text = fs.readFileSync(file, 'utf8');
   let countSummary = null;
@@ -560,14 +573,36 @@ export function g1(file, { type, end, require: required = [], artifacts = [] } =
     console.error('사용법 오류: --type은 doc, api, code 중 하나');
     return 2;
   }
-  const rc = r.print();
-  if (countSummary) console.log(countSummary);
+  const rc = r.print(quiet);
+  if (countSummary && !quiet) console.log(countSummary);
   return rc;
 }
 
 // ---------- 원본 리포트 파서 (HRV-01, 02) ----------
 // 평가 리포트에서 지적 ID와 심각도를 직접 읽는다. 결정표의 값을 믿지 않는다.
 // 스키마는 eval-criteria-ddd.md 4절이고 보조 표는 evaluate.md 5항이 요구한다.
+
+// 디렉터리 하나를 g1으로 쓸고 한 줄로 요약한다 (10-14 8-4절 D1).
+// 게이트를 부를 자리가 파일 하나씩이면 훅이나 CI가 부를 것이 없다.
+export function sweep(dir, { type = 'doc', end, require: required = [] } = {}) {
+  const files = fs.readdirSync(dir)
+    .filter((n) => n.endsWith('.md'))
+    .sort()
+    .map((n) => path.join(dir, n));
+  const fails = [];
+  for (const p of files) {
+    const code = g1(p, { type, end, require: required, quiet: true });
+    if (code !== 0) fails.push(rel(p));
+  }
+  const pass = files.length - fails.length;
+  console.log(`${fails.length ? 'FAIL' : 'PASS'} sweep ${rel(dir)} --type ${type}`);
+  console.log(`  문서 ${files.length}개 중 ${pass}개 통과`);
+  if (fails.length) {
+    console.log(`  실패 ${fails.length}개`);
+    for (const f of fails) console.log(`    ${f}`);
+  }
+  return fails.length ? 1 : 0;
+}
 
 export function parseReport(file) {
   const out = { file, ok: true, errors: [], rows: [], summary: null, detailCount: 0 };
@@ -891,7 +926,7 @@ export function answer(file, { grade } = {}) {
 export function main(argv) {
   const [cmd, file, ...rest] = argv;
   if (!cmd || !file) {
-    console.error('사용법: node harness/tools/check.mjs <fill|g1|g2|answer> <파일> [옵션]');
+    console.error('사용법: node harness/tools/check.mjs <fill|g1|g2|answer|sweep> <파일 또는 디렉터리> [옵션]');
     return 2;
   }
   if (!fs.existsSync(file)) { console.error(`파일이 없다: ${file}`); return 2; }
@@ -909,6 +944,7 @@ export function main(argv) {
   if (cmd === 'g1') return g1(file, opt);
   if (cmd === 'g2') return g2(file, opt);
   if (cmd === 'answer') return answer(file, opt);
+  if (cmd === 'sweep') return sweep(file, opt);
   console.error(`알 수 없는 명령: ${cmd}`);
   return 2;
 }
