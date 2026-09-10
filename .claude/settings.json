@@ -37,5 +37,20 @@
       "PowerShell(git status *)",
       "PowerShell(git diff *)"
     ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/harness/tools/numbers-gate.mjs\"",
+            "timeout": 20,
+            "statusMessage": "문서 번호 겹침 검사"
+          }
+        ]
+      }
+    ]
   }
 }
