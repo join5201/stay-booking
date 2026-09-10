@@ -146,8 +146,8 @@ chat:
 
 knowledge_base:
   learnings:
-    # 기본값 auto. auto는 비공개 저장소에서 조직 전체로 학습을 퍼뜨린다.
-    # 이 저장소 안으로 한정한다
+    # 기본값 auto. auto는 공개 저장소에서 local, 비공개에서 global로 풀린다.
+    # 공개 여부가 바뀌어도 학습이 조직 전체로 새지 않게 못박는다
     scope: "local"
   code_guidelines:
     enabled: true
