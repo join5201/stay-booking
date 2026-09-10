@@ -25,7 +25,7 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { fill, g1, g2, answer, sweep, state, stateRows, scopeKind, skipReason } from '../check.mjs';
+import { fill, g1, g2, answer, sweep, state, stateRows, settings, ruleBody, scopeKind, skipReason } from '../check.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const FIX = path.join(HERE, 'fixtures');
@@ -647,5 +647,66 @@ test('state. 아홉 칸 행이 없으면 종료 코드 2', () => {
   const p = path.join(TMP, `state-empty-${seq++}.md`);
   fs.writeFileSync(p, '# 진행 기록\n\n표가 없다\n');
   const r = run(() => state(p));
+  assert.equal(r.code, 2);
+});
+
+// ---------- 권한 설정 검사 (10-19 4절 G5) ----------
+// 왜 필요한가: 같은 규칙을 Bash와 PowerShell 두 벌로 쓰는데 한쪽만 고치면 실패가 나지
+// 않고 그 규칙이 다른 쪽 경로에서 조용히 사라진다. 안 걸리는 것은 통과처럼 보인다.
+
+function settingsFile(perms) {
+  const p = path.join(TMP, `settings-${seq++}.json`);
+  fs.writeFileSync(p, JSON.stringify({ permissions: perms }, null, 2));
+  return p;
+}
+
+test('ruleBody. 두 문법의 같은 규칙이 같은 본체가 된다', () => {
+  assert.deepEqual(ruleBody('Bash(git status:*)'), { tool: 'Bash', body: 'git status' });
+  assert.deepEqual(ruleBody('PowerShell(git status *)'), { tool: 'PowerShell', body: 'git status' });
+});
+
+test('ruleBody. 명령 이름이 다른 짝은 선언으로 맞춘다', () => {
+  assert.equal(ruleBody('Bash(rm *)').body, 'Remove-Item');
+  assert.equal(ruleBody('PowerShell(Remove-Item *)').body, 'Remove-Item');
+});
+
+test('ruleBody. 셸 규칙이 아니면 본체가 없다', () => {
+  assert.equal(ruleBody('Read(./.env)'), null);
+  assert.equal(ruleBody('Edit(**/*.pem)'), null);
+});
+
+test('settings. 짝이 맞으면 통과한다', () => {
+  const f = settingsFile({ deny: ['Bash(rm *)', 'PowerShell(Remove-Item *)', 'Read(./.env)'], allow: [] });
+  const r = run(() => settings(f));
+  assert.equal(r.code, 0);
+});
+
+test('settings. 한쪽만 있는 규칙을 잡는다', () => {
+  const f = settingsFile({ deny: [], allow: ['Bash(git push:*)', 'PowerShell(git status *)'] });
+  const r = run(() => settings(f));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /짝이 되는 PowerShell 규칙이 없다: git push/);
+  assert.match(r.out, /짝이 되는 Bash 규칙이 없다: git status/);
+});
+
+test('settings. 같은 규칙이 deny와 allow 양쪽에 있으면 잡는다', () => {
+  const f = settingsFile({ deny: ['Read(./.env)'], allow: ['Read(./.env)'] });
+  const r = run(() => settings(f));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /deny와 allow 양쪽에 있다/);
+});
+
+test('settings. permissions 키가 없으면 잡는다', () => {
+  const p = path.join(TMP, `settings-nokey-${seq++}.json`);
+  fs.writeFileSync(p, '{}');
+  const r = run(() => settings(p));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /permissions 키가 없다/);
+});
+
+test('settings. JSON이 깨졌으면 종료 코드 2', () => {
+  const p = path.join(TMP, `settings-bad-${seq++}.json`);
+  fs.writeFileSync(p, '{ 깨진 ');
+  const r = run(() => settings(p));
   assert.equal(r.code, 2);
 });
