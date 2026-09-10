@@ -28,5 +28,7 @@
 | 10-13-o2o-harness-reference-crosscheck.md | 하네스 대조 상대 다섯. 별 순 선정 근거와 대조 지점 표 (2026-09-09 추가) |
 | 10-14-o2o-harness-crosscheck-promptfoo.md | promptfoo 대조 1건과 나머지 넷의 대조 방법. 축 다섯과 판정 (2026-09-09 추가) |
 | 10-15-o2o-harness-ondemand-rules.md | CLAUDE.md에서 내린 절차의 본문. 반입 절차와 settings 이유 (2026-09-10 추가) |
+| 10-16-o2o-harness-coderabbit.md | CodeRabbit 리뷰 설정의 근거. 기본값과 다르게 정한 항목과 검증 방법과 사람이 할 설치 단계 (2026-09-10 추가) |
+| 10-17-o2o-harness-overview.md | 하네스 도해. 아홉 단계와 폴더 지도와 게이트 세 장. 그림 파일 셋을 같이 둔다 (2026-09-10 추가) |
 
 주의: 여기 있는 결정은 이력이다. 결정의 정본은 harness/decisions/다(harness/decisions/README.md).
