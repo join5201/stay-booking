@@ -140,6 +140,7 @@ CLAUDE.md와 AGENTS.md 둘을 잇지 않았다. AGENTS.md의 소스 수정 금�
 | [10-16 CodeRabbit](harness/docs/10-16-o2o-harness-coderabbit.md) | 리뷰 봇 설정의 근거 |
 | [10-17 도해](harness/docs/10-17-o2o-harness-overview.md) | 위 그림 셋의 정본 |
 | [10-18 대조 종합](harness/docs/10-18-o2o-harness-crosscheck-rollup.md) | 대조 넷의 판정과 변경 전부 |
+| [10-19 gentle-ai](harness/docs/10-19-o2o-harness-crosscheck-gentle-ai.md) | 다섯째 대조. 권한 경계와 축 다섯 |
 
 ## 양식과 기준
 
@@ -157,12 +158,14 @@ CLAUDE.md와 AGENTS.md 둘을 잇지 않았다. AGENTS.md의 소스 수정 금�
 | [harness v2](harness/prompts/harness-ptcf-prompt.v2.md) | 하네스 세션 인계용 |
 | [dev v3](harness/prompts/dev-ptcf-prompt.v3.md) | 개발 세션용 |
 
+마스터 프롬프트는 최신 판만 적었다. 앞 판은 같은 폴더에 판 번호 없는 이름으로 남아 있다.
+
 ## 지금 상태
 
 | 항목 | 상태 |
 |---|---|
 | 설계 Step 1부터 7 | 완료 |
-| 설계 Step 8 | task-S8 R1 반영과 결정 완료 |
+| 설계 Step 8 | task-S8 R1 반영과 결정 완료. 확정본의 document/ 착지가 남았다 |
 | 설계 Step 9 | task-S9-catalog 완료. task-S9-inventory-rate R1 병합 |
 | 하네스 H0부터 H6 | 완료. 검사기와 양식과 기록 규칙과 작업 계약이 다 있다 |
 | 백엔드 | 카탈로그와 재고와 요금까지 구현. [backend/](backend/README.md) |
