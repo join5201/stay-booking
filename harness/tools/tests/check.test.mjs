@@ -25,7 +25,7 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { fill, g1, g2, answer, scopeKind, skipReason } from '../check.mjs';
+import { fill, g1, g2, answer, sweep, scopeKind, skipReason } from '../check.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const FIX = path.join(HERE, 'fixtures');
@@ -551,4 +551,45 @@ test('g1 doc. 통과 출력이 검사 이름을 다 적는다', () => {
   assert.match(r.out, /doc\.date-created/);
   assert.match(r.out, /doc\.end-sentence/);
   assert.doesNotMatch(r.out, /범위 밖/);
+});
+
+// ---------- 쓸기 진입점 (10-14 8-4절 D1) ----------
+// 왜 필요한가: 게이트를 부를 자리가 파일 하나씩이면 훅도 CI도 부를 것이 없다.
+// 쓸기는 한 번 돌려 한 줄로 답한다. 통과 파일의 상세는 안 찍고 실패만 찍는다.
+// 그래야 스물일곱 개를 돌려도 읽을 수 있는 출력이 된다.
+
+test('sweep. 디렉터리를 돌고 통과 수를 센다', () => {
+  const dir = fs.mkdtempSync(path.join(TMP, 'sweep-pass-'));
+  fs.copyFileSync(prep('g1-doc-pass.md'), path.join(dir, 'a.md'));
+  fs.copyFileSync(prep('g1-doc-pass.md'), path.join(dir, 'b.md'));
+  const r = run(() => sweep(dir, { type: 'doc' }));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /문서 2개 중 2개 통과/);
+});
+
+test('sweep. 통과한 파일의 상세는 찍지 않는다', () => {
+  const dir = fs.mkdtempSync(path.join(TMP, 'sweep-quiet-'));
+  fs.copyFileSync(prep('g1-doc-pass.md'), path.join(dir, 'a.md'));
+  const r = run(() => sweep(dir, { type: 'doc' }));
+  assert.doesNotMatch(r.out, /검사 \d+건 통과/);
+  assert.doesNotMatch(r.out, /doc\.date-created/);
+});
+
+test('sweep. 실패한 파일은 이름과 상세를 같이 찍고 종료 코드가 1이다', () => {
+  const dir = fs.mkdtempSync(path.join(TMP, 'sweep-fail-'));
+  fs.copyFileSync(prep('g1-doc-pass.md'), path.join(dir, 'a.md'));
+  fs.copyFileSync(prep('g1-doc-pass.md', (t) => t.replace(/^최초 작성:.*$/m, '작성:')), path.join(dir, 'b.md'));
+  const r = run(() => sweep(dir, { type: 'doc' }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /문서 2개 중 1개 통과/);
+  assert.match(r.out, /실패 1개/);
+  assert.match(r.out, /\[doc\.date-created\]/);
+});
+
+test('sweep. 마크다운이 아닌 파일은 세지 않는다', () => {
+  const dir = fs.mkdtempSync(path.join(TMP, 'sweep-ext-'));
+  fs.copyFileSync(prep('g1-doc-pass.md'), path.join(dir, 'a.md'));
+  fs.writeFileSync(path.join(dir, 'b.txt'), '문서가 아니다');
+  const r = run(() => sweep(dir, { type: 'doc' }));
+  assert.match(r.out, /문서 1개 중 1개 통과/);
 });
