@@ -25,7 +25,7 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { fill, g1, g2, answer, sweep, scopeKind, skipReason } from '../check.mjs';
+import { fill, g1, g2, answer, sweep, state, stateRows, scopeKind, skipReason } from '../check.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const FIX = path.join(HERE, 'fixtures');
@@ -592,4 +592,60 @@ test('sweep. 마크다운이 아닌 파일은 세지 않는다', () => {
   fs.writeFileSync(path.join(dir, 'b.txt'), '문서가 아니다');
   const r = run(() => sweep(dir, { type: 'doc' }));
   assert.match(r.out, /문서 1개 중 1개 통과/);
+});
+
+// ---------- 재개 브리핑 (10-14 9-4절 E1) ----------
+// 왜 필요한가: 재개할 때 42,900바이트를 통째로 읽으면 무엇이 안 끝났는지가 안 보인다.
+// 그리고 merge=union은 추가된 줄의 순서를 보장하지 않아서 파일의 마지막 행이 시간의
+// 마지막 행이 아니다. 이 둘이 이 명령이 있는 이유이고 아래 두 번째 테스트가 그것을 잰다.
+
+const ROWS = [
+  '| 날짜시각 | Task | 라운드 | 단계 | 결과 | 실패 원인 | 교훈 | 다음 작업 | 실제 시간 |',
+  '|---|---|---|---|---|---|---|---|---|',
+  '| 2026-09-08 10:00 | H1 | 해당 없음 | 준비 | drafted. 초안 | 없음 | 없음 | H1 승인 | 미측정 |',
+  '| 2026-09-08 12:00 | H1 | 해당 없음 | 준비 | done. 승인됨 | 없음 | 없음 | H2 | 미측정 |',
+  '| 2026-09-08 11:00 | H2 | 해당 없음 | 준비 | halted. 막혔다 | 권한 규칙이 막는다 | 없음 | 사용자 판단 | 미측정 |',
+].join('\n');
+
+function stateFile(body = ROWS) {
+  const p = path.join(TMP, `state-${seq++}.md`);
+  fs.writeFileSync(p, `# 진행 기록\n\n| 칸 | 무엇 |\n|---|---|\n| 날짜시각 | YYYY-MM-DD HH:MM |\n\n${body}\n`);
+  return p;
+}
+
+test('stateRows. 아홉 칸 행만 뽑고 다른 표는 무시한다', () => {
+  const rows = stateRows(fs.readFileSync(stateFile(), 'utf8'));
+  assert.equal(rows.length, 3);
+  assert.deepEqual(rows.map((r) => r.task), ['H1', 'H2', 'H1']);
+});
+
+test('stateRows. 파일 순서가 아니라 날짜시각으로 읽는다', () => {
+  const rows = stateRows(fs.readFileSync(stateFile(), 'utf8'));
+  assert.deepEqual(rows.map((r) => r.when), ['2026-09-08 10:00', '2026-09-08 11:00', '2026-09-08 12:00']);
+});
+
+test('state. 끝난 Task와 안 끝난 Task를 가른다', () => {
+  const r = run(() => state(stateFile()));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /끝난 Task 1종/);
+  assert.match(r.out, /안 끝난 Task 1종/);
+});
+
+test('state. 막힌 행을 실패 원인과 같이 낸다', () => {
+  const r = run(() => state(stateFile()));
+  assert.match(r.out, /막힌 채로 남은 행 1건/);
+  assert.match(r.out, /권한 규칙이 막는다/);
+});
+
+test('state. --task는 그 Task만 본다', () => {
+  const r = run(() => state(stateFile(), { task: 'H2' }));
+  assert.match(r.out, /행 1개/);
+  assert.doesNotMatch(r.out, /H1/);
+});
+
+test('state. 아홉 칸 행이 없으면 종료 코드 2', () => {
+  const p = path.join(TMP, `state-empty-${seq++}.md`);
+  fs.writeFileSync(p, '# 진행 기록\n\n표가 없다\n');
+  const r = run(() => state(p));
+  assert.equal(r.code, 2);
 });
