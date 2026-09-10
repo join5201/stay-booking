@@ -25,7 +25,7 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { fill, g1, g2, answer, sweep, scopeKind, skipReason } from '../check.mjs';
+import { fill, g1, g2, answer, sweep, numbers, scopeKind, skipReason } from '../check.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const FIX = path.join(HERE, 'fixtures');
@@ -592,4 +592,89 @@ test('sweep. 마크다운이 아닌 파일은 세지 않는다', () => {
   fs.writeFileSync(path.join(dir, 'b.txt'), '문서가 아니다');
   const r = run(() => sweep(dir, { type: 'doc' }));
   assert.match(r.out, /문서 1개 중 1개 통과/);
+});
+
+// ---------- 문서 번호 겹침 (이슈 75) ----------
+// 왜 필요한가: 번호는 우리 파일명 규약이지 git이 아는 규칙이 아니다. 경로가 다르면
+// git은 충돌 없이 둘 다 병합하므로 사람이나 검사기가 봐야 한다.
+//
+// 통과 케이스를 실패 케이스와 같이 붙인다. 10-17은 본문 하나에 그림 셋이 붙어
+// 파일 넷이다. 파일 수로 세는 가드는 그 정상 배치를 겹침으로 막는다.
+// 금지만 테스트하고 허용을 테스트하지 않아 가드가 허용 값까지 막은 적이 있다
+// (progress.md 2026-09-08 16:17).
+
+function numdir(tag, names) {
+  const dir = fs.mkdtempSync(path.join(TMP, `numbers-${tag}-`));
+  for (const n of names) fs.writeFileSync(path.join(dir, n), '');
+  return dir;
+}
+
+test('numbers 통과. 번호가 다 다르다', () => {
+  const r = run(() => numbers(numdir('pass', ['10-4-a.md', '10-5-b.md', '10-6-c.md'])));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /번호 3개, 파일 3개/);
+});
+
+// 한계를 출력에 적기로 한 자리다. 여기서 사라지면 통과한 사람이 읽을 곳이 없다
+test('numbers 통과. 로컬 트리만 본다는 한계를 출력에 적는다', () => {
+  const r = run(() => numbers(numdir('limit', ['10-4-a.md'])));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /한계\. 로컬 트리만 본다/);
+  assert.match(r.out, /git ls-tree --name-only origin\/main/);
+});
+
+test('numbers 통과. 본문 하나에 그림 셋이 붙은 배치 (10-17)', () => {
+  const r = run(() => numbers(numdir('fig', [
+    '10-17-o2o-harness-overview.md',
+    '10-17-o2o-harness-overview-fig1.svg',
+    '10-17-o2o-harness-overview-fig2.svg',
+    '10-17-o2o-harness-overview-fig3.svg',
+  ])));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /번호 1개, 파일 4개/);
+});
+
+test('numbers 통과. 번호가 없는 파일은 번호를 주장하지 않는다', () => {
+  const r = run(() => numbers(numdir('readme', ['README.md', '10-4-a.md'])));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /번호 1개, 파일 1개/);
+});
+
+// 10-4와 10-14는 다른 번호다. 접두를 자리수로 자르면 둘이 한 번호가 된다
+test('numbers 통과. 10-4와 10-14를 가른다', () => {
+  const r = run(() => numbers(numdir('prefix', ['10-4-a.md', '10-14-b.md'])));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /번호 2개, 파일 2개/);
+});
+
+test('numbers 실패. 같은 번호를 문서 둘이 쓴다', () => {
+  const r = run(() => numbers(numdir('dup', ['10-15-ondemand.md', '10-15-fix-plan.md'])));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /\[numbers\.duplicate\]/);
+  assert.match(r.out, /10-15-fix-plan\.md, 10-15-ondemand\.md/);
+});
+
+test('numbers 실패. 붙을 본문이 없는 첨부가 번호를 차지한다', () => {
+  const r = run(() => numbers(numdir('orphan', ['10-18-b-fig1.svg'])));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /\[numbers\.attachment\]/);
+});
+
+// 그림이 본문과 같은 번호를 쓰면서 이름은 다른 본문에서 딴 경우다. 번호만 맞추면 붙는 게 아니다
+test('numbers 실패. 첨부 이름이 본문에서 시작하지 않는다', () => {
+  const r = run(() => numbers(numdir('mismatch', ['10-17-overview.md', '10-17-recheck-fig1.svg'])));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /\[numbers\.attachment\]/);
+});
+
+test('numbers. 디렉터리가 아니면 사용법 오류다', () => {
+  const dir = numdir('notdir', ['10-4-a.md']);
+  const r = run(() => numbers(path.join(dir, '10-4-a.md')));
+  assert.equal(r.code, 2);
+});
+
+// 로컬 트리 회귀 가드. 이 테스트가 깨지면 산출물이 진짜로 겹친 것이다
+test('numbers. 지금의 harness/docs가 통과한다', () => {
+  const r = run(() => numbers(path.join(ROOT, 'harness', 'docs')));
+  assert.equal(r.code, 0);
 });

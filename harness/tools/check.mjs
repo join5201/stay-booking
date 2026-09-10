@@ -11,6 +11,7 @@
 //   node harness/tools/check.mjs g1 <후보파일> --type doc|api|code [--end "<문장>"] [--require "a,b"] [--artifact <경로>]
 //   node harness/tools/check.mjs g2 <결정표파일> [--mode pre|final]
 //   node harness/tools/check.mjs answer <답변파일> [--grade A|B|C]
+//   node harness/tools/check.mjs numbers <디렉터리>
 //   node --test harness/tools/tests/check.test.mjs
 //
 // 실행 예시
@@ -19,6 +20,7 @@
 //   node harness/tools/check.mjs g2 harness/decisions/task-S8-R1.md --mode pre
 //   node harness/tools/check.mjs answer /tmp/answer.md
 //   node harness/tools/check.mjs sweep harness/docs --type doc
+//   node harness/tools/check.mjs numbers harness/docs
 //
 // 통과 출력 예시
 //   PASS g1 harness/out/task-S8-R1/candidate.md
@@ -77,6 +79,24 @@
 //     검사 6건 중 1건 실패
 //     등급 A (자동)
 //   등급 줄이 뒤에 오는 것은 그것이 판정 결과지 실패가 아니기 때문이다
+//
+// numbers 통과 출력 예시
+//   PASS numbers harness/docs
+//     검사 17건 통과
+//       numbers.duplicate numbers.attachment
+//     번호 14개, 파일 17개
+//     한계. 로컬 트리만 본다. origin/main이 먼저 가져간 번호는 여기 안 나온다
+//       git fetch origin
+//       git ls-tree --name-only origin/main harness/docs/
+//   한계를 출력에 적는 이유는 통과했을 때가 오히려 위험하기 때문이다
+//
+// numbers 실패 출력 예시 (종료 코드 1)
+//   FAIL numbers harness/docs
+//     [numbers.duplicate]  0  번호 10-15. 문서 2개가 같은 번호를 쓴다: 10-15-a.md, 10-15-b.md. 나중 것이 다음 번호로 내려간다 (16bb437)
+//     [numbers.attachment] 0  번호 10-18. 붙을 본문 md가 없는 첨부다: 10-18-b-fig1.svg. 본문 이름 뒤에 -를 붙여 짓는다
+//     검사 15건 중 2건 실패
+//     번호 14개, 파일 17개
+//   도형 파일은 겹침이 아니다. 10-17은 본문 하나에 fig 셋이 정상으로 붙어 파일 넷이다
 //
 // 쓰기 정책
 //   g1과 g2는 아무 파일도 쓰지 않는다. 읽기만 한다.
@@ -157,6 +177,11 @@ function sha256(p) {
 // 폴더에 sha256을 부르면 EISDIR로 죽는다. existsSync는 폴더에도 참을 돌려준다
 function isFile(p) {
   try { return fs.statSync(p).isFile(); } catch { return false; }
+}
+
+// 디렉터리 명령이 파일을 받으면 readdirSync가 ENOTDIR로 죽는다. 사용법 오류로 가른다
+function isDir(p) {
+  try { return fs.statSync(p).isDirectory(); } catch { return false; }
 }
 
 // 대소문자를 무시한다. Windows 파일시스템이 구분하지 않기 때문이다 (HRV-05)
@@ -604,6 +629,66 @@ export function sweep(dir, { type = 'doc', end, require: required = [] } = {}) {
   return fails.length ? 1 : 0;
 }
 
+// ---------- numbers ----------
+// 디렉터리 아래 문서 번호가 겹치는지 본다 (이슈 75).
+// 왜 필요한가: 번호는 우리 파일명 규약이지 git이 아는 규칙이 아니다. 경로가 다르면
+// git은 서로 다른 파일 둘로 보고 충돌 없이 둘 다 병합한다. 2026-09-10에 한 브랜치가
+// 같은 문서에 10-14, 10-15, 10-17을 차례로 붙였고 앞의 둘은 origin/main의 다른 세션이
+// 먼저 가져가서 겹쳤다. 커밋 16bb437도 같은 종류(10-11 두 파일)를 고친 것이다.
+
+// 문서 번호 접두. 10-4-o2o-harness-workflow-decisions.md의 10-4다.
+// 계열과 일련을 따로 읽는다. 문자열로 비교하면 10-14가 10-4보다 앞으로 온다
+const DOC_NUM_RE = /^(\d+)-(\d+)-/;
+
+// 번호를 주장하는 것은 본문 md 하나이고 다른 확장자는 그 본문에 붙는 첨부다.
+// 파일 수로 세면 안 된다. 10-17은 본문 하나에 fig1부터 fig3까지 svg 셋이 정상으로
+// 붙어 있어서 파일 넷이다. 그 배치를 겹침으로 잡으면 가드가 정상 값을 막는다
+export function numbers(dir) {
+  if (!isDir(dir)) {
+    console.error(`사용법 오류: numbers는 디렉터리를 받는다: ${rel(dir)}`);
+    return 2;
+  }
+  const groups = new Map();
+  for (const name of fs.readdirSync(dir).sort()) {
+    if (!isFile(path.join(dir, name))) continue;
+    const m = name.match(DOC_NUM_RE);
+    if (!m) continue; // README.md처럼 번호가 없는 파일은 번호를 주장하지 않는다
+    const key = `${m[1]}-${m[2]}`;
+    const ext = path.extname(name);
+    if (!groups.has(key)) groups.set(key, { series: Number(m[1]), index: Number(m[2]), files: [] });
+    groups.get(key).files.push({ name, ext, base: name.slice(0, name.length - ext.length) });
+  }
+  const keys = [...groups.keys()].sort((a, b) =>
+    groups.get(a).series - groups.get(b).series || groups.get(a).index - groups.get(b).index);
+
+  const r = new Report('numbers', dir);
+  let fileCount = 0;
+  for (const key of keys) {
+    const g = groups.get(key);
+    fileCount += g.files.length;
+    const docs = g.files.filter((f) => f.ext === '.md');
+    const rest = g.files.filter((f) => f.ext !== '.md');
+    r.check('numbers.duplicate', 0, docs.length <= 1,
+      `번호 ${key}. 문서 ${docs.length}개가 같은 번호를 쓴다: ${docs.map((f) => f.name).join(', ')}. 나중 것이 다음 번호로 내려간다 (16bb437)`);
+    // 첨부는 본문 이름 뒤에 -를 붙여 짓는다. 그러지 않으면 본문 없이 번호만 차지해서
+    // 다음 세션이 그 번호를 비었다고 읽는다
+    for (const f of rest) {
+      r.check('numbers.attachment', 0, docs.some((d) => f.base.startsWith(d.base + '-')),
+        `번호 ${key}. 붙을 본문 md가 없는 첨부다: ${f.name}. 본문 이름 뒤에 -를 붙여 짓는다`);
+    }
+  }
+
+  const code = r.print();
+  console.log(`  번호 ${keys.length}개, 파일 ${fileCount}개`);
+  // 한계를 여기 적는 이유는 통과했을 때가 오히려 위험하기 때문이다. 남이 먼저 가져간
+  // 번호는 로컬 트리에 없으므로 이 명령은 초록을 낸다. README에만 적으면 그 초록을
+  // 받은 사람이 읽을 자리가 아니다
+  console.log('  한계. 로컬 트리만 본다. origin/main이 먼저 가져간 번호는 여기 안 나온다');
+  console.log('    git fetch origin');
+  console.log(`    git ls-tree --name-only origin/main ${rel(dir)}/`);
+  return code;
+}
+
 export function parseReport(file) {
   const out = { file, ok: true, errors: [], rows: [], summary: null, detailCount: 0 };
   const text = fs.readFileSync(file, 'utf8');
@@ -926,7 +1011,7 @@ export function answer(file, { grade } = {}) {
 export function main(argv) {
   const [cmd, file, ...rest] = argv;
   if (!cmd || !file) {
-    console.error('사용법: node harness/tools/check.mjs <fill|g1|g2|answer|sweep> <파일 또는 디렉터리> [옵션]');
+    console.error('사용법: node harness/tools/check.mjs <fill|g1|g2|answer|sweep|numbers> <파일 또는 디렉터리> [옵션]');
     return 2;
   }
   if (!fs.existsSync(file)) { console.error(`파일이 없다: ${file}`); return 2; }
@@ -945,6 +1030,7 @@ export function main(argv) {
   if (cmd === 'g2') return g2(file, opt);
   if (cmd === 'answer') return answer(file, opt);
   if (cmd === 'sweep') return sweep(file, opt);
+  if (cmd === 'numbers') return numbers(file);
   console.error(`알 수 없는 명령: ${cmd}`);
   return 2;
 }
