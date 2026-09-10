@@ -7,6 +7,7 @@
 | 파일 | 상태 |
 |---|---|
 | check.mjs | fill, g1, g2, answer, sweep, numbers 여섯 명령. 2026-09-08 H3에서 재작성, 같은 날 하네스 리뷰 12건 반영. 2026-09-10 sweep 추가 (10-14 8-4절), 같은 날 numbers 추가 (이슈 75) |
+| numbers-gate.mjs | PostToolUse 훅용 다리. 방금 건드린 파일이 harness/docs 아래면 numbers를 부른다 (2026-09-10 추가) |
 | build-v2.mjs | tmp/api-spec-v2/build-v2.mjs 사본. API 명세 조립용. 미검증 |
 | tests/ | 골든 fixture 6개와 테스트 99건 (2026-09-10 실측). fixture는 harness/prompts/의 양식에서 만든다. numbers의 대조 테스트는 임시 git 저장소를 만들어 refs/remotes/origin/main을 직접 박는다 |
 
@@ -61,3 +62,25 @@ fill만 쓴다. 대상은 인자로 받은 그 파일 하나뿐이고 document/,
 check.mjs는 저장소 루트를 스크립트 위치에서 유도한다(../..). 절대경로를 상수로 박지 않는다. 이전 판이 그렇게 해서 디렉터리 개편 두 번에 두 번 다 깨졌다.
 
 명령을 적을 때 경로 구분자는 슬래시로 고정한다. .claude/settings.json의 allow 규칙이 명령 문자열 앞부분을 그대로 비교한다.
+
+## 훅 (2026-09-10 추가)
+
+검사가 있다는 것과 검사가 무언가를 막는다는 것은 다르다. 사람이 손으로 쳐야 도는 검사는 바쁠 때 안 돌고, 안 돈 것과 돌아서 통과한 것을 구별할 수 없다(harness/docs/10-14 8-2절).
+
+numbers를 PostToolUse 훅에 걸었다. 배선은 .claude/settings.json이고 이 파일은 추적한다. answer 게이트는 배선이 .claude/settings.local.json에 있어 저장소를 받은 사람에게는 없는 것과 같다. 그 자리를 반복하지 않으려고 추적하는 쪽에 넣었다.
+
+| 항목 | 값 |
+|---|---|
+| 이벤트 | PostToolUse |
+| matcher | Write와 Bash |
+| 부르는 것 | node harness/tools/numbers-gate.mjs |
+| 보는 자리 | harness/docs 하나 |
+| 막는 조건 | 방금 건드린 파일이 겹침에 이름을 올렸을 때 |
+
+Bash를 넣은 것은 이름을 바꾸는 일이 git mv로 일어나기 때문이다. 커밋 16bb437이 그 모양이었고 Write만 보면 그 변경을 놓친다. 대신 Bash 호출마다 게이트가 한 번 뜬다. 실측 75밀리초이고 그중 60밀리초는 node 기동이라 더 줄일 자리가 없다. 느리면 matcher에서 Bash를 빼면 되고 그때 잃는 것은 이름 변경 감지다.
+
+document/는 보지 않는다. 06-2-o2o-aggregates.md와 06-2-o2o-aggregates-explained.md처럼 한 번호에 본문과 해설을 짝으로 두는 자리라 걸면 정상 배치가 매번 걸린다. 늘리려면 그 자리의 규약을 먼저 정한다.
+
+게이트가 고장 나도 세션을 잠그지 않는다. 안전 규칙 넷은 numbers-gate.mjs 머리 주석에 있다. 남이 만든 겹침은 알리기만 하고 막지 않는다. 이미 겹친 저장소에서 모든 쓰기가 막히면 세션이 못 나간다.
+
+훅은 이 저장소를 여는 세션에서만 돈다. PR과 다른 사람의 클론까지 덮으려면 CI가 따로 필요하다. 지금 .github/workflows는 없다.
