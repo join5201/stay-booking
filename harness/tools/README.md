@@ -41,6 +41,7 @@ fill만 쓴다. 대상은 인자로 받은 그 파일 하나뿐이고 document/,
 | --require "a,b" | g1 doc이 확인할 승인 양식 필수 항목 |
 | --artifact <경로> | g1 code에서 빌드나 테스트 결과 파일을 지정한다. 여러 번 쓸 수 있다 |
 | --mode pre 또는 final | g2의 반영 전 검사와 최종 완료 검사를 가른다 |
+| --grade A\|B\|C | answer가 쓸 등급을 지정한다. 안 주면 기계가 정한다 (harness/prompts/answer-format.md 4절) |
 | --dry | fill이 쓰지 않고 결과만 보여 준다 |
 | --task <이름> | state가 그 Task의 행만 본다 |
 
