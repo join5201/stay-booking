@@ -50,15 +50,18 @@
 //
 // 재개 브리핑 출력 예시 (종료 코드 0. 게이트가 아니라 보고다)
 //   재개 브리핑 harness/state/progress.md
-//     행 82개. Task 23종. 2026-09-07 18:31부터 2026-09-10 15:05까지
+//     행 94개. Task 25종. 2026-09-07 18:31부터 2026-09-10 15:31까지
+//     뒤 행이 대체한 행 1건은 셈에서 뺐다
 //     끝난 Task 6종
 //       H0 H1 저장소 편입 디렉터리 통합 하네스 리뷰 task-S2
-//     안 끝난 Task 17종. 마지막 행이 오래된 것부터
+//     안 끝난 Task 19종. 마지막 행이 오래된 것부터
 //       2026-09-08 14:11  drafted  H2  (준비)
 //         다음 작업: 저장소 편입
+//         안 해 본 것: 양식을 두 벌로 나눠 보기
 //     막힌 채로 남은 행 3건
 //   안 끝난 것을 오래된 것부터 내는 이유는 가장 오래 방치된 Task를 먼저 보게 하기
 //   위해서다. 순서는 파일 순서가 아니라 날짜시각 칸으로 잡는다 (10-14 9-4절 E1).
+//   안 해 본 것과 대체는 2026-09-10에 생긴 칸이라 그 전 행에는 없다. 없으면 안 찍는다.
 //
 // 권한 설정 출력 예시 (종료 코드 1)
 //   FAIL settings .claude/settings.json
@@ -630,20 +633,42 @@ export function sweep(dir, { type = 'doc', end, require: required = [] } = {}) {
 // 순서는 파일 순서가 아니라 날짜시각 칸으로 잡는다. merge=union이 추가된 줄의 순서를
 // 보장하지 않기 때문이다 (CLAUDE.md 4절). 안 끝난 것은 오래된 것부터 내놓는다.
 // 가장 오래 방치된 Task가 맨 위여야 재개하는 사람이 그것을 먼저 본다.
+//
+// 칸 수가 둘이다 (2026-09-10). 2026-09-10 이전 행은 아홉 칸이고 뒤의 세 칸이 없다.
+// 아흔 행을 다시 쓰는 커밋은 merge=union 아래에서 다른 세션의 추가와 만나면 파일을
+// 두 벌로 만든다. 그래서 옛 행을 그대로 두고 읽는 쪽이 두 형태를 다 받는다.
+// 없는 칸은 빈 문자열이고 그것은 값이 아니라 그때 안 적었다는 뜻이다.
 
-const ROW_COLS = 9;
+const ROW_MIN_COLS = 9;
+const ROW_MAX_COLS = 12;
 
 export function stateRows(text) {
   const rows = [];
   for (const line of text.split('\n')) {
     if (!line.startsWith('|')) continue;
     const c = line.split('|').slice(1, -1).map((s) => s.trim());
-    if (c.length !== ROW_COLS) continue;
+    if (c.length < ROW_MIN_COLS || c.length > ROW_MAX_COLS) continue;
     if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(c[0])) continue;
-    rows.push({ when: c[0], task: c[1], step: c[3], result: c[4], why: c[5], next: c[7] });
+    const at = (i) => c[i] || '';
+    rows.push({
+      when: c[0], task: c[1], step: c[3], result: c[4], why: c[5], next: c[7],
+      evidence: at(9), untried: at(10), supersedes: at(11), cols: c.length,
+    });
   }
   rows.sort((a, b) => (a.when < b.when ? -1 : a.when > b.when ? 1 : 0));
   return rows;
+}
+
+// 빈칸과 없음을 같이 다룬다. 둘 다 적을 것이 없다는 뜻이다
+function has(v) {
+  return v !== '' && v !== '없음' && v !== '해당 없음';
+}
+
+// 뒤 행이 대체한 앞 행의 날짜시각 집합
+export function supersededSet(rows) {
+  const out = new Set();
+  for (const r of rows) if (has(r.supersedes)) out.add(r.supersedes);
+  return out;
 }
 
 // Task마다 마지막 행. 날짜시각 순으로 오래된 것부터
@@ -655,17 +680,22 @@ export function lastPerTask(rows) {
 
 export function state(file, { task } = {}) {
   const all = stateRows(fs.readFileSync(file, 'utf8'));
-  const rows = task ? all.filter((r) => r.task === task) : all;
-  if (rows.length === 0) {
-    console.error(task ? `그 Task의 행이 없다: ${task}` : `아홉 칸 행이 없다: ${rel(file)}`);
+  const scoped = task ? all.filter((r) => r.task === task) : all;
+  if (scoped.length === 0) {
+    console.error(task ? `그 Task의 행이 없다: ${task}` : `행 형식에 맞는 행이 없다: ${rel(file)}`);
     return 2;
   }
+  const dead = supersededSet(all);
+  const rows = scoped.filter((r) => !dead.has(r.when));
   const last = lastPerTask(rows);
   const done = last.filter((r) => r.result.startsWith('done'));
   const open = last.filter((r) => !r.result.startsWith('done'));
 
   console.log(`재개 브리핑 ${rel(file)}${task ? ' --task ' + task : ''}`);
   console.log(`  행 ${rows.length}개. Task ${last.length}종. ${rows[0].when}부터 ${rows[rows.length - 1].when}까지`);
+  if (scoped.length !== rows.length) {
+    console.log(`  뒤 행이 대체한 행 ${scoped.length - rows.length}건은 셈에서 뺐다`);
+  }
   console.log(`  끝난 Task ${done.length}종`);
   if (done.length) for (const l of wrapNames(done.map((r) => r.task))) console.log(l);
 
@@ -673,6 +703,10 @@ export function state(file, { task } = {}) {
   for (const r of open) {
     console.log(`    ${r.when}  ${r.result.split(/[.\s]/)[0]}  ${r.task}  (${r.step})`);
     console.log(`      다음 작업: ${r.next}`);
+    if (has(r.untried)) console.log(`      안 해 본 것: ${r.untried}`);
+    if (r.cols >= ROW_MAX_COLS && !has(r.evidence)) {
+      console.log('      증거 없음. 결과 칸은 주장이지 기록이 아니다');
+    }
   }
   if (open.length === 0) console.log('    없음');
 
