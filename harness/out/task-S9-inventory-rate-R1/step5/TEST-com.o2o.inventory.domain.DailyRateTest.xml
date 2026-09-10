@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.inventory.domain.DailyRateTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-09-09T09:21:34.513Z" hostname="BOOK-QD5U7FFOBT" time="0.004">
+  <properties/>
+  <testcase name="요금이_음수면_거절한다()" classname="com.o2o.inventory.domain.DailyRateTest" time="0.001"/>
+  <testcase name="요금이_0이면_거절한다()" classname="com.o2o.inventory.domain.DailyRateTest" time="0.0"/>
+  <testcase name="지난_버전으로_조정하면_거절한다()" classname="com.o2o.inventory.domain.DailyRateTest" time="0.001"/>
+  <testcase name="조정하면_금액과_버전이_바뀐다()" classname="com.o2o.inventory.domain.DailyRateTest" time="0.0"/>
+  <testcase name="요금이_1이면_등록한다()" classname="com.o2o.inventory.domain.DailyRateTest" time="0.0"/>
+  <testcase name="조정에서도_0을_거절한다()" classname="com.o2o.inventory.domain.DailyRateTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

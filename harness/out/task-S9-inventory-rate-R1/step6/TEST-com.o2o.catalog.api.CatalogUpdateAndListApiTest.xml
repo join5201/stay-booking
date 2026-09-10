@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.catalog.api.CatalogUpdateAndListApiTest" tests="16" skipped="0" failures="0" errors="0" timestamp="2026-09-10T05:43:59.360Z" hostname="BOOK-QD5U7FFOBT" time="0.677">
+  <properties/>
+  <testcase name="C8_페이지_범위를_넘으면_빈_items다()" classname="com.o2o.catalog.api.CatalogUpdateAndListApiTest" time="0.111"/>
+  <testcase name="CAT_02_맞는_버전으로_수정하면_200이고_버전이_오른다()" classname="com.o2o.catalog.api.CatalogUpdateAndListApiTest" time="0.044"/>
+  <testcase name="C3_남의_숙소를_수정하면_404이고_바뀌지_않는다()" classname="com.o2o.catalog.api.CatalogUpdateAndListApiTest" time="0.036"/>
+  <testcase name="C5_version이_없으면_400이다()" classname="com.o2o.catalog.api.CatalogUpdateAndListApiTest" time="0.021"/>
+  <testcase name="C8_기본_정렬이_id_오름차순이다()" classname="com.o2o.catalog.api.CatalogUpdateAndListApiTest" time="0.05"/>
+  <testcase name="CAT_09_숙소의_객실_타입_목록을_준다()" classname="com.o2o.catalog.api.CatalogUpdateAndListApiTest" time="0.069"/>
+  <testcase name="CAT_04_지역_코드로_거른다()" classname="com.o2o.catalog.api.CatalogUpdateAndListApiTest" time="0.039"/>
+  <testcase name="C7_size가_0이거나_page가_음수면_400이다()" classname="com.o2o.catalog.api.CatalogUpdateAndListApiTest" time="0.01"/>
+  <testcase name="C4_틀린_버전으로_수정하면_409이고_바뀌지_않는다()" classname="com.o2o.catalog.api.CatalogUpdateAndListApiTest" time="0.032"/>
+  <testcase name="C7_size_상한은_100이고_101은_400이다()" classname="com.o2o.catalog.api.CatalogUpdateAndListApiTest" time="0.038"/>
+  <testcase name="C7_page와_size의_기본값이_0과_20이다()" classname="com.o2o.catalog.api.CatalogUpdateAndListApiTest" time="0.02"/>
+  <testcase name="CAT_07_객실_타입을_수정한다()" classname="com.o2o.catalog.api.CatalogUpdateAndListApiTest" time="0.048"/>
+  <testcase name="CAT_05_본인_숙소만_보이고_헤더가_없으면_401이다()" classname="com.o2o.catalog.api.CatalogUpdateAndListApiTest" time="0.034"/>
+  <testcase name="C5_version_외에_바꿀_필드가_없으면_400이다()" classname="com.o2o.catalog.api.CatalogUpdateAndListApiTest" time="0.018"/>
+  <testcase name="CAT_07_남의_객실_타입을_수정하면_404다()" classname="com.o2o.catalog.api.CatalogUpdateAndListApiTest" time="0.043"/>
+  <testcase name="CAT_09_없는_숙소_아래를_조회하면_404다()" classname="com.o2o.catalog.api.CatalogUpdateAndListApiTest" time="0.016"/>
+  <system-out><![CDATA[2026-09-10T14:43:59.362+09:00  INFO 50944 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.catalog.api.CatalogUpdateAndListApiTest]: CatalogUpdateAndListApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-10T14:43:59.364+09:00  INFO 50944 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.catalog.api.CatalogUpdateAndListApiTest
+2026-09-10T14:43:59.365+09:00  INFO 50944 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.catalog.api.CatalogUpdateAndListApiTest]: CatalogUpdateAndListApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-10T14:43:59.365+09:00  INFO 50944 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.catalog.api.CatalogUpdateAndListApiTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.inventory.application.InventoryApplicationServiceTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-09-10T05:52:16.021Z" hostname="BOOK-QD5U7FFOBT" time="0.891">
+  <properties/>
+  <testcase name="없는_객실_타입에_요금을_등록하면_거절한다()" classname="com.o2o.inventory.application.InventoryApplicationServiceTest" time="0.012"/>
+  <testcase name="판매분_아래로_조정하면_거절하고_수량을_유지한다()" classname="com.o2o.inventory.application.InventoryApplicationServiceTest" time="0.079"/>
+  <testcase name="다른_날짜에는_재고를_등록한다()" classname="com.o2o.inventory.application.InventoryApplicationServiceTest" time="0.019"/>
+  <testcase name="같은_날짜에_요금을_두_번_등록하면_거절한다()" classname="com.o2o.inventory.application.InventoryApplicationServiceTest" time="0.025"/>
+  <testcase name="판매분과_같은_값으로는_조정할_수_있다()" classname="com.o2o.inventory.application.InventoryApplicationServiceTest" time="0.032"/>
+  <testcase name="같은_날짜에_재고를_두_번_등록하면_거절한다()" classname="com.o2o.inventory.application.InventoryApplicationServiceTest" time="0.026"/>
+  <testcase name="남의_객실_타입에_재고를_등록하면_거절한다()" classname="com.o2o.inventory.application.InventoryApplicationServiceTest" time="0.011"/>
+  <system-out><![CDATA[2026-09-10T14:52:16.033+09:00  INFO 32684 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.inventory.application.InventoryApplicationServiceTest
+2026-09-10T14:52:16.035+09:00  INFO 32684 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.inventory.application.InventoryApplicationServiceTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.1)
+
+2026-09-10T14:52:16.059+09:00  INFO 32684 --- [    Test worker] c.o.i.a.InventoryApplicationServiceTest  : Starting InventoryApplicationServiceTest using Java 21.0.11 with PID 32684 (started by user in C:\Dev\potenup\99_projects\o2o-dev\backend)
+2026-09-10T14:52:16.060+09:00  INFO 32684 --- [    Test worker] c.o.i.a.InventoryApplicationServiceTest  : No active profile set, falling back to 1 default profile: "default"
+2026-09-10T14:52:16.216+09:00  INFO 32684 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-09-10T14:52:16.250+09:00  INFO 32684 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 22 ms. Found 4 JPA repository interfaces.
+2026-09-10T14:52:16.316+09:00  INFO 32684 --- [    Test worker] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-09-10T14:52:16.349+09:00  INFO 32684 --- [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-09-10T14:52:16.351+09:00  INFO 32684 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Starting...
+2026-09-10T14:52:16.369+09:00  INFO 32684 --- [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-3 - Added connection com.mysql.cj.jdbc.ConnectionImpl@368022b9
+2026-09-10T14:52:16.369+09:00  INFO 32684 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Start completed.
+2026-09-10T14:52:16.371+09:00  INFO 32684 --- [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://127.0.0.1:3307/o2o_catalog_test]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 9.7.2
+	Default catalog/schema: o2o_catalog_test/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-09-10T14:52:16.456+09:00  INFO 32684 --- [    Test worker] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-09-10T14:52:16.541+09:00  INFO 32684 --- [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-10T14:52:16.613+09:00  WARN 32684 --- [    Test worker] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-09-10T14:52:16.701+09:00  INFO 32684 --- [    Test worker] c.o.i.a.InventoryApplicationServiceTest  : Started InventoryApplicationServiceTest in 0.663 seconds (process running for 14.001)
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
