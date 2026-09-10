@@ -46,7 +46,7 @@ A, B, C, D 순으로 간다.
 
 | 항목 | 내용 |
 |---|---|
-| 고칠 파일 | .claude/settings.json, CLAUDE.md 4-1의 deny 이유 표 |
+| 고칠 파일 | .claude/settings.json, harness/docs/10-15 3절의 deny 이유 표 (2026-09-10 CLAUDE.md 4-1에서 옮김) |
 | 무엇을 | Edit(**/.env.*)의 범위에서 .env.example과 .env.sample을 뺀다 |
 | 확인 | 좁힌 뒤 .env와 .env.local이 여전히 막히는지 손으로 시험한다. 통과 케이스와 차단 케이스를 짝으로 |
 | 하지 않을 것 | Read 쪽 deny는 건드리지 않는다. 읽기는 값이 프롬프트로 들어오는 경로라 성격이 다르다 |
