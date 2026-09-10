@@ -36,15 +36,17 @@
 //   범위 밖은 통과로 세지 않는다. 검사를 안 돌린 것과 돌려서 통과한 것을 가른다 (10-14 2-3절 A4).
 //
 // 쓸기 출력 예시 (종료 코드 1)
-//   FAIL g1 harness/docs/README.md
+//   FAIL g1 harness/docs/10-99-example.md
 //     [doc.date-created] 1  최초 작성 줄이 없다 (F5)
 //     [doc.date-updated] 1  최종 갱신 줄이 없다 (F5)
 //     검사 7건 중 2건 실패
 //   FAIL sweep harness/docs --type doc
-//     문서 13개 중 12개 통과
+//     문서 16개 중 15개 통과
 //     실패 1개
-//       harness/docs/README.md
+//       harness/docs/10-99-example.md
 //   통과한 파일은 이름도 안 찍는다. 스물일곱 개를 돌려도 읽히는 출력이어야 한다 (10-14 8-4절 D1).
+//   실패 예시의 파일 이름은 가상이다. 실재하는 파일을 적으면 그 파일을 고치는 순간
+//   예시가 낡는다. 이 자리가 실제로 그렇게 낡았다 (이슈 74).
 //
 // 실패 출력 예시 (종료 코드 1)
 //   FAIL g2 harness/decisions/task-S8-R1.md
