@@ -1,68 +1,68 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="680" height="500" viewBox="0 0 680 500" role="img" aria-labelledby="t2 d2">
 <title id="t2">O2O 하네스 폴더 지도와 평가 입력 경계</title>
-<desc id="d2">루트의 규칙 파일 셋, harness 아래 아홉 폴더, 그리고 document과 backend와 frontend를 보여 주는 구조도. 청록은 평가자에게 나가는 폴더, 회색은 나가지 않는 폴더다.</desc>
+<desc id="d2">루트의 규칙 파일 셋, harness 아래 아홉 폴더, 그리고 document과 backend와 frontend를 보여 주는 구조도. 검은 바탕은 평가자에게 나가는 폴더, 흰 바탕은 나가지 않는 폴더다.</desc>
 <style>
-text{font-family:system-ui,-apple-system,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif}
-.th{font-size:14px;font-weight:500;fill:#2C2C2A}
-.ts{font-size:12px;fill:#5F5E5A}
-.hair{stroke:#D3D1C7;stroke-width:0.8;fill:none}
-.b-teal{fill:#9FE1CB;stroke:#0F6E56;stroke-width:1}
-.b-gray{fill:#F1EFE8;stroke:#5F5E5A;stroke-width:0.8}
-.h-teal{fill:#04342C;font-size:14px;font-weight:500}
-.s-teal{fill:#085041;font-size:12px}
-.h-gray{fill:#444441;font-size:14px;font-weight:500}
-.s-gray{fill:#5F5E5A;font-size:12px}
+.s{font-family:system-ui,-apple-system,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif}
+.m{font-family:ui-monospace,Consolas,"DejaVu Sans Mono",monospace}
+.h{font-size:14px;font-weight:500;fill:#1F2328}
+.r{font-size:12px;fill:#57606A}
+.bw{fill:#FFFFFF;stroke:#57606A;stroke-width:1}
+.bk{fill:#1F2328;stroke:#1F2328;stroke-width:1}
+.tk{font-size:14px;font-weight:500;fill:#1F2328}
+.tw{font-size:14px;font-weight:500;fill:#FFFFFF}
+.sk{font-size:12px;fill:#57606A}
+.sw{font-size:12px;fill:#B8BFC7}
 </style>
 <rect x="0" y="0" width="680" height="500" fill="#FFFFFF"/>
-<rect class="b-gray" x="40" y="48" width="185" height="48" rx="4"/>
-<text class="h-gray" x="132.5" y="70" text-anchor="middle">CLAUDE.md</text>
-<text class="s-gray" x="132.5" y="86" text-anchor="middle">생성자 규칙</text>
-<rect class="b-gray" x="247" y="48" width="185" height="48" rx="4"/>
-<text class="h-gray" x="339.5" y="70" text-anchor="middle">AGENTS.md</text>
-<text class="s-gray" x="339.5" y="86" text-anchor="middle">평가자 규칙, Codex가 읽는다</text>
-<rect class="b-gray" x="454" y="48" width="185" height="48" rx="4"/>
-<text class="h-gray" x="546.5" y="70" text-anchor="middle">settings.json</text>
-<text class="s-gray" x="546.5" y="86" text-anchor="middle">deny와 allow</text>
-<rect x="40" y="118" width="600" height="228" rx="8" fill="none" stroke="#D3D1C7" stroke-width="0.8" stroke-dasharray="5 4"/>
-<text class="th" x="56" y="140">harness/</text>
-<rect class="b-teal" x="56" y="152" width="180" height="48" rx="4"/>
-<text class="h-teal" x="146" y="174" text-anchor="middle">tasks/</text>
-<text class="s-teal" x="146" y="190" text-anchor="middle">승인된 계약</text>
-<rect class="b-teal" x="250" y="152" width="180" height="48" rx="4"/>
-<text class="h-teal" x="340" y="174" text-anchor="middle">out/</text>
-<text class="s-teal" x="340" y="190" text-anchor="middle">이번 라운드 후보</text>
-<rect class="b-teal" x="444" y="152" width="180" height="48" rx="4"/>
-<text class="h-teal" x="534" y="174" text-anchor="middle">prompts/</text>
-<text class="s-teal" x="534" y="190" text-anchor="middle">eval-criteria 둘만</text>
-<rect class="b-teal" x="56" y="214" width="180" height="48" rx="4"/>
-<text class="h-teal" x="146" y="236" text-anchor="middle">project-sync/</text>
-<text class="s-teal" x="146" y="252" text-anchor="middle">쓰기 금지, 입력 팩만</text>
-<rect class="b-gray" x="250" y="214" width="180" height="48" rx="4"/>
-<text class="h-gray" x="340" y="236" text-anchor="middle">docs/</text>
-<text class="s-gray" x="340" y="252" text-anchor="middle">설계 근거와 이력</text>
-<rect class="b-gray" x="444" y="214" width="180" height="48" rx="4"/>
-<text class="h-gray" x="534" y="236" text-anchor="middle">tools/</text>
-<text class="s-gray" x="534" y="252" text-anchor="middle">check.mjs 세 명령</text>
-<rect class="b-gray" x="56" y="276" width="180" height="48" rx="4"/>
-<text class="h-gray" x="146" y="298" text-anchor="middle">reviews/</text>
-<text class="s-gray" x="146" y="314" text-anchor="middle">리포트 원문</text>
-<rect class="b-gray" x="250" y="276" width="180" height="48" rx="4"/>
-<text class="h-gray" x="340" y="298" text-anchor="middle">decisions/</text>
-<text class="s-gray" x="340" y="314" text-anchor="middle">결정 정본</text>
-<rect class="b-gray" x="444" y="276" width="180" height="48" rx="4"/>
-<text class="h-gray" x="534" y="298" text-anchor="middle">state/</text>
-<text class="s-gray" x="534" y="314" text-anchor="middle">진행 기록, 추가 전용</text>
-<rect class="b-teal" x="40" y="392" width="185" height="48" rx="4"/>
-<text class="h-teal" x="132.5" y="414" text-anchor="middle">document/</text>
-<text class="s-teal" x="132.5" y="430" text-anchor="middle">평가 대상과 확정본</text>
-<rect class="b-gray" x="247" y="392" width="185" height="48" rx="4"/>
-<text class="h-gray" x="339.5" y="414" text-anchor="middle">backend/</text>
-<text class="s-gray" x="339.5" y="430" text-anchor="middle">Spring, 카탈로그 아홉</text>
-<rect class="b-gray" x="454" y="392" width="185" height="48" rx="4"/>
-<text class="h-gray" x="546.5" y="414" text-anchor="middle">frontend/</text>
-<text class="s-gray" x="546.5" y="430" text-anchor="middle">Next.js, 아직 없다</text>
-<rect class="b-teal" x="45" y="466" width="14" height="14" rx="3"/>
-<text class="ts" x="66" y="477">평가자에게 나간다</text>
-<rect class="b-gray" x="225" y="466" width="14" height="14" rx="3"/>
-<text class="ts" x="246" y="477">나가지 않는다</text>
+<rect class="bw" x="40" y="48" width="186" height="46" rx="2"/>
+<text class="m tk" x="133" y="70" text-anchor="middle">CLAUDE.md</text>
+<text class="s sk" x="133" y="86" text-anchor="middle">생성자 규칙</text>
+<rect class="bw" x="247" y="48" width="186" height="46" rx="2"/>
+<text class="m tk" x="340" y="70" text-anchor="middle">AGENTS.md</text>
+<text class="s sk" x="340" y="86" text-anchor="middle">Codex의 평가자 규칙</text>
+<rect class="bw" x="454" y="48" width="186" height="46" rx="2"/>
+<text class="m tk" x="547" y="70" text-anchor="middle">settings.json</text>
+<text class="s sk" x="547" y="86" text-anchor="middle">deny와 allow</text>
+<rect x="40" y="118" width="600" height="228" rx="2" fill="none" stroke="#8C959F" stroke-width="1" stroke-dasharray="4 4"/>
+<text class="m h" x="56" y="140">harness/</text>
+<rect class="bk" x="56" y="152" width="180" height="48" rx="2"/>
+<text class="m tw" x="146" y="174" text-anchor="middle">tasks/</text>
+<text class="s sw" x="146" y="190" text-anchor="middle">승인된 계약</text>
+<rect class="bk" x="250" y="152" width="180" height="48" rx="2"/>
+<text class="m tw" x="340" y="174" text-anchor="middle">out/</text>
+<text class="s sw" x="340" y="190" text-anchor="middle">이번 라운드 후보</text>
+<rect class="bk" x="444" y="152" width="180" height="48" rx="2"/>
+<text class="m tw" x="534" y="174" text-anchor="middle">prompts/</text>
+<text class="s sw" x="534" y="190" text-anchor="middle">eval-criteria 둘만</text>
+<rect class="bk" x="56" y="214" width="180" height="48" rx="2"/>
+<text class="m tw" x="146" y="236" text-anchor="middle">project-sync/</text>
+<text class="s sw" x="146" y="252" text-anchor="middle">쓰기 금지, 입력 팩만</text>
+<rect class="bw" x="250" y="214" width="180" height="48" rx="2"/>
+<text class="m tk" x="340" y="236" text-anchor="middle">docs/</text>
+<text class="s sk" x="340" y="252" text-anchor="middle">설계 근거와 이력</text>
+<rect class="bw" x="444" y="214" width="180" height="48" rx="2"/>
+<text class="m tk" x="534" y="236" text-anchor="middle">tools/</text>
+<text class="s sk" x="534" y="252" text-anchor="middle">check.mjs 세 명령</text>
+<rect class="bw" x="56" y="276" width="180" height="48" rx="2"/>
+<text class="m tk" x="146" y="298" text-anchor="middle">reviews/</text>
+<text class="s sk" x="146" y="314" text-anchor="middle">리포트 원문</text>
+<rect class="bw" x="250" y="276" width="180" height="48" rx="2"/>
+<text class="m tk" x="340" y="298" text-anchor="middle">decisions/</text>
+<text class="s sk" x="340" y="314" text-anchor="middle">결정 정본</text>
+<rect class="bw" x="444" y="276" width="180" height="48" rx="2"/>
+<text class="m tk" x="534" y="298" text-anchor="middle">state/</text>
+<text class="s sk" x="534" y="314" text-anchor="middle">진행 기록, 추가 전용</text>
+<rect class="bk" x="40" y="392" width="186" height="46" rx="2"/>
+<text class="m tw" x="133" y="414" text-anchor="middle">document/</text>
+<text class="s sw" x="133" y="430" text-anchor="middle">평가 대상과 확정본</text>
+<rect class="bw" x="247" y="392" width="186" height="46" rx="2"/>
+<text class="m tk" x="340" y="414" text-anchor="middle">backend/</text>
+<text class="s sk" x="340" y="430" text-anchor="middle">Spring, 카탈로그 아홉</text>
+<rect class="bw" x="454" y="392" width="186" height="46" rx="2"/>
+<text class="m tk" x="547" y="414" text-anchor="middle">frontend/</text>
+<text class="s sk" x="547" y="430" text-anchor="middle">Next.js, 아직 없다</text>
+<rect class="bk" x="40" y="466" width="14" height="14" rx="2"/>
+<text class="s r" x="62" y="477">평가자에게 나간다</text>
+<rect class="bw" x="220" y="466" width="14" height="14" rx="2"/>
+<text class="s r" x="242" y="477">나가지 않는다</text>
 </svg>

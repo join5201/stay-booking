@@ -2,45 +2,46 @@
 <title id="t3">O2O 하네스의 게이트</title>
 <desc id="d3">기계가 막는 다섯과 사람이 막는 넷을 두 열로 나눈 비교표. 왼쪽은 검사 스크립트와 설정 파일, 오른쪽은 사람의 승인 지점이다.</desc>
 <style>
-text{font-family:system-ui,-apple-system,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif}
-.th{font-size:14px;font-weight:500;fill:#2C2C2A}
-.hair{stroke:#D3D1C7;stroke-width:0.8;fill:none}
-.b-coral{fill:#FAECE7;stroke:#993C1D;stroke-width:0.8}
-.b-gray{fill:#F1EFE8;stroke:#5F5E5A;stroke-width:0.8}
-.h-coral{fill:#712B13;font-size:14px;font-weight:500}
-.s-coral{fill:#993C1D;font-size:12px}
-.h-gray{fill:#444441;font-size:14px;font-weight:500}
-.s-gray{fill:#5F5E5A;font-size:12px}
+.s{font-family:system-ui,-apple-system,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif}
+.m{font-family:ui-monospace,Consolas,"DejaVu Sans Mono",monospace}
+.h{font-size:14px;font-weight:500;fill:#1F2328}
+.bw{fill:#FFFFFF;stroke:#57606A;stroke-width:1}
+.bk{fill:#1F2328;stroke:#1F2328;stroke-width:1}
+.tk{font-size:14px;font-weight:500;fill:#1F2328}
+.tw{font-size:14px;font-weight:500;fill:#FFFFFF}
+.sk{font-size:12px;fill:#57606A}
+.sw{font-size:12px;fill:#B8BFC7}
 </style>
 <rect x="0" y="0" width="680" height="396" fill="#FFFFFF"/>
-<text class="th" x="180" y="52" text-anchor="middle">기계가 막는다</text>
-<text class="th" x="500" y="52" text-anchor="middle">사람이 막는다</text>
-<line class="hair" x1="40" y1="62" x2="640" y2="62"/>
-<rect class="b-gray" x="40" y="76" width="280" height="48" rx="4"/>
-<text class="h-gray" x="180" y="98" text-anchor="middle">check.mjs fill</text>
-<text class="s-gray" x="180" y="114" text-anchor="middle">빈칸 0, 경로 존재, sha256</text>
-<rect class="b-gray" x="40" y="136" width="280" height="48" rx="4"/>
-<text class="h-gray" x="180" y="158" text-anchor="middle">check.mjs g1</text>
-<text class="s-gray" x="180" y="174" text-anchor="middle">날짜, 금지 기호, 종료 문장</text>
-<rect class="b-gray" x="40" y="196" width="280" height="48" rx="4"/>
-<text class="h-gray" x="180" y="218" text-anchor="middle">check.mjs g2</text>
-<text class="s-gray" x="180" y="234" text-anchor="middle">지적 ID와 심각도 대조</text>
-<rect class="b-gray" x="40" y="256" width="280" height="48" rx="4"/>
-<text class="h-gray" x="180" y="278" text-anchor="middle">settings.json deny</text>
-<text class="s-gray" x="180" y="294" text-anchor="middle">.env, rm, project-sync 쓰기</text>
-<rect class="b-gray" x="40" y="316" width="280" height="48" rx="4"/>
-<text class="h-gray" x="180" y="338" text-anchor="middle">.gitattributes</text>
-<text class="s-gray" x="180" y="354" text-anchor="middle">LF 고정, state 셋 union</text>
-<rect class="b-coral" x="360" y="76" width="280" height="48" rx="4"/>
-<text class="h-coral" x="500" y="98" text-anchor="middle">계약 승인</text>
-<text class="s-coral" x="500" y="114" text-anchor="middle">승인 전에는 생성하지 않는다</text>
-<rect class="b-coral" x="360" y="136" width="280" height="48" rx="4"/>
-<text class="h-coral" x="500" y="158" text-anchor="middle">결정표</text>
-<text class="s-coral" x="500" y="174" text-anchor="middle">수용과 거부와 반박을 적는다</text>
-<rect class="b-coral" x="360" y="196" width="280" height="48" rx="4"/>
-<text class="h-coral" x="500" y="218" text-anchor="middle">최종 done</text>
-<text class="s-coral" x="500" y="234" text-anchor="middle">스크립트도 모델도 못 쓴다</text>
-<rect class="b-coral" x="360" y="256" width="280" height="48" rx="4"/>
-<text class="h-coral" x="500" y="278" text-anchor="middle">project-sync 반입</text>
-<text class="s-coral" x="500" y="294" text-anchor="middle">사람이 손으로 옮긴다</text>
+<text class="s h" x="180" y="52" text-anchor="middle">기계가 막는다</text>
+<text class="s h" x="500" y="52" text-anchor="middle">사람이 막는다</text>
+<line x1="40" y1="62" x2="320" y2="62" stroke="#D0D7DE" stroke-width="1"/>
+<line x1="360" y1="62" x2="640" y2="62" stroke="#D0D7DE" stroke-width="1"/>
+<rect class="bw" x="40" y="76" width="280" height="48" rx="2"/>
+<text class="m tk" x="180" y="98" text-anchor="middle">check.mjs fill</text>
+<text class="s sk" x="180" y="114" text-anchor="middle">빈칸 0, 경로 존재, sha256</text>
+<rect class="bw" x="40" y="136" width="280" height="48" rx="2"/>
+<text class="m tk" x="180" y="158" text-anchor="middle">check.mjs g1</text>
+<text class="s sk" x="180" y="174" text-anchor="middle">날짜, 금지 기호, 종료 문장</text>
+<rect class="bw" x="40" y="196" width="280" height="48" rx="2"/>
+<text class="m tk" x="180" y="218" text-anchor="middle">check.mjs g2</text>
+<text class="s sk" x="180" y="234" text-anchor="middle">지적 ID와 심각도 대조</text>
+<rect class="bw" x="40" y="256" width="280" height="48" rx="2"/>
+<text class="m tk" x="180" y="278" text-anchor="middle">settings.json deny</text>
+<text class="s sk" x="180" y="294" text-anchor="middle">.env, rm, project-sync 쓰기</text>
+<rect class="bw" x="40" y="316" width="280" height="48" rx="2"/>
+<text class="m tk" x="180" y="338" text-anchor="middle">.gitattributes</text>
+<text class="s sk" x="180" y="354" text-anchor="middle">LF 고정, state 셋 union</text>
+<rect class="bk" x="360" y="76" width="280" height="48" rx="2"/>
+<text class="s tw" x="500" y="98" text-anchor="middle">계약 승인</text>
+<text class="s sw" x="500" y="114" text-anchor="middle">승인 전에는 생성하지 않는다</text>
+<rect class="bk" x="360" y="136" width="280" height="48" rx="2"/>
+<text class="s tw" x="500" y="158" text-anchor="middle">결정표</text>
+<text class="s sw" x="500" y="174" text-anchor="middle">수용과 거부와 반박을 적는다</text>
+<rect class="bk" x="360" y="196" width="280" height="48" rx="2"/>
+<text class="s tw" x="500" y="218" text-anchor="middle">최종 done</text>
+<text class="s sw" x="500" y="234" text-anchor="middle">스크립트도 모델도 못 쓴다</text>
+<rect class="bk" x="360" y="256" width="280" height="48" rx="2"/>
+<text class="s tw" x="500" y="278" text-anchor="middle">project-sync 반입</text>
+<text class="s sw" x="500" y="294" text-anchor="middle">사람이 손으로 옮긴다</text>
 </svg>
