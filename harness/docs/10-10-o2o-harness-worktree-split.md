@@ -80,7 +80,9 @@ merge=union은 같은 자리에 들어온 양쪽 줄을 둘 다 남기는 병합
 | 로컬 git merge-tree | 걸린다 |
 | GitHub의 PR 병합 가능 여부 계산 | 안 걸린다 |
 
-2026-09-10 재현이다. PR 61과 62가 각각 main에서 갈라져 progress.md에 행을 더했다. 61을 병합하자 62가 CONFLICTING으로 바뀌었다. 같은 두 커밋을 로컬에서 병합하면 깨끗이 붙는다. 같은 날 열려 있던 PR 77로 한 번 더 확인했다. GitHub는 CONFLICTING이라 적는데 로컬 git merge-tree는 충돌 0으로 트리를 만든다. 그 progress.md 셋을 꺼내 재 보면 기본 병합은 충돌 1건, union 병합은 0건이다. union이 그 차이를 만드는 것이 맞다.
+처음 본 것은 이슈 68이다. PR 61과 62가 각각 main에서 갈라져 progress.md에 행을 더했고, 61을 병합하자 62가 CONFLICTING으로 바뀌었다고 적혀 있다. 둘이 3분 간격으로 병합됐고 공유 파일이 progress.md 하나인 것은 지금도 확인된다.
+
+직접 잰 것은 같은 날 열려 있던 PR 77이다. GitHub는 CONFLICTING이라 적는데 로컬 git merge-tree는 충돌 0으로 트리를 만든다. 그 progress.md 셋을 꺼내 재 보면 기본 병합은 충돌 1건, union 병합은 0건이다. union이 그 차이를 만드는 것이 맞다.
 
 그래서 PR을 올리기 전에 브랜치에서 origin/main을 병합한다. 그 병합은 로컬 git이 하므로 union이 걸리고, GitHub는 이미 합쳐진 결과를 받는다. CLAUDE.md 4-1의 5단계다.
 
