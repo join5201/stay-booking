@@ -1,11 +1,13 @@
 # task-S9-inventory-rate R1 평가자 B 요청문
 
 최초 작성: 2026-09-10
-최종 갱신: 2026-09-10
+최종 갱신: 2026-09-10 (작업 디렉터리를 o2o-dev로. 병합 후 삭제된 브랜치 이름. 이슈 87)
 
 이 파일은 사용자가 Codex의 새 작업에 그대로 붙여 넣는 요청문이다. A와 다른 새 작업에서 돈다. 한 작업에서 A와 B를 둘 다 하지 않는다. 근거는 eval-criteria-ddd.md 6절의 평가자 분할이다.
 
-작업 디렉터리는 C:/Dev/potenup/99_projects/o2o 또는 그 하위로 연다.
+작업 디렉터리는 C:/Dev/potenup/99_projects/o2o-dev로 연다. 그래야 AGENTS.md와 backend/AGENTS.md가 읽힌다. 상위 폴더 o2o는 세션 여럿이 브랜치를 바꿔 가며 쓰는 곳이라 평가 대상 파일이 없을 수 있다.
+
+열기 전에 `node harness/out/task-S9-inventory-rate-R1/verify-eval-workspace.mjs`를 그 폴더에서 돌려 PASS를 확인한다. FAIL이면 붙여 넣지 않는다.
 
 아래 구분선부터가 붙여 넣을 내용이다.
 
@@ -19,7 +21,7 @@
 |---|---|
 | Task | task-S9-inventory-rate. 재고와 요금 묶음 |
 | 라운드 | R1 |
-| 브랜치 | feat/task-s9-inventory-rate |
+| 브랜치 | main. feat/task-s9-inventory-rate는 PR 54로 병합된 뒤 삭제됐다 |
 | 기준 커밋 | 280a69163a6a64225bb414969a134af22d5cefbe |
 
 평가 대상 파일 목록은 `harness/out/task-S9-inventory-rate-R1/eval-target-files.md`에 있다.
