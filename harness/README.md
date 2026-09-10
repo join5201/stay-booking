@@ -14,13 +14,15 @@
 | prompts/ | 실행 중 읽는 양식 5종과 평가 기준 2종, 07 v3 | eval-criteria-*.md 둘만 |
 | tools/ | 검사 스크립트 | 안 된다 |
 | project-sync/ | 프로젝트 계열 원본 사본. 수정 금지 | 대조용. 작업 계약이 허용한 것만 |
-| tasks/ | 작업 계약 | 안 된다 |
+| tasks/ | 작업 계약 | 승인된 계약만 된다 |
 | out/ | 생성 후보와 형식 보정 이력 | 평가 대상 후보 자체는 된다 |
 | reviews/ | 평가 리포트 원문 | 안 된다 |
 | decisions/ | 결정의 정본 | 안 된다 |
 | state/ | 진행, 트러블슈팅, 누적 지식 | 안 된다 |
 
-한 줄 규칙: harness/ 아래는 harness/prompts/eval-criteria-*.md 둘과 그 라운드의 평가 대상 후보 말고는 평가 입력이 아니다.
+한 줄 규칙: harness/ 아래에서 평가자에게 나가는 것은 넷뿐이다. 승인된 Task 계약, 그 라운드의 평가 대상 후보, harness/prompts/eval-criteria-*.md 둘, harness/project-sync/의 입력 팩. 나머지는 전부 평가 입력이 아니다.
+
+계약이 평가 입력인 근거는 harness/prompts/evaluate.md의 허용 입력 표다. 승인된 Task 계약이 필수 행으로 있다. 평가자가 판정 기준으로 삼는 것이 계약이기 때문이다(HR1). 2026-09-10에 이 표의 tasks/ 행이 안 된다로 적혀 있던 것을 고쳤다.
 
 ## 여기 없는 것
 
