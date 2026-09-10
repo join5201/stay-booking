@@ -6,9 +6,9 @@
 
 | 파일 | 상태 |
 |---|---|
-| check.mjs | fill, g1, g2, answer, sweep, state 여섯 명령. 2026-09-08 H3에서 재작성, 같은 날 하네스 리뷰 12건 반영. 2026-09-10 sweep과 state 추가 (10-14 8-4절, 9-4절) |
+| check.mjs | fill, g1, g2, answer, sweep, state, settings 일곱 명령. 2026-09-08 H3에서 재작성, 같은 날 하네스 리뷰 12건 반영. 2026-09-10 sweep과 state와 settings 추가 (10-14 8-4절과 9-4절, 10-19 4절) |
 | build-v2.mjs | tmp/api-spec-v2/build-v2.mjs 사본. API 명세 조립용. 미검증 |
-| tests/ | 골든 fixture 6개와 테스트 89건 (2026-09-10 실측). fixture는 harness/prompts/의 양식에서 만든다 |
+| tests/ | 골든 fixture 6개와 테스트 97건 (2026-09-10 실측). fixture는 harness/prompts/의 양식에서 만든다 |
 
 원본은 tmp/ 아래에 그대로 둔다. 삭제하지 않는다.
 
@@ -21,6 +21,7 @@
 | node harness/tools/check.mjs answer <답변파일> [--grade A\|B\|C] | 첫 줄이 결론인지, 마지막 절이 결과인지, 결과 절 다섯 행이 다 있는지. 등급은 안 주면 기계가 정한다 (harness/prompts/answer-format.md 4절) |
 | node harness/tools/check.mjs sweep <디렉터리> --type doc | 디렉터리 아래 마크다운을 전부 g1으로 돌고 한 줄로 요약한다. 통과한 파일은 안 찍고 실패만 상세를 낸다. 하나라도 실패하면 종료 코드 1 |
 | node harness/tools/check.mjs state <진행 기록> [--task <이름>] | 안 끝난 Task의 마지막 행과 막힌 채로 남은 행을 고정 형식으로 낸다. 게이트가 아니라 보고라 실패해도 종료 코드가 0이다 |
+| node harness/tools/check.mjs settings <권한 설정> | Bash와 PowerShell 규칙의 짝, deny와 allow 겹침. 한쪽만 고쳐 규칙이 조용히 사라지는 것을 잡는다 |
 | node harness/tools/check.mjs g2 <결정표> --mode pre 또는 final | 버전 일치, 원본 리포트 스키마, 지적 ID 집합, 행 수, 심각도 보존, 빈 결정, 거부 이유, 반박 등급, 치명 거부 필수 필드. 남은 치명과 반영본은 final에서만 |
 | node --test harness/tools/tests/check.test.mjs | 골든 파일 테스트 |
 
@@ -28,7 +29,7 @@
 
 ## 쓰기 정책
 
-g1과 g2와 sweep과 state는 아무 파일도 쓰지 않는다. 읽기만 한다.
+g1과 g2와 sweep과 state와 settings는 아무 파일도 쓰지 않는다. 읽기만 한다.
 
 fill만 쓴다. 대상은 인자로 받은 그 파일 하나뿐이고 document/, harness/project-sync/, harness/docs/는 거부한다. 이전 판이 검사 도중 document/o2o-*.md를 덮어써서 생긴 규칙이다. 미리 보려면 --dry를 쓴다.
 
