@@ -25,7 +25,7 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { fill, g1, g2, answer, sweep, state, stateRows, settings, ruleBody, scopeKind, skipReason } from '../check.mjs';
+import { fill, g1, g2, answer, sweep, state, stateRows, supersededSet, settings, ruleBody, scopeKind, skipReason } from '../check.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const FIX = path.join(HERE, 'fixtures');
@@ -613,7 +613,7 @@ function stateFile(body = ROWS) {
   return p;
 }
 
-test('stateRows. 아홉 칸 행만 뽑고 다른 표는 무시한다', () => {
+test('stateRows. 진행 기록 행만 뽑고 다른 표는 무시한다', () => {
   const rows = stateRows(fs.readFileSync(stateFile(), 'utf8'));
   assert.equal(rows.length, 3);
   assert.deepEqual(rows.map((r) => r.task), ['H1', 'H2', 'H1']);
@@ -643,11 +643,78 @@ test('state. --task는 그 Task만 본다', () => {
   assert.doesNotMatch(r.out, /H1/);
 });
 
-test('state. 아홉 칸 행이 없으면 종료 코드 2', () => {
+test('state. 행 형식에 맞는 행이 없으면 종료 코드 2', () => {
   const p = path.join(TMP, `state-empty-${seq++}.md`);
   fs.writeFileSync(p, '# 진행 기록\n\n표가 없다\n');
   const r = run(() => state(p));
   assert.equal(r.code, 2);
+});
+
+// ---------- 열두 칸 (2026-09-10. 10-14 9-3절 E2 E3 E4) ----------
+// 왜 필요한가: 아홉 칸에는 결과 칸의 주장을 받치는 것이 없었고, 떠올렸다가 안 해 본
+// 방법을 적을 데가 없었고, 앞 행이 틀렸을 때 그것을 가리킬 데가 없었다. 추가 전용
+// 파일이라 고칠 수가 없으니 뒤 행이 앞 행을 대체한다고 적는 칸이 필요하다.
+// 옛 행은 그대로 둔다. merge=union이 걸린 파일을 아흔 행째 다시 쓰면 다른 세션의
+// 추가와 만나 파일이 두 벌이 된다. 그래서 읽는 쪽이 두 형태를 다 받는다.
+
+const ROWS12 = [
+  '| 날짜시각 | Task | 라운드 | 단계 | 결과 | 실패 원인 | 교훈 | 다음 작업 | 실제 시간 | 증거 | 안 해 본 것 | 대체 |',
+  '|---|---|---|---|---|---|---|---|---|---|---|---|',
+  '| 2026-09-10 09:00 | H7 | 해당 없음 | 준비 | halted. 막혔다 | 경로를 잘못 봤다 | 없음 | 사용자 판단 | 미측정 | 없음 | 없음 | 없음 |',
+  '| 2026-09-10 11:00 | H7 | 해당 없음 | 준비 | drafted. 초안 | 없음 | 없음 | H8 | 20분 | node --test 97건 통과 | 양식을 두 벌로 나눠 보기 | 2026-09-10 09:00 |',
+  '| 2026-09-10 12:00 | H8 | 해당 없음 | 준비 | drafted. 초안 | 없음 | 없음 | H9 | 미측정 | 없음 | 없음 | 없음 |',
+].join('\n');
+
+test('stateRows. 열두 칸 행의 뒤 세 칸을 읽는다', () => {
+  const rows = stateRows(fs.readFileSync(stateFile(ROWS12), 'utf8'));
+  const r = rows.find((x) => x.when === '2026-09-10 11:00');
+  assert.equal(r.evidence, 'node --test 97건 통과');
+  assert.equal(r.untried, '양식을 두 벌로 나눠 보기');
+  assert.equal(r.supersedes, '2026-09-10 09:00');
+});
+
+test('stateRows. 아홉 칸 행의 뒤 세 칸은 빈 문자열이다', () => {
+  const rows = stateRows(fs.readFileSync(stateFile(), 'utf8'));
+  assert.equal(rows[0].cols, 9);
+  assert.equal(rows[0].evidence, '');
+  assert.equal(rows[0].untried, '');
+  assert.equal(rows[0].supersedes, '');
+});
+
+test('stateRows. 두 형태가 한 파일에 섞여도 둘 다 뽑는다', () => {
+  const rows = stateRows(fs.readFileSync(stateFile(`${ROWS}\n${ROWS12}`), 'utf8'));
+  assert.equal(rows.length, 6);
+  assert.deepEqual(rows.map((r) => r.cols), [9, 9, 9, 12, 12, 12]);
+});
+
+test('supersededSet. 뒤 행이 가리킨 앞 행만 모은다', () => {
+  const rows = stateRows(fs.readFileSync(stateFile(ROWS12), 'utf8'));
+  assert.deepEqual([...supersededSet(rows)], ['2026-09-10 09:00']);
+});
+
+test('state. 대체된 앞 행은 셈에서 빠지고 막힌 행에도 안 나온다', () => {
+  const r = run(() => state(stateFile(ROWS12)));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /행 2개/);
+  assert.match(r.out, /뒤 행이 대체한 행 1건은 셈에서 뺐다/);
+  assert.match(r.out, /막힌 채로 남은 행 0건/);
+  assert.doesNotMatch(r.out, /경로를 잘못 봤다/);
+});
+
+test('state. 안 해 본 것이 있으면 안 끝난 Task에 같이 낸다', () => {
+  const r = run(() => state(stateFile(ROWS12)));
+  assert.match(r.out, /안 해 본 것: 양식을 두 벌로 나눠 보기/);
+});
+
+test('state. 증거가 없는 열두 칸 행은 지적한다', () => {
+  const r = run(() => state(stateFile(ROWS12)));
+  assert.match(r.out, /증거 없음\. 결과 칸은 주장이지 기록이 아니다/);
+});
+
+test('state. 아홉 칸 행에는 증거를 안 따진다', () => {
+  const r = run(() => state(stateFile()));
+  assert.doesNotMatch(r.out, /증거 없음/);
+  assert.doesNotMatch(r.out, /안 해 본 것:/);
 });
 
 // ---------- 권한 설정 검사 (10-19 4절 G5) ----------
