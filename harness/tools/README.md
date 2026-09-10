@@ -18,7 +18,7 @@
 |---|---|
 | node harness/tools/check.mjs fill <양식> [--dry] | 빈칸 잔존 0, 경로가 절대경로이고 존재, 버전 칸에 sha256 기입 |
 | node harness/tools/check.mjs g1 <후보> --type doc\|api\|code | doc은 날짜 2종, 금지 기호 3종, 내부 링크, 종료 문장. api는 요청과 응답과 오류 절. code는 빌드와 테스트 결과 파일 존재 |
-| node harness/tools/check.mjs answer <답변파일> [--grade A|B|C] | 첫 줄이 결론인지, 마지막 절이 결과인지, 결과 절 다섯 행이 다 있는지. 등급은 안 주면 기계가 정한다 (harness/prompts/answer-format.md 4절) |
+| node harness/tools/check.mjs answer <답변파일> [--grade A\|B\|C] | 첫 줄이 결론인지, 마지막 절이 결과인지, 결과 절 다섯 행이 다 있는지. 등급은 안 주면 기계가 정한다 (harness/prompts/answer-format.md 4절) |
 | node harness/tools/check.mjs sweep <디렉터리> --type doc | 디렉터리 아래 마크다운을 전부 g1으로 돌고 한 줄로 요약한다. 통과한 파일은 안 찍고 실패만 상세를 낸다. 하나라도 실패하면 종료 코드 1 |
 | node harness/tools/check.mjs state <진행 기록> [--task <이름>] | 안 끝난 Task의 마지막 행과 막힌 채로 남은 행을 고정 형식으로 낸다. 게이트가 아니라 보고라 실패해도 종료 코드가 0이다 |
 | node harness/tools/check.mjs g2 <결정표> --mode pre 또는 final | 버전 일치, 원본 리포트 스키마, 지적 ID 집합, 행 수, 심각도 보존, 빈 결정, 거부 이유, 반박 등급, 치명 거부 필수 필드. 남은 치명과 반영본은 final에서만 |
