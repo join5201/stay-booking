@@ -96,7 +96,7 @@ InventoryAllocationService도 같은 이유로 만들지 않는다. 06-2 6절 CR
 | 대상 02 기능 목록 | document/02-o2o-feature-list.md | sha256:2a3d3ca2d8b63809 | 재고와 요금 기능 행 |
 | 대상 03 이벤트 스토밍 | document/03-o2o-event-storming.md | sha256:3334e5a73cb8f896 | 재고와 요금 커맨드와 이벤트 행 |
 | 확정 전제 입력 팩 | harness/project-sync/o2o-review-input-pack.md | sha256:1608942c0815f911 | 1절 확정 전제와 2절 요구사항 |
-| 구현 계획 10-6 | harness/docs/10-6-o2o-harness-implementation-plan.md | sha256:6289683579908585 | 3절 실행 순서와 기능별 API와 검증 연결 표 |
+| 구현 계획 10-6 | harness/docs/10-6-o2o-harness-implementation-plan.md | sha256:eec97503b53ffff0 | 3절 실행 순서와 기능별 API와 검증 연결 표 |
 | 앞 묶음의 계약 | harness/tasks/task-S9-catalog.md | sha256:bd62431b07c6d3f9 | 3절 범위 밖, 6절 정책 적용, 8절 단계표 |
 | 적용할 코드 양식 | harness/prompts/dev-ptcf-prompt.v3.md | sha256:d4531cd7eeddb42d | Format 절 |
 | 실제 평가 기준 | harness/prompts/eval-criteria-code.md | sha256:c5ed835951fe09a5 | 축, 심각도, 출력 스키마 |
@@ -107,7 +107,7 @@ InventoryAllocationService도 같은 이유로 만들지 않는다. 06-2 6절 CR
 
 | 자료 | 경로 | 버전 또는 해시 | 읽을 범위 |
 |---|---|---|---|
-| 평가 대상 코드 | 생성 후 기입 | 생성 후 기입 | 파일 목록과 커밋 해시 |
+| 평가 대상 코드 | harness/out/task-S9-inventory-rate-R1/eval-target-files.md | sha256:807b6239259b4107 | 파일 목록과 커밋 해시 |
 | 입력 팩 | harness/project-sync/o2o-review-input-pack.md | sha256:1608942c0815f911 | 전문 |
 | 이 작업 계약 | harness/tasks/task-S9-inventory-rate.md | 자기 해시 없음 | 전문 |
 | 실제 평가 기준 | harness/prompts/eval-criteria-code.md | sha256:c5ed835951fe09a5 | 축, 심각도, 출력 스키마 |
@@ -254,8 +254,16 @@ T06과 T07이 부분인 이유. 둘 다 예약이 있어야 닫힌다. T06은 �
 | 항목 | 기록 |
 |---|---|
 | 작업 계약 승인 | 승인. join5201, 2026-09-09 |
-| 마지막 성공 단계 | 1단계 계약과 결정 승인 |
-| 미해결 사항과 다음 작업 | 결정 3건 전부 가로 확정됐다. 다음은 2단계 이슈와 브랜치다. D-1이 요구하는 CLAUDE.md N9 수정은 이 Task 밖의 별도 PR로 낸다 |
-| 최종 산출물과 버전 | 작업 후 기록 |
-| 실제 사용 시간 | 미측정 |
+| 개정 | 없음. 이 Task는 개정 0회다 |
+| 마지막 성공 단계 | 8절 9단계 완료(2026-09-10). 재고와 요금 API 아홉이 서고 테스트 118건이 통과하며 검증 표와 회고 표가 나왔다. 이 Task의 모델 몫은 끝났고 남은 것은 D-3의 블라인드 평가와 사용자 최종 완료 판단이다 |
+| 실제 사용 시간 (1단계) | 15분 |
+| 실제 사용 시간 (2단계) | 8분 |
+| 실제 사용 시간 (3단계) | 건너뜀. 앞 묶음이 세웠다 |
+| 실제 사용 시간 (4단계) | 12분 |
+| 실제 사용 시간 (5단계) | 10분 |
+| 실제 사용 시간 (6단계) | 27분. 그중 Docker Desktop 기동 대기 16분 |
+| 실제 사용 시간 (6-2단계) | 6분 |
+| 미해결 사항과 다음 작업 | 승인 대기 하나. D-3이 가라서 블라인드 평가 A와 B를 사용자가 Codex에 전달해야 한다. 요청문은 harness/out/task-S9-inventory-rate-R1/eval-request-A.md와 eval-request-B.md에 있다. 이월 넷은 V2와 T04의 heldCount 몫과 T05의 잠금 몫과 T06 T07의 예약 몫이고 전부 예약 묶음이다. 하네스에 남기는 제안 하나는 커밋된 트리를 대상으로 도는 검사다. 커밋에 편집분이 빠져도 테스트가 초록인 사고가 이번에 실제로 났다 |
+| 최종 산출물과 버전 | backend/ 아래 프로덕션 43 클래스와 테스트 7 파일. harness/out/task-S9-inventory-rate-R1/ 아래 step5, step6, step6-2와 step9-verification.md와 eval-target-files.md. 브랜치 feat/task-s9-inventory-rate, 기준 커밋 280a69163a6a6422 |
+| 실제 사용 시간 | 측정된 개발 시간 합 55분. 4단계 12분, 5단계 10분, 6단계 27분, 6-2단계 6분. Docker 대기 16분을 빼면 39분이다. 1단계와 2단계는 승인과 브랜치라 개발 시간이 아니다 |
 | 최종 완료 판단 | 대기 |
