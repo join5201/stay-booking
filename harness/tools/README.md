@@ -8,7 +8,7 @@
 |---|---|
 | check.mjs | fill, g1, g2, answer, sweep, numbers 여섯 명령. 2026-09-08 H3에서 재작성, 같은 날 하네스 리뷰 12건 반영. 2026-09-10 sweep 추가 (10-14 8-4절), 같은 날 numbers 추가 (이슈 75) |
 | build-v2.mjs | tmp/api-spec-v2/build-v2.mjs 사본. API 명세 조립용. 미검증 |
-| tests/ | 골든 fixture 6개와 테스트 93건 (2026-09-10 실측). fixture는 harness/prompts/의 양식에서 만든다 |
+| tests/ | 골든 fixture 6개와 테스트 99건 (2026-09-10 실측). fixture는 harness/prompts/의 양식에서 만든다. numbers의 대조 테스트는 임시 git 저장소를 만들어 refs/remotes/origin/main을 직접 박는다 |
 
 원본은 tmp/ 아래에 그대로 둔다. 삭제하지 않는다.
 
@@ -20,7 +20,7 @@
 | node harness/tools/check.mjs g1 <후보> --type doc\|api\|code | doc은 날짜 2종, 금지 기호 3종, 내부 링크, 종료 문장. api는 요청과 응답과 오류 절. code는 빌드와 테스트 결과 파일 존재 |
 | node harness/tools/check.mjs answer <답변파일> [--grade A|B|C] | 첫 줄이 결론인지, 마지막 절이 결과인지, 결과 절 다섯 행이 다 있는지. 등급은 안 주면 기계가 정한다 (harness/prompts/answer-format.md 4절) |
 | node harness/tools/check.mjs sweep <디렉터리> --type doc | 디렉터리 아래 마크다운을 전부 g1으로 돌고 한 줄로 요약한다. 통과한 파일은 안 찍고 실패만 상세를 낸다. 하나라도 실패하면 종료 코드 1 |
-| node harness/tools/check.mjs numbers <디렉터리> | 파일명의 10-N 접두를 모아 한 번호를 문서 둘이 쓰는지 본다. 번호를 주장하는 것은 본문 md 하나이고 다른 확장자는 그 본문 이름으로 시작하는 첨부다. 겹치면 종료 코드 1 |
+| node harness/tools/check.mjs numbers <디렉터리> [--fetch] | 파일명의 10-N 접두를 모아 한 번호를 문서 둘이 쓰는지 본다. 로컬 트리와 origin/main 트리의 합집합으로 센다. 번호를 주장하는 것은 본문 md 하나이고 다른 확장자는 그 본문 이름으로 시작하는 첨부다. 겹치면 종료 코드 1 |
 | node harness/tools/check.mjs g2 <결정표> --mode pre 또는 final | 버전 일치, 원본 리포트 스키마, 지적 ID 집합, 행 수, 심각도 보존, 빈 결정, 거부 이유, 반박 등급, 치명 거부 필수 필드. 남은 치명과 반영본은 final에서만 |
 | node --test harness/tools/tests/check.test.mjs | 골든 파일 테스트 |
 
@@ -28,7 +28,9 @@
 
 ## 쓰기 정책
 
-g1과 g2와 sweep과 numbers는 아무 파일도 쓰지 않는다. 읽기만 한다.
+g1과 g2와 sweep과 numbers는 저장소 파일을 쓰지 않는다. 읽기만 한다.
+
+numbers는 --fetch를 줬을 때만 git fetch origin을 부른다. 그때 .git의 원격 추적 ref가 갱신된다. 기본값은 부르지 않는다. 검사기가 매번 네트워크를 부르면 오프라인에서 못 돌기 때문이다. 대신 어느 커밋과 대조했는지를 출력에 적어서 낡은 ref로 대조하고도 최신인 줄 아는 일을 막는다.
 
 fill만 쓴다. 대상은 인자로 받은 그 파일 하나뿐이고 document/, harness/project-sync/, harness/docs/는 거부한다. 이전 판이 검사 도중 document/o2o-*.md를 덮어써서 생긴 규칙이다. 미리 보려면 --dry를 쓴다.
 
@@ -40,6 +42,9 @@ fill만 쓴다. 대상은 인자로 받은 그 파일 하나뿐이고 document/,
 | --end "<문장>" | g1 doc의 종료 문장을 바꾼다. 기본값은 07 v3 F16의 문장이다 |
 | --artifact <경로> | g1 code에서 빌드나 테스트 결과 파일을 지정한다. 여러 번 쓸 수 있다 |
 | --dry | fill이 쓰지 않고 결과만 보여 준다 |
+| --ref <ref> | numbers가 대조할 ref. 기본값은 origin/main |
+| --fetch | numbers가 대조 전에 git fetch origin을 부른다 |
+| --local-only | numbers가 대조를 끄고 로컬 트리만 본다. 남이 먼저 가져간 번호를 못 본다 |
 
 경로 칸의 허용 값 넷이다. 절대경로, 해당 없음, 생성 후 기입, 그리고 아직 안 채운 빈칸 표시다. 앞의 셋은 통과하고 빈칸 표시는 실패한다. 생성 후 기입은 계약 시점에 아직 없는 대상을 가리키는 유예이며 fill이 건수를 출력한다.
 

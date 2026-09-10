@@ -24,6 +24,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { fill, g1, g2, answer, sweep, numbers, scopeKind, skipReason } from '../check.mjs';
 
@@ -615,14 +616,6 @@ test('numbers 통과. 번호가 다 다르다', () => {
   assert.match(r.out, /번호 3개, 파일 3개/);
 });
 
-// 한계를 출력에 적기로 한 자리다. 여기서 사라지면 통과한 사람이 읽을 곳이 없다
-test('numbers 통과. 로컬 트리만 본다는 한계를 출력에 적는다', () => {
-  const r = run(() => numbers(numdir('limit', ['10-4-a.md'])));
-  assert.equal(r.code, 0);
-  assert.match(r.out, /한계\. 로컬 트리만 본다/);
-  assert.match(r.out, /git ls-tree --name-only origin\/main/);
-});
-
 test('numbers 통과. 본문 하나에 그림 셋이 붙은 배치 (10-17)', () => {
   const r = run(() => numbers(numdir('fig', [
     '10-17-o2o-harness-overview.md',
@@ -677,4 +670,89 @@ test('numbers. 디렉터리가 아니면 사용법 오류다', () => {
 test('numbers. 지금의 harness/docs가 통과한다', () => {
   const r = run(() => numbers(path.join(ROOT, 'harness', 'docs')));
   assert.equal(r.code, 0);
+});
+
+// ---------- 문서 번호 origin/main 대조 (이슈 75) ----------
+// 왜 필요한가: 로컬 트리만 보면 남이 먼저 가져간 번호가 초록으로 나온다. 그 초록이
+// 이 결함의 원래 모양이다. 실제로 이 작업 중에 다른 세션이 10-18을 origin/main에
+// 올렸고 이 브랜치에는 그 파일이 없었다.
+//
+// 원격 없이 refs/remotes/origin/main을 직접 박아 기본 ref 경로를 그대로 시험한다.
+// --ref로 바꿔 시험하면 기본값이 도는지를 못 본다.
+
+function gitrepo(tag, committed, working) {
+  const root = fs.mkdtempSync(path.join(TMP, `numbers-git-${tag}-`));
+  const docs = path.join(root, 'docs');
+  fs.mkdirSync(docs);
+  const g = (...a) => execFileSync('git', a, { cwd: root, stdio: 'ignore' });
+  g('init', '-q');
+  g('config', 'user.email', 'test@example.com');
+  g('config', 'user.name', 'test');
+  g('config', 'commit.gpgsign', 'false');
+  for (const n of committed) fs.writeFileSync(path.join(docs, n), '');
+  // 경로를 명시한다. 임시 저장소라도 add -A를 쓰지 않는다 (CLAUDE.md 4-1)
+  g('add', ...committed.map((n) => `docs/${n}`));
+  g('commit', '-q', '-m', 'seed');
+  const sha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
+  g('update-ref', 'refs/remotes/origin/main', sha);
+  for (const n of committed) if (!working.includes(n)) fs.unlinkSync(path.join(docs, n));
+  for (const n of working) fs.writeFileSync(path.join(docs, n), '');
+  return docs;
+}
+
+test('numbers 실패. origin/main이 먼저 가져간 번호가 겹친다', () => {
+  const r = run(() => numbers(gitrepo('taken', ['10-15-ondemand.md'], ['10-15-fix-plan.md'])));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /\[numbers\.duplicate\]/);
+  // 어느 쪽에만 있는지를 적어야 누가 양보하는지가 보인다
+  assert.match(r.out, /10-15-fix-plan\.md\(로컬만\)/);
+  assert.match(r.out, /10-15-ondemand\.md\(origin\/main만\)/);
+});
+
+test('numbers 통과. 양쪽에 있는 같은 파일은 겹침이 아니다', () => {
+  const r = run(() => numbers(gitrepo('same', ['10-15-a.md'], ['10-15-a.md'])));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /대조 origin\/main [0-9a-f]+/);
+  assert.match(r.out, /로컬만 0개, origin\/main만 0개/);
+});
+
+// 남이 먼저 가져간 번호가 내게 없는 것은 겹침이 아니라 내가 뒤처진 것이다.
+// 실패로 두면 브랜치를 팔 때마다 빨간불이 뜬다
+test('numbers 통과. origin/main에만 있는 번호는 겹침이 아니다', () => {
+  const r = run(() => numbers(gitrepo('behind', ['10-16-a.md'], ['10-15-b.md'])));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /로컬만 1개, origin\/main만 1개/);
+});
+
+test('numbers 통과. 그림 첨부는 양쪽에 갈려 있어도 본문에 붙는다', () => {
+  const r = run(() => numbers(gitrepo('figsplit',
+    ['10-17-overview.md'], ['10-17-overview-fig1.svg'])));
+  assert.equal(r.code, 0);
+});
+
+test('numbers 실패. ref를 읽을 수 없으면 통과로 두지 않는다', () => {
+  const docs = gitrepo('noref', ['10-15-a.md'], ['10-15-a.md']);
+  const r = run(() => numbers(docs, { ref: 'origin/nope' }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /\[numbers\.ref\]/);
+  assert.match(r.out, /--local-only/);
+});
+
+// --local-only는 대조를 끄는 값이다. 끄면 위의 taken 케이스가 초록으로 나온다.
+// 그 초록이 이 결함의 원래 모양이라 한계를 출력에 적는다
+test('numbers. --local-only는 대조를 끄고 한계를 적는다', () => {
+  const r = run(() => numbers(gitrepo('localonly', ['10-15-ondemand.md'], ['10-15-fix-plan.md']),
+    { localOnly: true }));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /로컬 트리만 봤다/);
+  assert.doesNotMatch(r.out, /numbers\.ref/);
+});
+
+// git 저장소가 아니면 대조할 ref 자체가 없다. 실패가 아니라 범위 밖이다.
+// 범위 밖은 통과로 세지 않으므로 안 돌린 것과 돌려서 통과한 것이 갈린다
+test('numbers. git 저장소가 아니면 대조를 범위 밖으로 센다', () => {
+  const r = run(() => numbers(numdir('norepo', ['10-4-a.md'])));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /범위 밖 1건/);
+  assert.match(r.out, /numbers\.ref/);
 });
