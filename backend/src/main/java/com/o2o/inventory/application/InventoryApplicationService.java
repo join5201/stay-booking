@@ -6,7 +6,9 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -195,6 +197,54 @@ public class InventoryApplicationService {
     }
 
     /**
+     * INV-04. 설계 근거: 11 재고 INV-04, T07.
+     *
+     * 쓰기 경로와 다른 점 둘. 과거 날짜를 허용하고, 없는 날짜를 오류로 보지 않는다.
+     * 같은 절의 처리 규칙이 과거 조회를 허용하고 없는 날짜는 items에 만들지 않고
+     * missingDates에 적는다고 적는다. 없는 날짜를 0으로 채워 내보내면 재고 0과 재고 미등록이
+     * 같아진다. 그 둘은 예약 판정에서 다르게 쓰인다(T07).
+     */
+    @Transactional(readOnly = true)
+    public RangeResult<DailyInventory> findInventories(HostId hostId, RoomTypeId roomTypeId,
+                                                       LocalDate from, LocalDate to) {
+        requireOwnedRoomType(hostId, roomTypeId);
+        requireQueryPeriod(from, to);
+        List<DailyInventory> items = inventoryRepository.findRange(roomTypeId, from, to);
+        return new RangeResult<>(items, missingDates(from, to, items.stream()
+                .map(DailyInventory::stayDate).toList()));
+    }
+
+    /**
+     * INV-05. 설계 근거: 11 재고 INV-05.
+     * 없으면 404다. 같은 절이 레코드가 없으면 404라고 적는다. 기간 조회와 다른 자리다.
+     */
+    @Transactional(readOnly = true)
+    public DailyInventory getInventory(HostId hostId, RoomTypeId roomTypeId, LocalDate stayDate) {
+        requireOwnedRoomType(hostId, roomTypeId);
+        return inventoryRepository.findByRoomTypeIdAndStayDate(roomTypeId, stayDate)
+                .orElseThrow(() -> new InventoryNotFoundException(roomTypeId, stayDate));
+    }
+
+    /** RATE-03. 설계 근거: 11 요금 RATE-03, T07. 재고의 findInventories와 같은 규칙이다 */
+    @Transactional(readOnly = true)
+    public RangeResult<DailyRate> findRates(HostId hostId, RoomTypeId roomTypeId,
+                                            LocalDate from, LocalDate to) {
+        requireOwnedRoomType(hostId, roomTypeId);
+        requireQueryPeriod(from, to);
+        List<DailyRate> items = rateRepository.findRange(roomTypeId, from, to);
+        return new RangeResult<>(items, missingDates(from, to, items.stream()
+                .map(DailyRate::stayDate).toList()));
+    }
+
+    /** RATE-04. 설계 근거: 11 요금 RATE-04. 없으면 404다 */
+    @Transactional(readOnly = true)
+    public DailyRate getRate(HostId hostId, RoomTypeId roomTypeId, LocalDate stayDate) {
+        requireOwnedRoomType(hostId, roomTypeId);
+        return rateRepository.findByRoomTypeIdAndStayDate(roomTypeId, stayDate)
+                .orElseThrow(() -> new RateNotFoundException(roomTypeId, stayDate));
+    }
+
+    /**
      * 06-2 6절 CRC의 세 번째 책임 행. 개설과 요금 등록 전에 roomTypeId가 카탈로그에 있는지
      * 확인한다(06-1 R1). 소유자 확인은 11 인증과 접근 제어가 더한다.
      *
@@ -223,16 +273,41 @@ public class InventoryApplicationService {
     }
 
     private void requirePeriod(LocalDate from, LocalDate to, LocalDate today) {
-        if (!from.isBefore(to)) {
-            throw new InvalidStayPeriodException("from은 to보다 앞서야 한다", from, to);
-        }
+        requireQueryPeriod(from, to);
         if (from.isBefore(today)) {
             throw new PastStayDateException(from, today);
+        }
+    }
+
+    /**
+     * 조회의 기간 검사. 쓰기의 requirePeriod에서 과거 날짜 조건만 뺀 것이다.
+     * 11 INV-04와 RATE-03의 처리 규칙이 과거 조회를 허용한다고 적어서다. 순서와 366일
+     * 상한은 그대로 걸린다. 쓰기 쪽이 이 메서드를 부르고 과거 검사를 더하는 모양이라
+     * 두 곳에 같은 상한이 따로 적히지 않는다.
+     */
+    private void requireQueryPeriod(LocalDate from, LocalDate to) {
+        if (!from.isBefore(to)) {
+            throw new InvalidStayPeriodException("from은 to보다 앞서야 한다", from, to);
         }
         long days = ChronoUnit.DAYS.between(from, to);
         if (days > InvalidStayPeriodException.MAX_DAYS) {
             throw new InvalidStayPeriodException(
                     "기간은 " + InvalidStayPeriodException.MAX_DAYS + "일을 넘을 수 없다", from, to);
         }
+    }
+
+    /**
+     * 요청한 기간에서 실제로 있는 날짜를 뺀 나머지. 11 응답 모델의 missingDates다.
+     * 있는 날짜가 오름차순으로 오므로 결과도 오름차순이다.
+     */
+    private List<LocalDate> missingDates(LocalDate from, LocalDate to, List<LocalDate> present) {
+        Set<LocalDate> found = new HashSet<>(present);
+        List<LocalDate> missing = new ArrayList<>();
+        for (LocalDate d = from; d.isBefore(to); d = d.plusDays(1)) {
+            if (!found.contains(d)) {
+                missing.add(d);
+            }
+        }
+        return missing;
     }
 }

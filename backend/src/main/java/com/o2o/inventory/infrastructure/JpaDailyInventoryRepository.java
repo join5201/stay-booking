@@ -57,4 +57,10 @@ public class JpaDailyInventoryRepository implements DailyInventoryRepository {
         }
         return jpaRepository.findExistingDates(roomTypeId.value(), stayDates);
     }
+
+    @Override
+    public List<DailyInventory> findRange(RoomTypeId roomTypeId, LocalDate from,
+                                          LocalDate toExclusive) {
+        return jpaRepository.findRange(roomTypeId.value(), from, toExclusive);
+    }
 }

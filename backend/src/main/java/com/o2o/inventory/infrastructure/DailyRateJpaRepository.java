@@ -1,6 +1,7 @@
 package com.o2o.inventory.infrastructure;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,4 +26,11 @@ public interface DailyRateJpaRepository extends JpaRepository<DailyRate, String>
     @Query("select r from DailyRate r where r.roomTypeId = :roomTypeId and r.stayDate = :stayDate")
     Optional<DailyRate> findOneForUpdate(@Param("roomTypeId") String roomTypeId,
                                          @Param("stayDate") LocalDate stayDate);
+
+    // RATE-03. 재고 쪽 findRange와 같은 조건이다
+    @Query("select r from DailyRate r where r.roomTypeId = :roomTypeId "
+            + "and r.stayDate >= :from and r.stayDate < :to order by r.stayDate")
+    List<DailyRate> findRange(@Param("roomTypeId") String roomTypeId,
+                              @Param("from") LocalDate from,
+                              @Param("to") LocalDate toExclusive);
 }

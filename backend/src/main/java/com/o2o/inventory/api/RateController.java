@@ -1,16 +1,20 @@
 package com.o2o.inventory.api;
 
 import java.net.URI;
+import java.time.LocalDate;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.o2o.inventory.application.InventoryApplicationService;
+import com.o2o.inventory.application.RangeResult;
 import com.o2o.inventory.domain.DailyRate;
 import com.o2o.shared.Actor;
 import com.o2o.shared.ActorResolver;
@@ -52,6 +56,33 @@ public class RateController {
                 .created(URI.create("/api/v1/room-types/" + roomTypeId + "/rates/"
                         + ApiDate.format(registered.stayDate())))
                 .body(DailyRateResponse.from(registered));
+    }
+
+    /** RATE-03 기간 요금 조회. 200. 과거 기간도 허용한다 */
+    @GetMapping("/api/v1/room-types/{roomTypeId}/rates")
+    public RateRangeResponse findRange(
+            @RequestHeader(value = "X-Dev-Actor-Id", required = false) String actorId,
+            @PathVariable String roomTypeId,
+            @RequestParam String from,
+            @RequestParam String to) {
+        Actor actor = actorResolver.require(actorId, ActorRole.HOST);
+        LocalDate fromDate = ApiDate.parse("from", from);
+        LocalDate toDate = ApiDate.parse("to", to);
+        RangeResult<DailyRate> found = inventoryApplicationService.findRates(
+                actor.asHostId(), RoomTypeId.of(roomTypeId), fromDate, toDate);
+        return RateRangeResponse.of(roomTypeId, fromDate, toDate,
+                found.items(), found.missingDates());
+    }
+
+    /** RATE-04 날짜별 요금 조회. 200이고 없으면 404 */
+    @GetMapping("/api/v1/room-types/{roomTypeId}/rates/{date}")
+    public DailyRateResponse get(
+            @RequestHeader(value = "X-Dev-Actor-Id", required = false) String actorId,
+            @PathVariable String roomTypeId,
+            @PathVariable String date) {
+        Actor actor = actorResolver.require(actorId, ActorRole.HOST);
+        return DailyRateResponse.from(inventoryApplicationService.getRate(
+                actor.asHostId(), RoomTypeId.of(roomTypeId), ApiDate.parse("date", date)));
     }
 
     /** RATE-02 날짜별 요금 수정. 200 */

@@ -35,4 +35,12 @@ public interface DailyInventoryRepository {
      * 이유는 11 INV-02가 전부 실패시키되 어느 날짜가 겹쳤는지 알려야 하기 때문이다.
      */
     List<LocalDate> findExistingDates(RoomTypeId roomTypeId, Collection<LocalDate> stayDates);
+
+    /**
+     * INV-04. from을 포함하고 to를 제외하며 날짜 오름차순이다. 11 응답 모델 InventoryRange의
+     * items 열이 date 오름차순이고 존재하는 날짜만 포함한다고 적는다. 정렬을 부르는 쪽이
+     * 아니라 여기서 하는 이유는 그것이 질의의 일이기 때문이다. 읽어 와서 정렬하면 행이
+     * 많아질 때 값을 두 번 옮긴다.
+     */
+    List<DailyInventory> findRange(RoomTypeId roomTypeId, LocalDate from, LocalDate toExclusive);
 }

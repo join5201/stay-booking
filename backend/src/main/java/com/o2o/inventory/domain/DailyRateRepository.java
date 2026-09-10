@@ -1,6 +1,7 @@
 package com.o2o.inventory.domain;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import com.o2o.shared.RoomTypeId;
@@ -19,4 +20,7 @@ public interface DailyRateRepository {
 
     /** 06-4 1-2 adjustRate. 계약표는 잠금을 적지 않으나 계약 7절 D-2가 수정 경로에 잠금을 요구한다 */
     Optional<DailyRate> findForUpdate(RoomTypeId roomTypeId, LocalDate stayDate);
+
+    /** RATE-03. 재고의 findRange와 같은 규칙이다. from 포함, to 제외, 날짜 오름차순 */
+    List<DailyRate> findRange(RoomTypeId roomTypeId, LocalDate from, LocalDate toExclusive);
 }

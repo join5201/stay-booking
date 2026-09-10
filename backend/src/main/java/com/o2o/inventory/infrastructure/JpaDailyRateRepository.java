@@ -1,6 +1,7 @@
 package com.o2o.inventory.infrastructure;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
@@ -35,5 +36,10 @@ public class JpaDailyRateRepository implements DailyRateRepository {
     @Override
     public Optional<DailyRate> findForUpdate(RoomTypeId roomTypeId, LocalDate stayDate) {
         return jpaRepository.findOneForUpdate(roomTypeId.value(), stayDate);
+    }
+
+    @Override
+    public List<DailyRate> findRange(RoomTypeId roomTypeId, LocalDate from, LocalDate toExclusive) {
+        return jpaRepository.findRange(roomTypeId.value(), from, toExclusive);
     }
 }

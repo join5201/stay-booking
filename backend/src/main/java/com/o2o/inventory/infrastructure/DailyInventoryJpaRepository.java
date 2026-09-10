@@ -36,4 +36,11 @@ public interface DailyInventoryJpaRepository extends JpaRepository<DailyInventor
             + "where i.roomTypeId = :roomTypeId and i.stayDate in :stayDates order by i.stayDate")
     List<LocalDate> findExistingDates(@Param("roomTypeId") String roomTypeId,
                                       @Param("stayDates") Collection<LocalDate> stayDates);
+
+    // INV-04. to가 크거나 같음이 아니라 작음인 것이 명세의 끝 날짜 제외다
+    @Query("select i from DailyInventory i where i.roomTypeId = :roomTypeId "
+            + "and i.stayDate >= :from and i.stayDate < :to order by i.stayDate")
+    List<DailyInventory> findRange(@Param("roomTypeId") String roomTypeId,
+                                   @Param("from") LocalDate from,
+                                   @Param("to") LocalDate toExclusive);
 }
