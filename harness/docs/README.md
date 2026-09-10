@@ -10,7 +10,7 @@
 |---|---|
 | document/ | O2O 서비스의 베이스 설계 문서. 평가 대상이 되는 것 |
 | harness/prompts/ | 실행 중 읽는 양식과 평가 기준. 매 라운드 사용 |
-| harness/docs/ | 하네스 설계 근거와 결정 이력. 참고용. 평가 입력이 아니다 |
+| harness/docs/ | 하네스 설계 근거와 결정 이력. 참고용. 10-15만 예외로 규칙 본문이다. 둘 다 평가 입력이 아니다 |
 
 현재 파일
 
@@ -24,7 +24,9 @@
 | 10-9-o2o-harness-answer-format-plan.md | 답변 형식 R1부터 R4의 적용 계획 v2. 2026-09-08 사용자 승인 (2026-09-08 추가) |
 | 10-10-o2o-harness-worktree-split.md | 세션별 worktree 분리. 배치와 절차와 남는 제약 (2026-09-09 추가) |
 | 10-11-o2o-board-transcription-check.md | 09-1 전사본과 FigJam 정본 대조. 전 항목 일치 (2026-09-09 추가) |
+| 10-12-o2o-harness-fix-plan.md | 하네스 결함 넷 수정 계획. 순서와 경계 (2026-09-09 추가) |
 | 10-13-o2o-harness-reference-crosscheck.md | 하네스 대조 상대 다섯. 별 순 선정 근거와 대조 지점 표 (2026-09-09 추가) |
 | 10-14-o2o-harness-crosscheck-promptfoo.md | promptfoo 대조 1건과 나머지 넷의 대조 방법. 축 다섯과 판정 (2026-09-09 추가) |
+| 10-15-o2o-harness-ondemand-rules.md | CLAUDE.md에서 내린 절차의 본문. 반입 절차와 settings 이유 (2026-09-10 추가) |
 
 주의: 여기 있는 결정은 이력이다. 결정의 정본은 harness/decisions/다(harness/decisions/README.md).
