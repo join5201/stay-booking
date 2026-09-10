@@ -6,10 +6,10 @@
 
 | 파일 | 상태 |
 |---|---|
-| check.mjs | fill, g1, g2, answer, sweep, numbers 여섯 명령. 2026-09-08 H3에서 재작성, 같은 날 하네스 리뷰 12건 반영. 2026-09-10 sweep 추가 (10-14 8-4절), 같은 날 numbers 추가 (이슈 75) |
+| check.mjs | fill, g1, g2, answer, sweep, numbers, state, settings 여덟 명령. 2026-09-08 H3에서 재작성, 같은 날 하네스 리뷰 12건 반영. 2026-09-10 sweep과 state와 settings 추가 (10-14 8-4절과 9-4절, 10-19 4절), 같은 날 numbers 추가 (이슈 75) |
 | numbers-gate.mjs | PostToolUse 훅용 다리. 방금 건드린 파일이 harness/docs 아래면 numbers를 부른다 (2026-09-10 추가) |
 | build-v2.mjs | tmp/api-spec-v2/build-v2.mjs 사본. API 명세 조립용. 미검증 |
-| tests/ | 골든 fixture 6개와 테스트 99건 (2026-09-10 실측). fixture는 harness/prompts/의 양식에서 만든다. numbers의 대조 테스트는 임시 git 저장소를 만들어 refs/remotes/origin/main을 직접 박는다 |
+| tests/ | 골든 fixture 6개와 테스트 129건 (2026-09-10 실측). fixture는 harness/prompts/의 양식에서 만든다. numbers의 대조 테스트는 임시 git 저장소를 만들어 refs/remotes/origin/main을 직접 박는다 |
 
 원본은 tmp/ 아래에 그대로 둔다. 삭제하지 않는다.
 
@@ -22,6 +22,8 @@
 | node harness/tools/check.mjs answer <답변파일> [--grade A|B|C] | 첫 줄이 결론인지, 마지막 절이 결과인지, 결과 절 다섯 행이 다 있는지. 등급은 안 주면 기계가 정한다 (harness/prompts/answer-format.md 4절) |
 | node harness/tools/check.mjs sweep <디렉터리> --type doc | 디렉터리 아래 마크다운을 전부 g1으로 돌고 한 줄로 요약한다. 통과한 파일은 안 찍고 실패만 상세를 낸다. 하나라도 실패하면 종료 코드 1 |
 | node harness/tools/check.mjs numbers <디렉터리> [--fetch] | 파일명의 10-N 접두를 모아 한 번호를 문서 둘이 쓰는지 본다. 로컬 트리와 origin/main 트리의 합집합으로 센다. 번호를 주장하는 것은 본문 md 하나이고 다른 확장자는 그 본문 이름으로 시작하는 첨부다. 겹치면 종료 코드 1 |
+| node harness/tools/check.mjs state <진행 기록> [--task <이름>] | 안 끝난 Task의 마지막 행과 막힌 채로 남은 행을 고정 형식으로 낸다. 게이트가 아니라 보고라 실패해도 종료 코드가 0이다 |
+| node harness/tools/check.mjs settings <권한 설정> | Bash와 PowerShell 규칙의 짝, deny와 allow 겹침. 한쪽만 고쳐 규칙이 조용히 사라지는 것을 잡는다 |
 | node harness/tools/check.mjs g2 <결정표> --mode pre 또는 final | 버전 일치, 원본 리포트 스키마, 지적 ID 집합, 행 수, 심각도 보존, 빈 결정, 거부 이유, 반박 등급, 치명 거부 필수 필드. 남은 치명과 반영본은 final에서만 |
 | node --test harness/tools/tests/check.test.mjs | 골든 파일 테스트 |
 
@@ -29,7 +31,7 @@
 
 ## 쓰기 정책
 
-g1과 g2와 sweep과 numbers는 저장소 파일을 쓰지 않는다. 읽기만 한다.
+g1과 g2와 sweep과 numbers와 state와 settings는 저장소 파일을 쓰지 않는다. 읽기만 한다.
 
 numbers는 --fetch를 줬을 때만 git fetch origin을 부른다. 그때 .git의 원격 추적 ref가 갱신된다. 기본값은 부르지 않는다. 검사기가 매번 네트워크를 부르면 오프라인에서 못 돌기 때문이다. 대신 어느 커밋과 대조했는지를 출력에 적어서 낡은 ref로 대조하고도 최신인 줄 아는 일을 막는다.
 
@@ -56,6 +58,7 @@ fill만 쓴다. 대상은 인자로 받은 그 파일 하나뿐이고 document/,
 줄바꿈은 저장소 루트의 .gitattributes가 LF로 고정한다. core.autocrlf가 true인 채로 두면 커밋 전에 계산한 해시가 체크아웃 뒤 어긋난다.
 | --require "a,b" | g1 doc이 확인할 승인 양식 필수 항목 |
 | --mode pre 또는 final | g2의 반영 전 검사와 최종 완료 검사를 가른다 |
+| --task <이름> | state가 그 Task의 행만 본다 |
 
 ## 경로 규칙
 

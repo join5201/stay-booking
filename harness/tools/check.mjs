@@ -22,6 +22,8 @@
 //   node harness/tools/check.mjs sweep harness/docs --type doc
 //   node harness/tools/check.mjs numbers harness/docs
 //   node harness/tools/check.mjs numbers harness/docs --fetch
+//   node harness/tools/check.mjs state harness/state/progress.md [--task task-S9-catalog]
+//   node harness/tools/check.mjs settings .claude/settings.json
 //
 // 통과 출력 예시
 //   PASS g1 harness/out/task-S8-R1/candidate.md
@@ -48,6 +50,27 @@
 //     실패 1개
 //       harness/docs/README.md
 //   통과한 파일은 이름도 안 찍는다. 스물일곱 개를 돌려도 읽히는 출력이어야 한다 (10-14 8-4절 D1).
+//
+// 재개 브리핑 출력 예시 (종료 코드 0. 게이트가 아니라 보고다)
+//   재개 브리핑 harness/state/progress.md
+//     행 113개. Task 29종. 2026-09-07 18:31부터 2026-09-10 15:31까지
+//     뒤 행이 대체한 행 1건은 셈에서 뺐다
+//     끝난 Task 9종
+//       H0 H1 저장소 편입 디렉터리 통합 하네스 리뷰 task-S2 task-S9-catalog 하네스 도해 하네스 문서
+//     안 끝난 Task 20종. 마지막 행이 오래된 것부터
+//       2026-09-08 14:11  drafted  H2  (준비)
+//         다음 작업: 저장소 편입
+//         안 해 본 것: 양식을 두 벌로 나눠 보기
+//     막힌 채로 남은 행 3건
+//   안 끝난 것을 오래된 것부터 내는 이유는 가장 오래 방치된 Task를 먼저 보게 하기
+//   위해서다. 순서는 파일 순서가 아니라 날짜시각 칸으로 잡는다 (10-14 9-4절 E1).
+//   안 해 본 것과 대체는 2026-09-10에 생긴 칸이라 그 전 행에는 없다. 없으면 안 찍는다.
+//
+// 권한 설정 출력 예시 (종료 코드 1)
+//   FAIL settings .claude/settings.json
+//     [settings.tool-pair] 0  allow의 Bash 규칙에 짝이 되는 PowerShell 규칙이 없다: git push
+//     검사 19건 중 1건 실패
+//   한쪽만 고치면 실패가 안 나고 그 규칙이 다른 쪽 경로에서 조용히 사라진다 (10-19 4절 G5).
 //
 // 실패 출력 예시 (종료 코드 1)
 //   FAIL g2 harness/decisions/task-S8-R1.md
@@ -788,6 +811,147 @@ export function numbers(dir, { ref = DEFAULT_REF, localOnly = false, fetch = fal
   return code;
 }
 
+// ---------- 재개 브리핑 (10-14 9-4절 E1) ----------
+// 진행 기록에서 재개에 필요한 것만 뽑아 고정 형식으로 낸다. 파일을 통째로 읽는 대신
+// 안 끝난 Task의 마지막 행과 막힌 채로 남은 행을 본다. 끝난 것은 이름만 센다.
+// 순서는 파일 순서가 아니라 날짜시각 칸으로 잡는다. merge=union이 추가된 줄의 순서를
+// 보장하지 않기 때문이다 (CLAUDE.md 4절). 안 끝난 것은 오래된 것부터 내놓는다.
+// 가장 오래 방치된 Task가 맨 위여야 재개하는 사람이 그것을 먼저 본다.
+//
+// 칸 수가 둘이다 (2026-09-10). 2026-09-10 이전 행은 아홉 칸이고 뒤의 세 칸이 없다.
+// 아흔 행을 다시 쓰는 커밋은 merge=union 아래에서 다른 세션의 추가와 만나면 파일을
+// 두 벌로 만든다. 그래서 옛 행을 그대로 두고 읽는 쪽이 두 형태를 다 받는다.
+// 없는 칸은 빈 문자열이고 그것은 값이 아니라 그때 안 적었다는 뜻이다.
+
+const ROW_MIN_COLS = 9;
+const ROW_MAX_COLS = 12;
+
+export function stateRows(text) {
+  const rows = [];
+  for (const line of text.split('\n')) {
+    if (!line.startsWith('|')) continue;
+    const c = line.split('|').slice(1, -1).map((s) => s.trim());
+    if (c.length < ROW_MIN_COLS || c.length > ROW_MAX_COLS) continue;
+    if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(c[0])) continue;
+    const at = (i) => c[i] || '';
+    rows.push({
+      when: c[0], task: c[1], step: c[3], result: c[4], why: c[5], next: c[7],
+      evidence: at(9), untried: at(10), supersedes: at(11), cols: c.length,
+    });
+  }
+  rows.sort((a, b) => (a.when < b.when ? -1 : a.when > b.when ? 1 : 0));
+  return rows;
+}
+
+// 빈칸과 없음을 같이 다룬다. 둘 다 적을 것이 없다는 뜻이다
+function has(v) {
+  return v !== '' && v !== '없음' && v !== '해당 없음';
+}
+
+// 뒤 행이 대체한 앞 행의 날짜시각 집합
+export function supersededSet(rows) {
+  const out = new Set();
+  for (const r of rows) if (has(r.supersedes)) out.add(r.supersedes);
+  return out;
+}
+
+// Task마다 마지막 행. 날짜시각 순으로 오래된 것부터
+export function lastPerTask(rows) {
+  const last = new Map();
+  for (const r of rows) last.set(r.task, r);
+  return [...last.values()].sort((a, b) => (a.when < b.when ? -1 : a.when > b.when ? 1 : 0));
+}
+
+export function state(file, { task } = {}) {
+  const all = stateRows(fs.readFileSync(file, 'utf8'));
+  const scoped = task ? all.filter((r) => r.task === task) : all;
+  if (scoped.length === 0) {
+    console.error(task ? `그 Task의 행이 없다: ${task}` : `행 형식에 맞는 행이 없다: ${rel(file)}`);
+    return 2;
+  }
+  const dead = supersededSet(all);
+  const rows = scoped.filter((r) => !dead.has(r.when));
+  const last = lastPerTask(rows);
+  const done = last.filter((r) => r.result.startsWith('done'));
+  const open = last.filter((r) => !r.result.startsWith('done'));
+
+  console.log(`재개 브리핑 ${rel(file)}${task ? ' --task ' + task : ''}`);
+  console.log(`  행 ${rows.length}개. Task ${last.length}종. ${rows[0].when}부터 ${rows[rows.length - 1].when}까지`);
+  if (scoped.length !== rows.length) {
+    console.log(`  뒤 행이 대체한 행 ${scoped.length - rows.length}건은 셈에서 뺐다`);
+  }
+  console.log(`  끝난 Task ${done.length}종`);
+  if (done.length) for (const l of wrapNames(done.map((r) => r.task))) console.log(l);
+
+  console.log(`  안 끝난 Task ${open.length}종. 마지막 행이 오래된 것부터`);
+  for (const r of open) {
+    console.log(`    ${r.when}  ${r.result.split(/[.\s]/)[0]}  ${r.task}  (${r.step})`);
+    console.log(`      다음 작업: ${r.next}`);
+    if (has(r.untried)) console.log(`      안 해 본 것: ${r.untried}`);
+    if (r.cols >= ROW_MAX_COLS && !has(r.evidence)) {
+      console.log('      증거 없음. 결과 칸은 주장이지 기록이 아니다');
+    }
+  }
+  if (open.length === 0) console.log('    없음');
+
+  const halted = rows.filter((r) => r.result.startsWith('halted'));
+  console.log(`  막힌 채로 남은 행 ${halted.length}건`);
+  for (const h of halted) console.log(`    ${h.when}  ${h.task}  ${h.why}`);
+  if (halted.length === 0) console.log('    없음. 막힌 채로 끝난 행이 하나도 없다는 뜻이다');
+  return 0;
+}
+
+// ---------- 권한 설정 검사 (10-19 4절 G5) ----------
+// 같은 규칙을 Bash와 PowerShell 두 벌로 쓴다. 한쪽만 고치면 그 규칙은 다른 쪽 경로에서
+// 조용히 사라진다. 실패가 안 나고 그냥 안 걸린다. 이 검사가 그 짝을 센다.
+// 명령 이름 자체가 다른 짝은 아래 표에 적는다. 자동으로 못 맞히는 것을 선언으로 메운다.
+
+const SHELL_ALIAS = { rm: 'Remove-Item' };
+
+// Bash(git status:*)와 PowerShell(git status *)를 같은 본체로 만든다
+export function ruleBody(rule) {
+  const m = rule.match(/^(Bash|PowerShell)\((.*)\)$/);
+  if (!m) return null;
+  let body = m[2].replace(/:\*$/, '').replace(/\s+\*$/, '').trim();
+  if (m[1] === 'Bash') {
+    const head = body.split(/\s+/)[0];
+    if (SHELL_ALIAS[head]) body = [SHELL_ALIAS[head], ...body.split(/\s+/).slice(1)].join(' ');
+  }
+  return { tool: m[1], body };
+}
+
+export function settings(file) {
+  const r = new Report('settings', file);
+  let conf;
+  try {
+    conf = JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch (e) {
+    console.error(`JSON을 읽을 수 없다: ${e.message}`);
+    return 2;
+  }
+  const p = conf.permissions || {};
+  r.check('settings.permissions', 1, !!conf.permissions, 'permissions 키가 없다');
+
+  for (const kind of ['deny', 'allow', 'ask']) {
+    const list = p[kind] || [];
+    const shell = list.map(ruleBody).filter(Boolean);
+    const bash = new Set(shell.filter((x) => x.tool === 'Bash').map((x) => x.body));
+    const pwsh = new Set(shell.filter((x) => x.tool === 'PowerShell').map((x) => x.body));
+    for (const b of bash) {
+      r.check('settings.tool-pair', 0, pwsh.has(b), `${kind}의 Bash 규칙에 짝이 되는 PowerShell 규칙이 없다: ${b}`);
+    }
+    for (const b of pwsh) {
+      r.check('settings.tool-pair', 0, bash.has(b), `${kind}의 PowerShell 규칙에 짝이 되는 Bash 규칙이 없다: ${b}`);
+    }
+  }
+
+  const denySet = new Set(p.deny || []);
+  for (const a of p.allow || []) {
+    r.check('settings.deny-allow', 0, !denySet.has(a), `같은 규칙이 deny와 allow 양쪽에 있다: ${a}`);
+  }
+  return r.print();
+}
+
 export function parseReport(file) {
   const out = { file, ok: true, errors: [], rows: [], summary: null, detailCount: 0 };
   const text = fs.readFileSync(file, 'utf8');
@@ -1110,7 +1274,7 @@ export function answer(file, { grade } = {}) {
 export function main(argv) {
   const [cmd, file, ...rest] = argv;
   if (!cmd || !file) {
-    console.error('사용법: node harness/tools/check.mjs <fill|g1|g2|answer|sweep|numbers> <파일 또는 디렉터리> [옵션]');
+    console.error('사용법: node harness/tools/check.mjs <fill|g1|g2|answer|sweep|numbers|state|settings> <파일 또는 디렉터리> [옵션]');
     return 2;
   }
   if (!fs.existsSync(file)) { console.error(`파일이 없다: ${file}`); return 2; }
@@ -1126,6 +1290,7 @@ export function main(argv) {
     else if (rest[i] === '--ref') opt.ref = rest[++i];
     else if (rest[i] === '--local-only') opt.localOnly = true;
     else if (rest[i] === '--fetch') opt.fetch = true;
+    else if (rest[i] === '--task') opt.task = rest[++i];
   }
   if (cmd === 'fill') return fill(file, opt);
   if (cmd === 'g1') return g1(file, opt);
@@ -1133,6 +1298,8 @@ export function main(argv) {
   if (cmd === 'answer') return answer(file, opt);
   if (cmd === 'sweep') return sweep(file, opt);
   if (cmd === 'numbers') return numbers(file, opt);
+  if (cmd === 'state') return state(file, opt);
+  if (cmd === 'settings') return settings(file);
   console.error(`알 수 없는 명령: ${cmd}`);
   return 2;
 }
