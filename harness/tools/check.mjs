@@ -19,6 +19,7 @@
 //   node harness/tools/check.mjs g2 harness/decisions/task-S8-R1.md --mode pre
 //   node harness/tools/check.mjs answer /tmp/answer.md
 //   node harness/tools/check.mjs sweep harness/docs --type doc
+//   node harness/tools/check.mjs state harness/state/progress.md [--task task-S9-catalog]
 //
 // 통과 출력 예시
 //   PASS g1 harness/out/task-S8-R1/candidate.md
@@ -45,6 +46,18 @@
 //     실패 1개
 //       harness/docs/README.md
 //   통과한 파일은 이름도 안 찍는다. 스물일곱 개를 돌려도 읽히는 출력이어야 한다 (10-14 8-4절 D1).
+//
+// 재개 브리핑 출력 예시 (종료 코드 0. 게이트가 아니라 보고다)
+//   재개 브리핑 harness/state/progress.md
+//     행 82개. Task 23종. 2026-09-07 18:31부터 2026-09-10 15:05까지
+//     끝난 Task 6종
+//       H0 H1 저장소 편입 디렉터리 통합 하네스 리뷰 task-S2
+//     안 끝난 Task 17종. 마지막 행이 오래된 것부터
+//       2026-09-08 14:11  drafted  H2  (준비)
+//         다음 작업: 저장소 편입
+//     막힌 채로 남은 행 3건
+//   안 끝난 것을 오래된 것부터 내는 이유는 가장 오래 방치된 Task를 먼저 보게 하기
+//   위해서다. 순서는 파일 순서가 아니라 날짜시각 칸으로 잡는다 (10-14 9-4절 E1).
 //
 // 실패 출력 예시 (종료 코드 1)
 //   FAIL g2 harness/decisions/task-S8-R1.md
@@ -604,6 +617,65 @@ export function sweep(dir, { type = 'doc', end, require: required = [] } = {}) {
   return fails.length ? 1 : 0;
 }
 
+// ---------- 재개 브리핑 (10-14 9-4절 E1) ----------
+// 진행 기록에서 재개에 필요한 것만 뽑아 고정 형식으로 낸다. 파일을 통째로 읽는 대신
+// 안 끝난 Task의 마지막 행과 막힌 채로 남은 행을 본다. 끝난 것은 이름만 센다.
+// 순서는 파일 순서가 아니라 날짜시각 칸으로 잡는다. merge=union이 추가된 줄의 순서를
+// 보장하지 않기 때문이다 (CLAUDE.md 4절). 안 끝난 것은 오래된 것부터 내놓는다.
+// 가장 오래 방치된 Task가 맨 위여야 재개하는 사람이 그것을 먼저 본다.
+
+const ROW_COLS = 9;
+
+export function stateRows(text) {
+  const rows = [];
+  for (const line of text.split('\n')) {
+    if (!line.startsWith('|')) continue;
+    const c = line.split('|').slice(1, -1).map((s) => s.trim());
+    if (c.length !== ROW_COLS) continue;
+    if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(c[0])) continue;
+    rows.push({ when: c[0], task: c[1], step: c[3], result: c[4], why: c[5], next: c[7] });
+  }
+  rows.sort((a, b) => (a.when < b.when ? -1 : a.when > b.when ? 1 : 0));
+  return rows;
+}
+
+// Task마다 마지막 행. 날짜시각 순으로 오래된 것부터
+export function lastPerTask(rows) {
+  const last = new Map();
+  for (const r of rows) last.set(r.task, r);
+  return [...last.values()].sort((a, b) => (a.when < b.when ? -1 : a.when > b.when ? 1 : 0));
+}
+
+export function state(file, { task } = {}) {
+  const all = stateRows(fs.readFileSync(file, 'utf8'));
+  const rows = task ? all.filter((r) => r.task === task) : all;
+  if (rows.length === 0) {
+    console.error(task ? `그 Task의 행이 없다: ${task}` : `아홉 칸 행이 없다: ${rel(file)}`);
+    return 2;
+  }
+  const last = lastPerTask(rows);
+  const done = last.filter((r) => r.result.startsWith('done'));
+  const open = last.filter((r) => !r.result.startsWith('done'));
+
+  console.log(`재개 브리핑 ${rel(file)}${task ? ' --task ' + task : ''}`);
+  console.log(`  행 ${rows.length}개. Task ${last.length}종. ${rows[0].when}부터 ${rows[rows.length - 1].when}까지`);
+  console.log(`  끝난 Task ${done.length}종`);
+  if (done.length) for (const l of wrapNames(done.map((r) => r.task))) console.log(l);
+
+  console.log(`  안 끝난 Task ${open.length}종. 마지막 행이 오래된 것부터`);
+  for (const r of open) {
+    console.log(`    ${r.when}  ${r.result.split(/[.\s]/)[0]}  ${r.task}  (${r.step})`);
+    console.log(`      다음 작업: ${r.next}`);
+  }
+  if (open.length === 0) console.log('    없음');
+
+  const halted = rows.filter((r) => r.result.startsWith('halted'));
+  console.log(`  막힌 채로 남은 행 ${halted.length}건`);
+  for (const h of halted) console.log(`    ${h.when}  ${h.task}  ${h.why}`);
+  if (halted.length === 0) console.log('    없음. 막힌 채로 끝난 행이 하나도 없다는 뜻이다');
+  return 0;
+}
+
 export function parseReport(file) {
   const out = { file, ok: true, errors: [], rows: [], summary: null, detailCount: 0 };
   const text = fs.readFileSync(file, 'utf8');
@@ -926,7 +998,7 @@ export function answer(file, { grade } = {}) {
 export function main(argv) {
   const [cmd, file, ...rest] = argv;
   if (!cmd || !file) {
-    console.error('사용법: node harness/tools/check.mjs <fill|g1|g2|answer|sweep> <파일 또는 디렉터리> [옵션]');
+    console.error('사용법: node harness/tools/check.mjs <fill|g1|g2|answer|sweep|state> <파일 또는 디렉터리> [옵션]');
     return 2;
   }
   if (!fs.existsSync(file)) { console.error(`파일이 없다: ${file}`); return 2; }
@@ -939,12 +1011,14 @@ export function main(argv) {
     else if (rest[i] === '--mode') opt.mode = rest[++i];
     else if (rest[i] === '--dry') opt.dry = true;
     else if (rest[i] === '--grade') opt.grade = rest[++i];
+    else if (rest[i] === '--task') opt.task = rest[++i];
   }
   if (cmd === 'fill') return fill(file, opt);
   if (cmd === 'g1') return g1(file, opt);
   if (cmd === 'g2') return g2(file, opt);
   if (cmd === 'answer') return answer(file, opt);
   if (cmd === 'sweep') return sweep(file, opt);
+  if (cmd === 'state') return state(file, opt);
   console.error(`알 수 없는 명령: ${cmd}`);
   return 2;
 }
