@@ -235,6 +235,10 @@ const docCases = [
   ['옛 상대경로 링크', (t) => t.replace('본문이다.', '본문이다. [옛 링크](claude/06-4.md)'), /link\.stale/],
   // HRV-09
   ['깨진 상대 링크', (t) => t.replace('본문이다.', '본문이다. [상대](./없는파일.md)'), /link\.exists/],
+  // 이슈 93. 원인 셋을 각각 건다. 칸 모자람, 칸 넘침, 이스케이프 안 한 파이프
+  ['표 칸이 모자람', (t) => t.replace('| --dry | 쓰지 않고 결과만 낸다 |', '| --dry 쓰지 않고 결과만 낸다 |'), /doc\.table-cells/],
+  ['표 칸이 넘침', (t) => t.replace('| --dry | 쓰지 않고 결과만 낸다 |', '| --dry | 쓰지 않고 | 결과만 낸다 |'), /doc\.table-cells/],
+  ['이스케이프 안 한 파이프', (t) => t.replace('doc\\|api\\|code', 'doc|api|code'), /doc\.table-cells/],
 ];
 
 for (const [name, mutate, want] of docCases) {

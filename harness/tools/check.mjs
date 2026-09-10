@@ -24,15 +24,16 @@
 //
 // 통과 출력 예시
 //   PASS g1 harness/out/task-S8-R1/candidate.md
-//     검사 8건 통과
-//       doc.date-created doc.date-updated doc.no-emdash doc.no-middot doc.no-bold
-//       doc.end-sentence link.exists link.stale
+//     검사 9건 통과
+//       doc.date-created doc.date-updated doc.no-emdash doc.no-middot doc.no-bold doc.table-cells
+//       link.exists link.stale doc.end-sentence
 //   이름을 다 적는 이유는 그 명령이 무엇을 보는지 실행 한 번으로 알기 위해서다 (10-14 2-3절 A2).
 //
 // 범위 밖 출력 예시
 //   PASS g1 harness/docs/10-9-o2o-harness-answer-format-plan.md
-//     검사 7건 통과
-//       doc.date-created doc.date-updated doc.no-emdash doc.no-middot doc.no-bold link.exists link.stale
+//     검사 8건 통과
+//       doc.date-created doc.date-updated doc.no-emdash doc.no-middot doc.no-bold doc.table-cells
+//       link.exists link.stale
 //     범위 밖 1건
 //       doc.end-sentence  하네스 문서는 Step 산출물이 아니라 고정 종료 문장이 없다 (10-14 3절)
 //   범위 밖은 통과로 세지 않는다. 검사를 안 돌린 것과 돌려서 통과한 것을 가른다 (10-14 2-3절 A4).
@@ -41,7 +42,7 @@
 //   FAIL g1 harness/docs/README.md
 //     [doc.date-created] 1  최초 작성 줄이 없다 (F5)
 //     [doc.date-updated] 1  최종 갱신 줄이 없다 (F5)
-//     검사 7건 중 2건 실패
+//     검사 8건 중 2건 실패
 //   FAIL sweep harness/docs --type doc
 //     문서 13개 중 12개 통과
 //     실패 1개
@@ -101,6 +102,16 @@
 //     등급 A (자동)
 //   등급 줄이 뒤에 오는 것은 그것이 판정 결과지 실패가 아니기 때문이다
 //
+// 표 칸 수 실패 출력 예시 (종료 코드 1. 이슈 93)
+//   FAIL g1 harness/docs/10-99-example.md
+//     [doc.table-cells]  50  머리글 17행은 6칸인데 이 행은 4칸이다 (F4)
+//     [doc.table-cells]  62  머리글 17행은 6칸인데 이 행은 7칸이다 (F4)
+//     검사 8건 중 2건 실패
+//   칸이 모자란 것과 넘치는 것을 한 검사로 잡는다. 넘치는 쪽은 대개 이스케이프하지 않은
+//   파이프 기호이고, 마크다운이 넘치는 칸을 버려서 그 칸의 글이 화면에서 사라진다.
+//   파일 이름은 가상이다. 실재하는 파일을 적으면 그 파일을 고치는 순간 예시가 낡는다.
+//
+
 // 쓰기 정책
 //   g1과 g2는 아무 파일도 쓰지 않는다. 읽기만 한다.
 //   fill만 쓴다. 대상은 인자로 받은 그 파일 하나뿐이다. 보호 경로는 거부한다.
@@ -202,6 +213,14 @@ function stripFences(text) {
   return out;
 }
 
+// 표 한 줄을 칸으로 가른다. 이스케이프한 파이프는 칸을 가르지 않는다 (이슈 93).
+// 마크다운이 그렇게 읽으므로 검사기도 그렇게 읽어야 --type doc\|api\|code 같은 칸이 셋으로 쪼개지지 않는다.
+function splitCells(line) {
+  return line.trim().replace(/^\|/, '').replace(/(?<!\\)\|$/, '')
+    .split(/(?<!\\)\|/)
+    .map((c) => c.trim());
+}
+
 // 마크다운 표를 셀 배열로. 구분선은 버린다
 function parseTables(text) {
   const tables = [];
@@ -210,10 +229,7 @@ function parseTables(text) {
     if (/^\s*\|/.test(line)) {
       if (!cur) { cur = { rows: [] }; tables.push(cur); }
       if (/^\s*\|[\s|:-]+\|\s*$/.test(line)) return;
-      cur.rows.push({
-        line: i + 1,
-        cells: line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim()),
-      });
+      cur.rows.push({ line: i + 1, cells: splitCells(line) });
     } else if (line.trim() !== '') {
       cur = null;
     }
@@ -515,6 +531,24 @@ function checkStyle(r, text, prefix = 'doc') {
   if (seen.bold) r.check(`${prefix}.no-bold`, 0, true, '');
 }
 
+// 표 행이 머리글과 같은 칸 수인가 (이슈 93). 원본이 표여도 렌더링이 표가 아니면 D3(F4)을 못 지킨다.
+// 칸이 넘치는 것과 모자란 것을 한 검사로 잡는다. 사람이 눈으로 세면 반드시 샌다.
+// 펜스 안은 데이터라 세지 않는다. stripFences가 줄 수를 유지하므로 줄 번호는 원본 그대로다
+function checkTables(r, text, prefix = 'doc') {
+  let ok = true;
+  for (const t of parseTables(stripFences(text).join('\n'))) {
+    const head = t.rows[0];
+    if (!head) continue;
+    for (const row of t.rows.slice(1)) {
+      if (row.cells.length === head.cells.length) continue;
+      ok = false;
+      r.check(`${prefix}.table-cells`, row.line, false,
+        `머리글 ${head.line}행은 ${head.cells.length}칸인데 이 행은 ${row.cells.length}칸이다 (F4)`);
+    }
+  }
+  if (ok) r.check(`${prefix}.table-cells`, 0, true, '');
+}
+
 // 결과 파일에서 실행 수와 실패 수와 오류 수와 건너뛴 수 넷을 읽는다 (D-1 다).
 // JUnit XML만 읽는다. 다른 형식을 추측으로 읽으면 그 형식이 바뀌었을 때 조용히 통과시킨다.
 // testsuite가 여럿이면 합산한다. Gradle이 테스트 클래스마다 파일 하나를 낸다.
@@ -546,6 +580,7 @@ export function g1(file, { type, end, require: required = [], artifacts = [], qu
       r.check('doc.required-item', 1, text.includes(item), `승인 양식의 필수 항목이 없다: ${item}`);
     }
     checkStyle(r, text);
+    checkTables(r, text);
     checkLinks(r, text, file);
     const nonEmpty = text.split('\n').filter((l) => l.trim() !== '');
     const last = (nonEmpty[nonEmpty.length - 1] || '').trim();
@@ -558,6 +593,7 @@ export function g1(file, { type, end, require: required = [], artifacts = [], qu
       r.check('api.section', 1, new RegExp('^#{1,6}\\s.*' + sec, 'm').test(text), `${sec} 절이 없다`);
     }
     checkStyle(r, text);
+    checkTables(r, text, 'api');
     checkLinks(r, text, file);
   } else if (type === 'code') {
     // 2026-09-09 task-S9-catalog 결정 D-1 다로 존재 확인에서 숫자 판정으로 올렸다.
