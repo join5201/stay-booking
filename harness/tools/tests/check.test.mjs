@@ -25,7 +25,7 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { fill, g1, g2, answer, sweep, scopeKind, skipReason } from '../check.mjs';
+import { fill, g1, g2, answer, sweep, state, stateRows, supersededSet, settings, ruleBody, scopeKind, skipReason } from '../check.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const FIX = path.join(HERE, 'fixtures');
@@ -611,4 +611,188 @@ test('sweep. 마크다운이 아닌 파일은 세지 않는다', () => {
   fs.writeFileSync(path.join(dir, 'b.txt'), '문서가 아니다');
   const r = run(() => sweep(dir, { type: 'doc' }));
   assert.match(r.out, /문서 1개 중 1개 통과/);
+});
+
+// ---------- 재개 브리핑 (10-14 9-4절 E1) ----------
+// 왜 필요한가: 재개할 때 42,900바이트를 통째로 읽으면 무엇이 안 끝났는지가 안 보인다.
+// 그리고 merge=union은 추가된 줄의 순서를 보장하지 않아서 파일의 마지막 행이 시간의
+// 마지막 행이 아니다. 이 둘이 이 명령이 있는 이유이고 아래 두 번째 테스트가 그것을 잰다.
+
+const ROWS = [
+  '| 날짜시각 | Task | 라운드 | 단계 | 결과 | 실패 원인 | 교훈 | 다음 작업 | 실제 시간 |',
+  '|---|---|---|---|---|---|---|---|---|',
+  '| 2026-09-08 10:00 | H1 | 해당 없음 | 준비 | drafted. 초안 | 없음 | 없음 | H1 승인 | 미측정 |',
+  '| 2026-09-08 12:00 | H1 | 해당 없음 | 준비 | done. 승인됨 | 없음 | 없음 | H2 | 미측정 |',
+  '| 2026-09-08 11:00 | H2 | 해당 없음 | 준비 | halted. 막혔다 | 권한 규칙이 막는다 | 없음 | 사용자 판단 | 미측정 |',
+].join('\n');
+
+function stateFile(body = ROWS) {
+  const p = path.join(TMP, `state-${seq++}.md`);
+  fs.writeFileSync(p, `# 진행 기록\n\n| 칸 | 무엇 |\n|---|---|\n| 날짜시각 | YYYY-MM-DD HH:MM |\n\n${body}\n`);
+  return p;
+}
+
+test('stateRows. 진행 기록 행만 뽑고 다른 표는 무시한다', () => {
+  const rows = stateRows(fs.readFileSync(stateFile(), 'utf8'));
+  assert.equal(rows.length, 3);
+  assert.deepEqual(rows.map((r) => r.task), ['H1', 'H2', 'H1']);
+});
+
+test('stateRows. 파일 순서가 아니라 날짜시각으로 읽는다', () => {
+  const rows = stateRows(fs.readFileSync(stateFile(), 'utf8'));
+  assert.deepEqual(rows.map((r) => r.when), ['2026-09-08 10:00', '2026-09-08 11:00', '2026-09-08 12:00']);
+});
+
+test('state. 끝난 Task와 안 끝난 Task를 가른다', () => {
+  const r = run(() => state(stateFile()));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /끝난 Task 1종/);
+  assert.match(r.out, /안 끝난 Task 1종/);
+});
+
+test('state. 막힌 행을 실패 원인과 같이 낸다', () => {
+  const r = run(() => state(stateFile()));
+  assert.match(r.out, /막힌 채로 남은 행 1건/);
+  assert.match(r.out, /권한 규칙이 막는다/);
+});
+
+test('state. --task는 그 Task만 본다', () => {
+  const r = run(() => state(stateFile(), { task: 'H2' }));
+  assert.match(r.out, /행 1개/);
+  assert.doesNotMatch(r.out, /H1/);
+});
+
+test('state. 행 형식에 맞는 행이 없으면 종료 코드 2', () => {
+  const p = path.join(TMP, `state-empty-${seq++}.md`);
+  fs.writeFileSync(p, '# 진행 기록\n\n표가 없다\n');
+  const r = run(() => state(p));
+  assert.equal(r.code, 2);
+});
+
+// ---------- 열두 칸 (2026-09-10. 10-14 9-3절 E2 E3 E4) ----------
+// 왜 필요한가: 아홉 칸에는 결과 칸의 주장을 받치는 것이 없었고, 떠올렸다가 안 해 본
+// 방법을 적을 데가 없었고, 앞 행이 틀렸을 때 그것을 가리킬 데가 없었다. 추가 전용
+// 파일이라 고칠 수가 없으니 뒤 행이 앞 행을 대체한다고 적는 칸이 필요하다.
+// 옛 행은 그대로 둔다. merge=union이 걸린 파일을 아흔 행째 다시 쓰면 다른 세션의
+// 추가와 만나 파일이 두 벌이 된다. 그래서 읽는 쪽이 두 형태를 다 받는다.
+
+const ROWS12 = [
+  '| 날짜시각 | Task | 라운드 | 단계 | 결과 | 실패 원인 | 교훈 | 다음 작업 | 실제 시간 | 증거 | 안 해 본 것 | 대체 |',
+  '|---|---|---|---|---|---|---|---|---|---|---|---|',
+  '| 2026-09-10 09:00 | H7 | 해당 없음 | 준비 | halted. 막혔다 | 경로를 잘못 봤다 | 없음 | 사용자 판단 | 미측정 | 없음 | 없음 | 없음 |',
+  '| 2026-09-10 11:00 | H7 | 해당 없음 | 준비 | drafted. 초안 | 없음 | 없음 | H8 | 20분 | node --test 97건 통과 | 양식을 두 벌로 나눠 보기 | 2026-09-10 09:00 |',
+  '| 2026-09-10 12:00 | H8 | 해당 없음 | 준비 | drafted. 초안 | 없음 | 없음 | H9 | 미측정 | 없음 | 없음 | 없음 |',
+].join('\n');
+
+test('stateRows. 열두 칸 행의 뒤 세 칸을 읽는다', () => {
+  const rows = stateRows(fs.readFileSync(stateFile(ROWS12), 'utf8'));
+  const r = rows.find((x) => x.when === '2026-09-10 11:00');
+  assert.equal(r.evidence, 'node --test 97건 통과');
+  assert.equal(r.untried, '양식을 두 벌로 나눠 보기');
+  assert.equal(r.supersedes, '2026-09-10 09:00');
+});
+
+test('stateRows. 아홉 칸 행의 뒤 세 칸은 빈 문자열이다', () => {
+  const rows = stateRows(fs.readFileSync(stateFile(), 'utf8'));
+  assert.equal(rows[0].cols, 9);
+  assert.equal(rows[0].evidence, '');
+  assert.equal(rows[0].untried, '');
+  assert.equal(rows[0].supersedes, '');
+});
+
+test('stateRows. 두 형태가 한 파일에 섞여도 둘 다 뽑는다', () => {
+  const rows = stateRows(fs.readFileSync(stateFile(`${ROWS}\n${ROWS12}`), 'utf8'));
+  assert.equal(rows.length, 6);
+  assert.deepEqual(rows.map((r) => r.cols), [9, 9, 9, 12, 12, 12]);
+});
+
+test('supersededSet. 뒤 행이 가리킨 앞 행만 모은다', () => {
+  const rows = stateRows(fs.readFileSync(stateFile(ROWS12), 'utf8'));
+  assert.deepEqual([...supersededSet(rows)], ['2026-09-10 09:00']);
+});
+
+test('state. 대체된 앞 행은 셈에서 빠지고 막힌 행에도 안 나온다', () => {
+  const r = run(() => state(stateFile(ROWS12)));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /행 2개/);
+  assert.match(r.out, /뒤 행이 대체한 행 1건은 셈에서 뺐다/);
+  assert.match(r.out, /막힌 채로 남은 행 0건/);
+  assert.doesNotMatch(r.out, /경로를 잘못 봤다/);
+});
+
+test('state. 안 해 본 것이 있으면 안 끝난 Task에 같이 낸다', () => {
+  const r = run(() => state(stateFile(ROWS12)));
+  assert.match(r.out, /안 해 본 것: 양식을 두 벌로 나눠 보기/);
+});
+
+test('state. 증거가 없는 열두 칸 행은 지적한다', () => {
+  const r = run(() => state(stateFile(ROWS12)));
+  assert.match(r.out, /증거 없음\. 결과 칸은 주장이지 기록이 아니다/);
+});
+
+test('state. 아홉 칸 행에는 증거를 안 따진다', () => {
+  const r = run(() => state(stateFile()));
+  assert.doesNotMatch(r.out, /증거 없음/);
+  assert.doesNotMatch(r.out, /안 해 본 것:/);
+});
+
+// ---------- 권한 설정 검사 (10-19 4절 G5) ----------
+// 왜 필요한가: 같은 규칙을 Bash와 PowerShell 두 벌로 쓰는데 한쪽만 고치면 실패가 나지
+// 않고 그 규칙이 다른 쪽 경로에서 조용히 사라진다. 안 걸리는 것은 통과처럼 보인다.
+
+function settingsFile(perms) {
+  const p = path.join(TMP, `settings-${seq++}.json`);
+  fs.writeFileSync(p, JSON.stringify({ permissions: perms }, null, 2));
+  return p;
+}
+
+test('ruleBody. 두 문법의 같은 규칙이 같은 본체가 된다', () => {
+  assert.deepEqual(ruleBody('Bash(git status:*)'), { tool: 'Bash', body: 'git status' });
+  assert.deepEqual(ruleBody('PowerShell(git status *)'), { tool: 'PowerShell', body: 'git status' });
+});
+
+test('ruleBody. 명령 이름이 다른 짝은 선언으로 맞춘다', () => {
+  assert.equal(ruleBody('Bash(rm *)').body, 'Remove-Item');
+  assert.equal(ruleBody('PowerShell(Remove-Item *)').body, 'Remove-Item');
+});
+
+test('ruleBody. 셸 규칙이 아니면 본체가 없다', () => {
+  assert.equal(ruleBody('Read(./.env)'), null);
+  assert.equal(ruleBody('Edit(**/*.pem)'), null);
+});
+
+test('settings. 짝이 맞으면 통과한다', () => {
+  const f = settingsFile({ deny: ['Bash(rm *)', 'PowerShell(Remove-Item *)', 'Read(./.env)'], allow: [] });
+  const r = run(() => settings(f));
+  assert.equal(r.code, 0);
+});
+
+test('settings. 한쪽만 있는 규칙을 잡는다', () => {
+  const f = settingsFile({ deny: [], allow: ['Bash(git push:*)', 'PowerShell(git status *)'] });
+  const r = run(() => settings(f));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /짝이 되는 PowerShell 규칙이 없다: git push/);
+  assert.match(r.out, /짝이 되는 Bash 규칙이 없다: git status/);
+});
+
+test('settings. 같은 규칙이 deny와 allow 양쪽에 있으면 잡는다', () => {
+  const f = settingsFile({ deny: ['Read(./.env)'], allow: ['Read(./.env)'] });
+  const r = run(() => settings(f));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /deny와 allow 양쪽에 있다/);
+});
+
+test('settings. permissions 키가 없으면 잡는다', () => {
+  const p = path.join(TMP, `settings-nokey-${seq++}.json`);
+  fs.writeFileSync(p, '{}');
+  const r = run(() => settings(p));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /permissions 키가 없다/);
+});
+
+test('settings. JSON이 깨졌으면 종료 코드 2', () => {
+  const p = path.join(TMP, `settings-bad-${seq++}.json`);
+  fs.writeFileSync(p, '{ 깨진 ');
+  const r = run(() => settings(p));
+  assert.equal(r.code, 2);
 });

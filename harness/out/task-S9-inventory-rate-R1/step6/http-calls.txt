@@ -1,0 +1,124 @@
+# 6단계 로컬 HTTP 호출 기록
+# 계약 8절 6단계의 완료 조건이다. gradlew bootRun으로 띄운 실제 서버에 curl로 쳤다.
+# 일시: 2026-09-10 05:44:34 UTC, 서버: http://127.0.0.1:8080, DB: o2o_catalog_test (127.0.0.1:3307)
+# 대상: INV-01, INV-02, INV-03, RATE-01, RATE-02와 오류 경로 여섯
+# 본문에 한글이 있는 요청은 UTF-8 파일로 보낸다. 셸이 인라인 인자를 변환해 400이 난다.
+# 준비: 내 객실 타입 room_6757876f75ac44c391414b307ef99d09, 남의 객실 타입 room_9ecc90179fc14497b67ff0778ab3f4f9
+
+== INV-01 POST /api/v1/room-types/room_6757876f75ac44c391414b307ef99d09/inventories (HOST) ==
+HTTP/1.1 201 
+Location: /api/v1/room-types/room_6757876f75ac44c391414b307ef99d09/inventories/2026-09-20
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Thu, 10 Sep 2026 05:44:34 GMT
+
+{"roomTypeId":"room_6757876f75ac44c391414b307ef99d09","date":"2026-09-20","totalCount":5,"heldCount":0,"soldCount":0,"availableCount":5,"version":0}
+
+== INV-01 같은 날짜 재등록. 409 RESOURCE_ALREADY_EXISTS ==
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Thu, 10 Sep 2026 05:44:35 GMT
+
+{"code":"RESOURCE_ALREADY_EXISTS","message":"같은 객실 타입과 날짜에 이미 등록돼 있습니다.","traceId":"trace_d465e62fd34f42778b33223757c41e13","details":[]}
+
+== INV-02 POST .../inventories/bulk 2026-09-21 부터 2026-09-23 까지 (끝 날짜 제외) ==
+HTTP/1.1 201 
+Location: /api/v1/room-types/room_6757876f75ac44c391414b307ef99d09/inventories?from=2026-09-21&to=2026-09-23
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Thu, 10 Sep 2026 05:44:35 GMT
+
+{"roomTypeId":"room_6757876f75ac44c391414b307ef99d09","from":"2026-09-21","to":"2026-09-23","items":[{"roomTypeId":"room_6757876f75ac44c391414b307ef99d09","date":"2026-09-21","totalCount":4,"heldCount":0,"soldCount":0,"availableCount":4,"version":0},{"roomTypeId":"room_6757876f75ac44c391414b307ef99d09","date":"2026-09-22","totalCount":4,"heldCount":0,"soldCount":0,"availableCount":4,"version":0}],"missingDates":[]}
+
+== V5 INV-02 겹치는 날짜 포함. 409이고 전부 실패 ==
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Thu, 10 Sep 2026 05:44:35 GMT
+
+{"code":"RESOURCE_ALREADY_EXISTS","message":"같은 객실 타입과 날짜에 이미 등록돼 있습니다.","traceId":"trace_cec0c1182d904460887c5d7180d04022","details":[]}
+
+== INV-03 PATCH .../inventories/2026-09-20 version 0 으로 8 로 수정 ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 148
+Date: Thu, 10 Sep 2026 05:44:35 GMT
+
+{"roomTypeId":"room_6757876f75ac44c391414b307ef99d09","date":"2026-09-20","totalCount":8,"heldCount":0,"soldCount":0,"availableCount":8,"version":1}
+
+== V6 INV-03 지난 version 0 재사용. 409 VERSION_CONFLICT ==
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Thu, 10 Sep 2026 05:44:35 GMT
+
+{"code":"VERSION_CONFLICT","message":"수정 버전이 일치하지 않습니다.","traceId":"trace_7d441e0a65004117981d98bfbb076031","details":[]}
+
+== RATE-01 POST .../rates ==
+HTTP/1.1 201 
+Location: /api/v1/room-types/room_6757876f75ac44c391414b307ef99d09/rates/2026-09-20
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Thu, 10 Sep 2026 05:44:35 GMT
+
+{"roomTypeId":"room_6757876f75ac44c391414b307ef99d09","date":"2026-09-20","amount":100000,"currency":"KRW","version":0}
+
+== RATE-02 PATCH .../rates/2026-09-20 version 0 으로 110000 으로 수정 ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 119
+Date: Thu, 10 Sep 2026 05:44:35 GMT
+
+{"roomTypeId":"room_6757876f75ac44c391414b307ef99d09","date":"2026-09-20","amount":110000,"currency":"KRW","version":1}
+
+== V9 과거 날짜 2026-09-09 등록. 400 INVALID_DATE_RANGE ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Thu, 10 Sep 2026 05:44:35 GMT
+Connection: close
+
+{"code":"INVALID_DATE_RANGE","message":"날짜 값이 올바르지 않습니다.","traceId":"trace_f9876b48874b4afc81f83f35ceb7a505","details":[]}
+
+== V8 기간 367일. 400 INVALID_DATE_RANGE ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Thu, 10 Sep 2026 05:44:35 GMT
+Connection: close
+
+{"code":"INVALID_DATE_RANGE","message":"날짜 값이 올바르지 않습니다.","traceId":"trace_32bb5dbd88f54faab96945b1b67e0832","details":[]}
+
+== V7 남의 객실 타입에 등록. 404 RESOURCE_NOT_FOUND ==
+HTTP/1.1 404 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Thu, 10 Sep 2026 05:44:35 GMT
+
+{"code":"RESOURCE_NOT_FOUND","message":"자원을 찾을 수 없습니다.","traceId":"trace_74c4c3db9c4041d9a586ecaf56867b20","details":[]}
+
+== RATE-01 통화 USD. 400 INVALID_REQUEST ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Thu, 10 Sep 2026 05:44:35 GMT
+Connection: close
+
+{"code":"INVALID_REQUEST","message":"요청 값이 올바르지 않습니다.","traceId":"trace_a81d6a2b71e641398c0f6be51731f4a8","details":[{"field":"currency","reason":"통화는 KRW만 쓴다"}]}
+
+== 인증 헤더 없음. 401 ACTOR_REQUIRED ==
+HTTP/1.1 401 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Thu, 10 Sep 2026 05:44:35 GMT
+
+{"code":"ACTOR_REQUIRED","message":"필요한 개발 행위자가 없거나 미등록입니다.","traceId":"trace_fc67f896ed604db5bf476d71e2450957","details":[]}
+
+== GUEST 로 등록. 403 ACCESS_DENIED ==
+HTTP/1.1 403 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Thu, 10 Sep 2026 05:44:35 GMT
+
+{"code":"ACCESS_DENIED","message":"이 작업에 필요한 역할이 아닙니다.","traceId":"trace_5f4fa4e42c514187a28becb9d20baea3","details":[]}
