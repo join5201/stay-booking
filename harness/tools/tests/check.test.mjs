@@ -536,6 +536,13 @@ test('scopeKind. README는 앞자리보다 이름이 세다', () => {
   assert.equal(scopeKind(path.join(ROOT, 'backend/README.md')), 'index');
 });
 
+// 부모 경로는 점 두 개 뒤에 구분자가 온다. 점 두 개로 시작하는 폴더 이름은 저장소 안이다.
+// 구분자를 안 보면 그런 폴더의 README가 저장소 밖으로 분류돼 면제를 못 받는다 (PR 77 리뷰 지적)
+test('scopeKind. 점 두 개로 시작하는 폴더는 저장소 밖이 아니다', () => {
+  assert.equal(scopeKind(path.join(ROOT, '..fixtures/README.md')), 'index');
+  assert.equal(scopeKind(path.join(ROOT, '..dot/README.md')), 'index');
+});
+
 // 이름이 README로 끝나기만 하면 안 된다. 앞에 슬래시가 있어야 파일 이름이다
 test('scopeKind. README로 끝나는 다른 이름은 색인이 아니다', () => {
   assert.equal(scopeKind(path.join(ROOT, 'document/NOT-README.md')), 'step');
