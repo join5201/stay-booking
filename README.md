@@ -55,6 +55,7 @@ O2O 숙박 예약 서비스의 DDD 설계와 그 설계를 돌리는 하네스(H
 | CLAUDE.md | 생성자. Claude Code가 읽는다 |
 | AGENTS.md | 평가자. Codex가 읽는다 |
 | .claude/settings.json | 권한 게이트. 비밀 파일 읽기와 삭제 명령을 막는다 |
+| .coderabbit.yaml | 리뷰 봇. PR에 붙는 자동 리뷰의 언어와 문체 규칙과 경로별 지시문. 근거는 harness/docs/10-16 |
 
 둘을 잇지 않았다. AGENTS.md의 소스 수정 금지 조항을 생성자가 따르면 생성 자체가 불가능해지기 때문이다.
 
