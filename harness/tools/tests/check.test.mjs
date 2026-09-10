@@ -527,6 +527,25 @@ test('scopeKind. 저장소 밖 파일은 성격이 없다', () => {
   assert.equal(scopeKind(path.join(TMP, 'x.md')), null);
 });
 
+// README는 어디에 있든 디렉터리 색인이다. 앞자리로만 성격을 정하면 harness/docs와
+// harness/prompts 아래 둘만 면제되고 같은 성격인 나머지 열 개가 종료 문장에서 실패한다.
+test('scopeKind. README는 앞자리보다 이름이 세다', () => {
+  assert.equal(scopeKind(path.join(ROOT, 'README.md')), 'index');
+  assert.equal(scopeKind(path.join(ROOT, 'document/README.md')), 'index');
+  assert.equal(scopeKind(path.join(ROOT, 'harness/docs/README.md')), 'index');
+  assert.equal(scopeKind(path.join(ROOT, 'backend/README.md')), 'index');
+});
+
+// 이름이 README로 끝나기만 하면 안 된다. 앞에 슬래시가 있어야 파일 이름이다
+test('scopeKind. README로 끝나는 다른 이름은 색인이 아니다', () => {
+  assert.equal(scopeKind(path.join(ROOT, 'document/NOT-README.md')), 'step');
+});
+
+test('skipReason. 색인의 종료 문장만 범위 밖이다', () => {
+  assert.ok(skipReason(path.join(ROOT, 'harness/state/README.md'), 'doc.end-sentence'));
+  assert.equal(skipReason(path.join(ROOT, 'harness/state/README.md'), 'doc.date-created'), null);
+});
+
 test('skipReason. 하네스 문서의 종료 문장만 범위 밖이다', () => {
   assert.ok(skipReason(path.join(ROOT, 'harness/docs/10-9-x.md'), 'doc.end-sentence'));
   assert.equal(skipReason(path.join(ROOT, 'harness/out/r/candidate.md'), 'doc.end-sentence'), null);

@@ -240,11 +240,18 @@ const OUT_OF_SCOPE = {
   'harness-doc': {
     'doc.end-sentence': '하네스 문서는 Step 산출물이 아니라 고정 종료 문장이 없다 (10-14 3절)',
   },
+  'index': {
+    'doc.end-sentence': 'README는 디렉터리 색인이지 Step 산출물이 아니다',
+  },
 };
 
 // 저장소 밖 파일은 성격이 없다. 테스트가 임시 폴더에 쓰므로 그 경우 기존 동작을 그대로 둔다.
 export function scopeKind(file) {
   const p = rel(file);
+  // 저장소 밖은 성격이 없다. rel이 ../로 시작하거나 다른 드라이브면 절대경로를 돌려준다
+  if (p.startsWith('..') || path.isAbsolute(p)) return null;
+  // 이름이 앞자리보다 세다. README는 어디에 있든 색인이라 위치가 성격을 바꾸지 않는다
+  if (p === 'README.md' || p.endsWith('/README.md')) return 'index';
   for (const [prefix, kind] of SCOPE) if (p.startsWith(prefix)) return kind;
   return null;
 }
