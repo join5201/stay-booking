@@ -24,9 +24,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { fill, g1, g2, answer, sweep, numbers, scopeKind, skipReason } from '../check.mjs';
+import { touchedNames } from '../numbers-gate.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const FIX = path.join(HERE, 'fixtures');
@@ -755,4 +756,107 @@ test('numbers. git 저장소가 아니면 대조를 범위 밖으로 센다', ()
   assert.equal(r.code, 0);
   assert.match(r.out, /범위 밖 1건/);
   assert.match(r.out, /numbers\.ref/);
+});
+
+// ---------- 문서 번호 게이트 (PostToolUse 훅) ----------
+// 왜 필요한가: 검사가 있다는 것과 검사가 무언가를 막는다는 것은 다르다. 사람이 손으로
+// 쳐야 도는 검사는 바쁠 때 안 돌고, 안 돈 것과 돌아서 통과한 것을 구별할 수 없다
+// (10-14 8-2절). 이 게이트가 파일을 만드는 순간에 부른다.
+//
+// 게이트가 고장 나면 세션이 잠긴다. 그래서 막는 경우보다 안 막는 경우를 더 많이 본다.
+
+const GATE = path.join(HERE, '..', 'numbers-gate.mjs');
+
+// 차단 횟수 기록은 os.tmpdir()에 남아 실행 사이에 살아남는다. 세션 id를 고정하면
+// 두 번째 실행부터 한도를 이미 쓴 상태로 시작해 테스트가 들쭉날쭉해진다.
+// 실제 세션도 매번 다른 id를 받으므로 이쪽이 현실에 가깝다
+const sid = (tag) => `${tag}-${Date.now()}-${seq++}`;
+
+// 훅은 stdin JSON을 주고 종료 코드로 답한다. 자식 프로세스로 돌려야 그 계약을 시험한다.
+// spawnSync를 쓴다. execFileSync는 성공한 실행의 stderr를 돌려주지 않는데 이 게이트는
+// 안 막을 때도 stderr로 알린다. 그 줄을 놓치면 알림이 없는 것과 구별이 안 된다
+function gate(input, env = {}) {
+  const r = spawnSync('node', [GATE], {
+    input: typeof input === 'string' ? input : JSON.stringify(input),
+    env: { ...process.env, ...env },
+    encoding: 'utf8',
+  });
+  return { code: r.status, out: String(r.stdout || '') + String(r.stderr || '') };
+}
+
+// 겹침이 있는 임시 저장소. 로컬에 10-18-mine.md, origin/main에 10-18-rollup.md
+function gaterepo(tag) {
+  const root = fs.mkdtempSync(path.join(TMP, `gate-${tag}-`));
+  const docs = path.join(root, 'docs');
+  fs.mkdirSync(docs);
+  const g = (...a) => execFileSync('git', a, { cwd: root, stdio: 'ignore' });
+  g('init', '-q');
+  g('config', 'user.email', 'test@example.com');
+  g('config', 'user.name', 'test');
+  g('config', 'commit.gpgsign', 'false');
+  fs.writeFileSync(path.join(docs, '10-18-rollup.md'), '');
+  g('add', 'docs/10-18-rollup.md');
+  g('commit', '-q', '-m', 'seed');
+  const sha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
+  g('update-ref', 'refs/remotes/origin/main', sha);
+  fs.unlinkSync(path.join(docs, '10-18-rollup.md'));
+  fs.writeFileSync(path.join(docs, '10-18-mine.md'), '');
+  return docs;
+}
+
+test('게이트. harness/docs 아래 쓰기에서 파일 이름을 뽑는다', () => {
+  assert.deepEqual(
+    touchedNames({ tool_input: { file_path: 'harness/docs/10-19-a.md' } }), ['10-19-a.md']);
+});
+
+test('게이트. 다른 경로의 쓰기는 뽑지 않는다', () => {
+  assert.deepEqual(touchedNames({ tool_input: { file_path: 'backend/src/Main.java' } }), []);
+  assert.deepEqual(touchedNames({ tool_input: { file_path: 'document/06-2-o2o-aggregates.md' } }), []);
+});
+
+// 이름을 바꾸는 일은 git mv로 한다. Write만 보면 16bb437 같은 변경을 놓친다
+test('게이트. Bash 명령에서도 뽑는다', () => {
+  const got = touchedNames({
+    tool_input: { command: 'git mv harness/docs/10-15-a.md harness/docs/10-16-b.md' } });
+  assert.deepEqual(got.sort(), ['10-15-a.md', '10-16-b.md']);
+});
+
+test('게이트. 하위 디렉터리는 뽑지 않는다', () => {
+  assert.deepEqual(touchedNames({ tool_input: { file_path: 'harness/docs/sub/10-19-a.md' } }), []);
+});
+
+test('게이트. 방금 만든 파일이 겹치면 종료 코드 2로 막는다', () => {
+  const docs = gaterepo('block');
+  const r = gate({ session_id: sid('block'), tool_name: 'Write',
+    tool_input: { file_path: path.join(docs, '10-18-mine.md') } }, { NUMBERS_GATE_DIR: docs });
+  assert.equal(r.code, 2);
+  assert.match(r.out, /문서 번호가 겹친다/);
+  assert.match(r.out, /10-18-mine\.md\(로컬만\)/);
+});
+
+// 이미 겹친 저장소에서 모든 쓰기가 막히면 세션이 못 나간다. 알리되 막지 않는다
+test('게이트. 남이 만든 겹침은 알리되 막지 않는다', () => {
+  const docs = gaterepo('other');
+  const r = gate({ session_id: sid('other'), tool_name: 'Write',
+    tool_input: { file_path: path.join(docs, '10-99-other.md') } }, { NUMBERS_GATE_DIR: docs });
+  assert.equal(r.code, 0);
+  assert.match(r.out, /방금 만든 파일과는 무관하다/);
+});
+
+test('게이트. 차단 한도를 넘으면 막지 않는다', () => {
+  const docs = gaterepo('limit');
+  const arg = { session_id: sid('limit'), tool_name: 'Write',
+    tool_input: { file_path: path.join(docs, '10-18-mine.md') } };
+  const env = { NUMBERS_GATE_DIR: docs, NUMBERS_GATE_MAX_BLOCKS: '1' };
+  assert.equal(gate(arg, env).code, 2);
+  const second = gate(arg, env);
+  assert.equal(second.code, 0);
+  assert.match(second.out, /차단 한도/);
+});
+
+// 게이트 고장이 세션을 잠그면 안 된다. 입력이 무엇이든 막지 않는 쪽으로 넘어진다
+test('게이트. 빈 입력과 깨진 JSON은 막지 않는다', () => {
+  assert.equal(gate('').code, 0);
+  assert.equal(gate('{ 이건 JSON이 아니다').code, 0);
+  assert.equal(gate({ tool_name: 'Write' }).code, 0);
 });
