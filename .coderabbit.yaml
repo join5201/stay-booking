@@ -6,7 +6,7 @@
 # 스키마: https://coderabbit.ai/integrations/schema.v2.json
 #   공식 문서에 적힌 schema.json은 404다. v2 주소를 쓴다. 2026-09-10 확인.
 #
-# 검증 실행 예시와 실패 시 출력 예시: harness/docs/10-15-o2o-harness-coderabbit.md 4절
+# 검증 실행 예시와 실패 시 출력 예시: harness/docs/10-16-o2o-harness-coderabbit.md 6절
 #
 # 기본값과 같은 항목은 적지 않는다. 여기 있는 것은 전부 기본값과 다르거나
 # 사람이 자주 돌릴 손잡이다. 어느 쪽인지는 각 항목의 주석에 적는다.
