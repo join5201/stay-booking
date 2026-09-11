@@ -16,10 +16,11 @@ import jakarta.persistence.UniqueConstraint;
 /**
  * 날짜별 재고 애그리거트 루트. 설계 근거: 06-2 1절 DailyInventory 행, 06-2 6절 재고와 요금 CRC.
  *
- * CRC의 책임 세 줄 중 둘에 대응한다. 객실 타입과 날짜와 수량 셋을 알고, 조정에서 I1과 I1a를
- * 검사하며, 가용성을 계산해 답하되 저장하지 않는다. hold와 commit과 release 세 책임은
- * 이번 묶음에서 만들지 않는다. 근거는 task-S9-inventory-rate 2-2절이다. 부르는 쪽이
- * 예약 컨텍스트뿐이고 그 컨텍스트가 아직 없다.
+ * CRC의 책임 세 줄 전부에 대응한다. 객실 타입과 날짜와 수량 셋을 알고, 모든 수량 변경에서
+ * I1과 I1a를 검사하며, 가용성을 계산해 답하되 저장하지 않는다. hold와 commit과 release는
+ * 예약 묶음(task-S9-booking 2-1절)이 붙였다. 앞 묶음이 미뤄 둔 자리다(task-S9-inventory-rate
+ * 2-2절). 1차에서 호출 경로가 있는 것은 hold뿐이고 commit과 releaseHeld와 releaseSold의
+ * 호출자는 확정과 만료와 취소라 2차다.
  *
  * 지키는 불변식은 둘이다(06-2 3-1, 06-4 1-1).
  * I1 재고 총량. totalCount는 soldCount + heldCount 이상이다.
@@ -117,8 +118,8 @@ public class DailyInventory {
 
     /**
      * I1과 I1a를 한자리에서 검사한다. 06-2 6절 CRC가 모든 수량 변경에서 둘 다 검사하라고 적어서
-     * 수량을 바꾸는 모든 경로가 이 메서드를 지난다. 예약 묶음에서 hold와 commit과 release가
-     * 붙을 때도 같은 자리를 쓴다.
+     * 수량을 바꾸는 모든 경로가 이 메서드를 지난다. adjust와 hold와 commit과 releaseHeld와
+     * releaseSold 다섯이 전부 여기를 지난다.
      */
     private static void validateCounts(int totalCount, int soldCount, int heldCount) {
         if (soldCount < 0 || heldCount < 0) {
@@ -126,6 +127,75 @@ public class DailyInventory {
         }
         if (totalCount < soldCount + heldCount) {
             throw new InventoryBelowOccupiedException(totalCount, soldCount, heldCount);
+        }
+    }
+
+    /**
+     * HoldInventory. 설계 근거: 06-4 1-2 hold(n). Pre가 오름차순 잠금과 행 존재와 가용 수량
+     * n 이상을 적고, Post가 heldCount 증가와 InventoryHeld 발행을 적는다. 위반 예외는
+     * InventoryShortage다. 잠금과 존재 확인은 InventoryAllocationService가 리포지토리로 하고
+     * 이 메서드는 잠긴 뒤에 불린다. 연박 원자성(A1)의 롤백은 그 서비스와 트랜잭션이 맡는다.
+     *
+     * n은 08-3 결정 11의 11-5로 1이지만 계약표가 hold(n)이라 인자로 받는다. 검증 항목은
+     * 계약 8-1절 K4와 T08과 T09다.
+     */
+    public void hold(int n, Instant now) {
+        requirePositive(n);
+        if (availableCount() < n) {
+            throw new InventoryShortageException(roomTypeId(), stayDate, availableCount(), n);
+        }
+        validateCounts(this.totalCount, this.soldCount, this.heldCount + n);
+        this.heldCount = this.heldCount + n;
+        this.updatedAt = now;
+    }
+
+    /**
+     * CommitInventory. 설계 근거: 06-4 1-2 commit(n). Pre가 잠금과 heldCount가 n 이상을 적고
+     * Post가 선점을 판매로 이동한다고 적는다. 위반 예외는 InsufficientHold다.
+     * 1차에는 호출자가 없다. 호출자는 확정(2차)이다. 검증 항목은 계약 8-1절 K5다.
+     */
+    public void commit(int n, Instant now) {
+        requirePositive(n);
+        if (this.heldCount < n) {
+            throw new InsufficientHoldException(roomTypeId(), stayDate, this.heldCount, n);
+        }
+        validateCounts(this.totalCount, this.soldCount + n, this.heldCount - n);
+        this.heldCount = this.heldCount - n;
+        this.soldCount = this.soldCount + n;
+        this.updatedAt = now;
+    }
+
+    /**
+     * 선점 반환. 설계 근거: 06-4 1-2 releaseHeld(n). Pre가 잠금과 원천이 HELD와 heldCount가
+     * n 이상을 적는다. 위반 예외는 InsufficientHold다. 호출자는 만료(2차)다. K5.
+     */
+    public void releaseHeld(int n, Instant now) {
+        requirePositive(n);
+        if (this.heldCount < n) {
+            throw new InsufficientHoldException(roomTypeId(), stayDate, this.heldCount, n);
+        }
+        validateCounts(this.totalCount, this.soldCount, this.heldCount - n);
+        this.heldCount = this.heldCount - n;
+        this.updatedAt = now;
+    }
+
+    /**
+     * 판매분 반환. 설계 근거: 06-4 1-2 releaseSold(n). Pre가 잠금과 원천이 SOLD와 soldCount가
+     * n 이상을 적는다. 위반 예외는 InsufficientSold다. 호출자는 취소(2차)다. K5.
+     */
+    public void releaseSold(int n, Instant now) {
+        requirePositive(n);
+        if (this.soldCount < n) {
+            throw new InsufficientSoldException(roomTypeId(), stayDate, this.soldCount, n);
+        }
+        validateCounts(this.totalCount, this.soldCount - n, this.heldCount);
+        this.soldCount = this.soldCount - n;
+        this.updatedAt = now;
+    }
+
+    private static void requirePositive(int n) {
+        if (n <= 0) {
+            throw new IllegalArgumentException("수량은 1 이상이어야 한다: " + n);
         }
     }
 
