@@ -1,5 +1,6 @@
 package com.o2o.catalog.domain;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.o2o.shared.HostId;
@@ -40,4 +41,12 @@ public interface PropertyRepository {
      * hostId 쿼리는 받지 않는다. 그래서 인자가 쿼리 값이 아니라 행위자에서 온 값이다.
      */
     PageResult<Property> findByHostId(HostId hostId, PageQuery pageQuery);
+
+    /**
+     * SEARCH-01. 설계 근거: 06-1 R8(카탈로그, 재고와 요금, 프로모션 → 검색. 읽기 전용),
+     * 계약 task-S9-promotion-search 7절 D-1 나(기존 테이블 직접 조회). 검색은 지역의 숙소
+     * 전부를 읽어 객실 조건으로 거른 뒤 자기 쪽에서 쪽을 나눈다. 그래서 쪽 없는 읽기다.
+     * 정렬은 id 오름차순이다. 2026-09-12 추가. 기존 메서드는 바꾸지 않았다.
+     */
+    List<Property> findAllByRegionCode(String regionCode);
 }

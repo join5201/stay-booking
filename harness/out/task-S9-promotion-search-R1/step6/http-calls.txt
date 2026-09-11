@@ -1,0 +1,167 @@
+# 6단계 로컬 HTTP 호출 기록
+# 계약 8절 6단계의 완료 조건이다. gradlew bootRun --args='--server.port=8085'로 띄운 실제 서버에 curl로 쳤다.
+# 일시: 2026-09-11 19:06:46 UTC, 서버: http://127.0.0.1:8085, DB: o2o_promo_test (127.0.0.1:3307, SPRING_DATASOURCE_URL로 지정)
+# 대상: PROMO-01, PROMO-02, PROMO-03, PROMO-04, PROMO-05와 오류 경로 아홉
+# 본문에 한글이 있는 요청은 UTF-8 파일로 보낸다. 셸이 인라인 인자를 변환해 400이 난다.
+# 서울 오늘: 2026-09-12 (스크립트의 date는 Git Bash가 TZ를 못 읽어 UTC 날짜 2026-09-11을 냈다. 요청 날짜는 그 값에서 셌고 캠페인 시작 2026-09-11은 서버의 오늘 2026-09-12를 포함한다. 응답의 evaluatedAt 2026-09-11T19:06Z가 서울 2026-09-12 04:06이다). 준비 지역 코드: PROMO_DEMO_040646
+# 준비: 숙소 prop_b74e08be32da4670ab30ee28262f1c8d, 객실 타입 room_1da6625bf51c4de8a89f1c446cc2e2f3, 요금 2026-09-16과 2026-09-17 각 100000
+
+== PROMO-01 POST /api/v1/promotions (OPERATOR) ==
+HTTP/1.1 201 
+Location: /api/v1/promotions/promo_2a36b223c43748bb83c41f6a9c8bfe96
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:46 GMT
+
+{"id":"promo_2a36b223c43748bb83c41f6a9c8bfe96","name":"가을 할인","discountRate":10,"campaignStartDate":"2026-09-11","campaignEndDate":"2026-10-11","stayStartDate":null,"stayEndDate":null,"minNights":1,"regionCodes":["PROMO_DEMO_040646"],"enabled":true,"version":0,"createdAt":"2026-09-11T19:06:46.961Z","updatedAt":"2026-09-11T19:06:46.961Z"}
+# 등록된 프로모션: promo_2a36b223c43748bb83c41f6a9c8bfe96
+
+== PROMO-01 헤더 없음. 401 ACTOR_REQUIRED ==
+HTTP/1.1 401 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:47 GMT
+
+{"code":"ACTOR_REQUIRED","message":"필요한 개발 행위자가 없거나 미등록입니다.","traceId":"trace_8463cd93efb64787883a60a15b136fd5","details":[]}
+
+== PROMO-01 HOST 행위자. 403 ACCESS_DENIED ==
+HTTP/1.1 403 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:47 GMT
+
+{"code":"ACCESS_DENIED","message":"이 작업에 필요한 역할이 아닙니다.","traceId":"trace_59a7212e16a7495eb66692ba9831df41","details":[]}
+
+== V2 PROMO-01 discountRate 0. 400 INVALID_REQUEST ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:47 GMT
+Connection: close
+
+{"code":"INVALID_REQUEST","message":"요청 값이 올바르지 않습니다.","traceId":"trace_43863092cad041b1a18cc0819410854d","details":[{"field":"discountRate","reason":"1 이상이어야 합니다"}]}
+
+== V1 PROMO-01 캠페인 종료일이 시작일보다 앞. 400 INVALID_DATE_RANGE ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:47 GMT
+Connection: close
+
+{"code":"INVALID_DATE_RANGE","message":"날짜 값이 올바르지 않습니다.","traceId":"trace_15c90c1f75c34e5ca2c77e1e9c8092bf","details":[]}
+
+== V4 PROMO-01 숙박 기간 한쪽만. 400 INVALID_REQUEST ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:47 GMT
+Connection: close
+
+{"code":"INVALID_REQUEST","message":"요청 값이 올바르지 않습니다.","traceId":"trace_1c94f75f36834ccbb9918f22a1fb779d","details":[]}
+
+== PROMO-05 GET .../applicable-promotions 2박 2명 (인증 불필요). 200 후보 하나 선택 ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 358
+Date: Fri, 11 Sep 2026 19:06:47 GMT
+
+{"roomTypeId":"room_1da6625bf51c4de8a89f1c446cc2e2f3","checkIn":"2026-09-16","checkOut":"2026-09-18","guestCount":2,"evaluatedAt":"2026-09-11T19:06:47.540Z","items":[{"id":"promo_2a36b223c43748bb83c41f6a9c8bfe96","name":"가을 할인","discountRate":10,"discountAmount":20000,"selected":true}],"selectedPromotionId":"promo_2a36b223c43748bb83c41f6a9c8bfe96"}
+
+== V12 PROMO-05 guestCount 3 (최대 2). 409 OCCUPANCY_EXCEEDED ==
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:47 GMT
+
+{"code":"OCCUPANCY_EXCEEDED","message":"객실 최대 인원을 넘었습니다.","traceId":"trace_5e6839930df346d9a33c99a45342dc07","details":[]}
+
+== V11 PROMO-05 요금 없는 날짜 포함 (2026-09-18, 2026-09-19). 409 RATE_NOT_CONFIGURED ==
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:47 GMT
+
+{"code":"RATE_NOT_CONFIGURED","message":"하나 이상의 숙박 날짜에 요금이 없습니다.","traceId":"trace_b7989149e5f2475a8953139d5b13b40c","details":[{"field":"checkIn","reason":"2026-09-18 요금 없음"},{"field":"checkIn","reason":"2026-09-19 요금 없음"}]}
+
+== PROMO-05 checkIn 형식 오류. 400 INVALID_DATE_RANGE ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:47 GMT
+Connection: close
+
+{"code":"INVALID_DATE_RANGE","message":"날짜 값이 올바르지 않습니다.","traceId":"trace_f8239873642042f5aef8fbb510a676cc","details":[]}
+
+== PROMO-02 PATCH version 0 으로 discountRate 20. 200 version 1 ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 347
+Date: Fri, 11 Sep 2026 19:06:47 GMT
+
+{"id":"promo_2a36b223c43748bb83c41f6a9c8bfe96","name":"가을 할인","discountRate":20,"campaignStartDate":"2026-09-11","campaignEndDate":"2026-10-11","stayStartDate":null,"stayEndDate":null,"minNights":1,"regionCodes":["PROMO_DEMO_040646"],"enabled":true,"version":1,"createdAt":"2026-09-11T19:06:46.961Z","updatedAt":"2026-09-11T19:06:47.956Z"}
+
+== V9 PROMO-02 지난 version 0 재사용. 409 VERSION_CONFLICT ==
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:48 GMT
+
+{"code":"VERSION_CONFLICT","message":"수정 버전이 일치하지 않습니다.","traceId":"trace_a32d31502cb84924948349cd02a27ba6","details":[]}
+
+== V10 PROMO-02 종료일만 시작일 앞으로. 합친 상태에서 400 INVALID_DATE_RANGE ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:48 GMT
+Connection: close
+
+{"code":"INVALID_DATE_RANGE","message":"날짜 값이 올바르지 않습니다.","traceId":"trace_aeedd2db3c1c4e96972232babe9d99b1","details":[]}
+
+== PROMO-02 유지 필드에 명시적 null. 400 INVALID_REQUEST ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:48 GMT
+Connection: close
+
+{"code":"INVALID_REQUEST","message":"요청 본문을 읽을 수 없습니다.","traceId":"trace_72e7567d948846f4a28b59b5806f6125","details":[]}
+
+== PROMO-03 GET /api/v1/promotions/{id}. 200 열세 칸, version 1 discountRate 20 ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 347
+Date: Fri, 11 Sep 2026 19:06:48 GMT
+
+{"id":"promo_2a36b223c43748bb83c41f6a9c8bfe96","name":"가을 할인","discountRate":20,"campaignStartDate":"2026-09-11","campaignEndDate":"2026-10-11","stayStartDate":null,"stayEndDate":null,"minNights":1,"regionCodes":["PROMO_DEMO_040646"],"enabled":true,"version":1,"createdAt":"2026-09-11T19:06:46.961Z","updatedAt":"2026-09-11T19:06:47.956Z"}
+
+== PROMO-03 없는 ID. 404 RESOURCE_NOT_FOUND ==
+HTTP/1.1 404 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:48 GMT
+
+{"code":"RESOURCE_NOT_FOUND","message":"자원을 찾을 수 없습니다.","traceId":"trace_0628502402724ba0b8e76621d81d6100","details":[]}
+
+== PROMO-04 GET /api/v1/promotions?enabled=true&size=3. 200 쪽 구조 ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 410
+Date: Fri, 11 Sep 2026 19:06:48 GMT
+
+{"items":[{"id":"promo_2a36b223c43748bb83c41f6a9c8bfe96","name":"가을 할인","discountRate":20,"campaignStartDate":"2026-09-11","campaignEndDate":"2026-10-11","stayStartDate":null,"stayEndDate":null,"minNights":1,"regionCodes":["PROMO_DEMO_040646"],"enabled":true,"version":1,"createdAt":"2026-09-11T19:06:46.961Z","updatedAt":"2026-09-11T19:06:47.956Z"}],"page":0,"size":3,"totalElements":1,"totalPages":1}
+
+== PROMO-02 enabled false 수동 종료. 200 version 2 ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 348
+Date: Fri, 11 Sep 2026 19:06:48 GMT
+
+{"id":"promo_2a36b223c43748bb83c41f6a9c8bfe96","name":"가을 할인","discountRate":20,"campaignStartDate":"2026-09-11","campaignEndDate":"2026-10-11","stayStartDate":null,"stayEndDate":null,"minNights":1,"regionCodes":["PROMO_DEMO_040646"],"enabled":false,"version":2,"createdAt":"2026-09-11T19:06:46.961Z","updatedAt":"2026-09-11T19:06:48.388Z"}
+
+== V12 PROMO-05 종료 뒤 후보 없음. 200 items 빈 배열, selectedPromotionId null ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 195
+Date: Fri, 11 Sep 2026 19:06:48 GMT
+
+{"roomTypeId":"room_1da6625bf51c4de8a89f1c446cc2e2f3","checkIn":"2026-09-16","checkOut":"2026-09-18","guestCount":2,"evaluatedAt":"2026-09-11T19:06:48.511Z","items":[],"selectedPromotionId":null}

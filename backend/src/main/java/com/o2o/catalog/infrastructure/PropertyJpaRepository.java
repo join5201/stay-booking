@@ -1,5 +1,7 @@
 package com.o2o.catalog.infrastructure;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -28,4 +30,8 @@ public interface PropertyJpaRepository extends JpaRepository<Property, String> {
 
     @Query("select p from Property p where p.hostId = :hostId")
     Page<Property> findAllByHostId(@Param("hostId") String hostId, Pageable pageable);
+
+    // SEARCH-01. 쪽 없는 지역 읽기. 정렬을 JPQL에 박는다. 2026-09-12 추가
+    @Query("select p from Property p where p.region.code = :regionCode order by p.id")
+    List<Property> findAllByRegionCode(@Param("regionCode") String regionCode);
 }
