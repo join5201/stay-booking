@@ -237,6 +237,10 @@ const docCases = [
   ['옛 상대경로 링크', (t) => t.replace('본문이다.', '본문이다. [옛 링크](claude/06-4.md)'), /link\.stale/],
   // HRV-09
   ['깨진 상대 링크', (t) => t.replace('본문이다.', '본문이다. [상대](./없는파일.md)'), /link\.exists/],
+  // 이슈 93. 원인 셋을 각각 건다. 칸 모자람, 칸 넘침, 이스케이프 안 한 파이프
+  ['표 칸이 모자람', (t) => t.replace('| --dry | 쓰지 않고 결과만 낸다 |', '| --dry 쓰지 않고 결과만 낸다 |'), /doc\.table-cells/],
+  ['표 칸이 넘침', (t) => t.replace('| --dry | 쓰지 않고 결과만 낸다 |', '| --dry | 쓰지 않고 | 결과만 낸다 |'), /doc\.table-cells/],
+  ['이스케이프 안 한 파이프', (t) => t.replace('doc\\|api\\|code', 'doc|api|code'), /doc\.table-cells/],
 ];
 
 for (const [name, mutate, want] of docCases) {
@@ -533,6 +537,14 @@ test('skipReason. 하네스 문서의 종료 문장만 범위 밖이다', () => 
   assert.ok(skipReason(path.join(ROOT, 'harness/docs/10-9-x.md'), 'doc.end-sentence'));
   assert.equal(skipReason(path.join(ROOT, 'harness/out/r/candidate.md'), 'doc.end-sentence'), null);
   assert.equal(skipReason(path.join(ROOT, 'harness/docs/10-9-x.md'), 'doc.date-created'), null);
+});
+
+// 이슈 93. progress.md만 머리글이 자라서 옛 행의 칸이 모자란다. 다른 기록 파일은 그대로 본다
+test('skipReason. 표 칸 수는 progress.md에서만 범위 밖이다', () => {
+  assert.ok(skipReason(path.join(ROOT, 'harness/state/progress.md'), 'doc.table-cells'));
+  assert.equal(skipReason(path.join(ROOT, 'harness/state/troubleshooting.md'), 'doc.table-cells'), null);
+  assert.equal(skipReason(path.join(ROOT, 'harness/state/knowledge.md'), 'doc.table-cells'), null);
+  assert.equal(skipReason(path.join(ROOT, 'harness/state/progress.md'), 'doc.date-created'), null);
 });
 
 test('g1 doc. 하네스 문서는 종료 문장을 범위 밖으로 센다', () => {
