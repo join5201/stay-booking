@@ -1,7 +1,7 @@
 # 작업 계약 task-S9-booking (예약과 선점 묶음. 1차)
 
 최초 작성: 2026-09-11
-최종 갱신: 2026-09-12 (9단계. 5절 평가 대상 코드 행, 10절 진행 기록과 개정 후보 셋)
+최종 갱신: 2026-09-12 (개정 1부터 3 반영. 2절 검사 순서 표와 응답 모델 필드 수, 2-1절 I3, 8-1절 K13, 10절. 사용자 수용 join5201, 2026-09-12)
 양식: harness/prompts/task-contract.md v6
 
 이 계약은 세 번째 구현 묶음이다. 첫 묶음 task-S9-catalog(2026-09-09 완료)와 둘째 묶음 task-S9-inventory-rate(2026-09-11 R1 반영 완료. PR 105, 115, 117이 main에 들어갔다) 위에 얹는다. 2026-09-11 사용자 결정 셋(harness/out/mvp-parallel-2026-09-11/README.md 1절)에 따라 정지점은 1단계 계약 승인과 9단계 검증 표 둘뿐이고, 같은 시각에 프로모션과 검색 세션(P)과 결제 세션(Y)이 다른 워크트리에서 돈다. 이 계약은 그 셋 중 예약 세션(B)의 1차다.
@@ -41,7 +41,7 @@
 
 멱등과 N행 잠금과 세 선행조건이 이번 묶음의 난이도다. 앞 묶음의 원자성은 유니크 제약 하나로 DB가 지켰지만 이번은 코드가 잠금 순서와 롤백을 직접 다룬다.
 
-## 2. 대상 API 셋과 내부 처리 하나와 설계 근거
+## 2. 대상 API 셋과 내부 처리 하나와 설계 근거 (2026-09-12 개정 1, 2, 3 반영)
 
 | API ID | 엔드포인트 | 인증 | 계약표 행 | 불변식 |
 |---|---|---|---|---|
@@ -54,15 +54,16 @@
 
 셋 다 인증이 GUEST다. HOST 경로가 없다. BOOK-03은 소유자만 200이고 남의 예약은 자원 정보 없이 404 RESOURCE_NOT_FOUND다(11 명세 T02, 에러 표 404 행).
 
-BOOK-01의 검사 순서. 앞 검사에서 거절되면 뒤 검사는 하지 않는다. 층은 06-4 1-4 검증 책임 위치 표를 따른다.
+BOOK-01의 검사 순서. 앞 검사에서 거절되면 뒤 검사는 하지 않는다. 층은 06-4 1-4 검증 책임 위치 표를 따른다. 1부터 3의 순서와 5-1행은 2026-09-12 개정 2와 3이다. 원래 계약은 행위자를 body 형식보다 앞에 두고 날짜 규칙 전부를 3행 api에 뒀다.
 
 | 순서 | 무엇 | 실패 시 응답 | 층 |
 |---|---|---|---|
-| 1 | X-Dev-Actor-Id가 등록된 GUEST | 401 ACTOR_REQUIRED, 403 | api (ActorResolver). 멱등 규칙 9가 인증을 재전송에도 적용하라고 적으므로 멱등 조회보다 앞이다 |
-| 2 | Idempotency-Key 존재와 형식. 8자 이상 128자 이하의 영문, 숫자, 하이픈, 밑줄 | 400 IDEMPOTENCY_KEY_REQUIRED | api |
-| 3 | body 형식. 필수, 타입, 범위, 미정의 필드, 날짜 형식과 순서와 30박 상한과 서울 오늘 이상 | 400 INVALID_REQUEST, 400 INVALID_DATE_RANGE | api |
+| 1 | body 형식. 필수, 타입, 범위, 미정의 필드, JSON 해석 | 400 INVALID_REQUEST | api. 프레임워크가 컨트롤러 인자를 해석하며 보므로 행위자보다 앞이다(개정 3). 숙소와 재고의 컨트롤러도 같다 |
+| 2 | X-Dev-Actor-Id가 등록된 GUEST | 401 ACTOR_REQUIRED, 403 | api (ActorResolver). 멱등 규칙 9가 인증을 재전송에도 적용하라고 적으므로 멱등 조회보다 앞이다 |
+| 3 | Idempotency-Key 존재와 형식. 8자 이상 128자 이하의 영문, 숫자, 하이픈, 밑줄 | 400 IDEMPOTENCY_KEY_REQUIRED | api |
 | 4 | 멱등 기록 조회. 범위는 행위자 ID + POST + /api/v1/bookings + 키 | 완료 기록이고 body 같음이면 최초 응답 재전송과 Idempotency-Replayed: true. body 다름이면 409 IDEMPOTENCY_KEY_REUSED. 진행 중이면 409 REQUEST_IN_PROGRESS와 Retry-After: 1 | application |
 | 5 | 진행 중 기록 삽입 | 해당 없음. 같은 순간 둘이 들어오면 유니크가 하나를 4의 진행 중으로 보낸다 | application, DB |
+| 5-1 | 날짜 형식과 순서와 30박 상한과 서울 오늘 이상. 형식은 api가 문자열을 날짜로 바꾸며 보고, 순서와 30박과 오늘 이상은 StayPeriod가 본다. 둘 다 멱등 실행기 안에서 불리므로 4와 5 뒤다(개정 2) | 400 INVALID_DATE_RANGE. 5의 진행 중 기록은 규칙 7로 지워진다 | api (RequestBookingRequest.toCommand), domain (StayPeriod. 앱 서비스가 부른다) |
 | 6 | roomType 존재 | 404 RESOURCE_NOT_FOUND | application |
 | 7 | userCount <= maxOccupancy (A5) | 409 OCCUPANCY_EXCEEDED | application |
 | 8 | 재고 N행을 날짜 오름차순으로 잠그며 읽는다. 행 수가 박수보다 적으면 미개설 | 409 INVENTORY_NOT_CONFIGURED | InventoryAllocationService, infrastructure |
@@ -75,13 +76,13 @@ BOOK-01의 검사 순서. 앞 검사에서 거절되면 뒤 검사는 하지 않
 
 4단계에서 7단계와 8단계 사이가 거절되면 5의 진행 중 기록을 지운다(규칙 7. 4xx는 완료로 캐시하지 않는다). 8의 잠금이 10의 가격 대조보다 앞인 이유는 재고 행 읽기가 곧 미개설 검사이고 잠근 채 두 번 읽지 않기 위해서다. 잠금 보유 시간은 요금 조회와 덧셈만큼 늘어나며 로컬 v1에서 문제가 되지 않는다.
 
-응답 모델 Booking의 21개 필드는 11 명세 2557행 표 그대로다. 1차에서 값이 고정인 것: status HELD, expirationReason null, payment는 attemptCount 0과 approvedAttemptId null과 attempts 빈 배열과 refund null, cancellationReason null, confirmedAt과 canceledAt과 expiredAt null, version 0. priceSnapshot의 appliedPromotion은 1차 어댑터가 프로모션을 모르므로 null이고 discountAmount는 0이다(7절 D-4). 2차가 payment를 결제 세션의 attemptsOf로 채우고 appliedPromotion을 PricingService 어댑터로 채운다.
+응답 모델 Booking의 20개 필드는 11 명세 2557행 표 그대로다(개정 1. 원래 21은 셈 오류). 1차에서 값이 고정인 것: status HELD, expirationReason null, payment는 attemptCount 0과 approvedAttemptId null과 attempts 빈 배열과 refund null, cancellationReason null, confirmedAt과 canceledAt과 expiredAt null, version 0. priceSnapshot의 appliedPromotion은 1차 어댑터가 프로모션을 모르므로 null이고 discountAmount는 0이다(7절 D-4). 2차가 payment를 결제 세션의 attemptsOf로 채우고 appliedPromotion을 PricingService 어댑터로 채운다.
 
-### 2-1. 불변식과 선행조건
+### 2-1. 불변식과 선행조건 (2026-09-12 개정 2 반영)
 
 | 번호 | 문장 | 어디서 지키나 |
 |---|---|---|
-| I3 | checkIn < checkOut | StayPeriod VO. 최대 30박은 11 명세 1638행이라 api 형식 검사에도 있다 |
+| I3 | checkIn < checkOut | StayPeriod VO. 최대 30박(11 명세 1638행)도 StayPeriod가 본다. api는 날짜 형식만 본다(개정 2) |
 | I4 | 생성 이후 PriceSnapshot 불변 | Booking. 스냅샷을 바꾸는 메서드가 없고 days 목록은 방어 복사한다 |
 | I5 | 전이는 HELD → CONFIRMED, HELD → EXPIRED, CONFIRMED → CANCELED 셋뿐 | Booking. 1차는 HELD 생성만 만든다. 전이 메서드 셋은 2차 |
 | I10 | 할인 배분액 합 == 할인 총액 | PriceSnapshot VO 생성자 |
@@ -286,7 +287,7 @@ PricingService는 세션 P가 만들고 1차는 그것을 import하지 않는다
 
 3단계를 건너뛰는 이유. 앞 묶음이 backend/와 MySQL 컨테이너와 결과 파일 경로를 확정했고 9절이 그 값을 그대로 쓴다.
 
-### 8-1. 단계별 테스트 목록
+### 8-1. 단계별 테스트 목록 (2026-09-12 개정 1 반영)
 
 불변식 하나에 테스트 하나가 최소다. 이번 묶음은 불변식 일곱에 원자성과 잠금과 멱등이 더 붙는다. ID의 K는 예약(booking)의 K다. 앞 묶음의 V와 첫 묶음의 C와 겹치지 않게 골랐다.
 
@@ -304,7 +305,7 @@ PricingService는 세션 P가 만들고 1차는 그것을 import하지 않는다
 | K10 | 5 | expectedTotalAmount가 요금 합과 다르면 거부되고 Booking과 Hold가 없다 | T12 요금 절반, P06 |
 | K11 | 5 | 예약 뒤 RATE-02로 요금을 바꿔도 예약의 스냅샷과 totalAmount가 그대로다 | T13 요금 절반, I4, R5 부분 |
 | K12 | 5 | 성공하면 BookingCreated 1건과 InventoryHeld N건이 커밋 뒤 테스트 전용 구독자에 닿고, K7처럼 롤백된 요청에서는 어느 것도 닿지 않는다 | 06-2 4절, 03 이벤트, layers.md 3-3 E1과 E2 |
-| K13 | 6 | BOOK-01이 201과 Location과 Booking 21개 필드 전부를 낸다. status HELD, payment는 0과 null과 빈 배열과 null, appliedPromotion null, days N행 날짜 오름차순, version 0, serverNow 있음 | 11 명세 BOOK-01 응답과 응답 모델 Booking |
+| K13 | 6 | BOOK-01이 201과 Location과 Booking 20개 필드 전부를 낸다(개정 1). status HELD, payment는 0과 null과 빈 배열과 null, appliedPromotion null, days N행 날짜 오름차순, version 0, serverNow 있음 | 11 명세 BOOK-01 응답과 응답 모델 Booking |
 | K14 | 6 | Idempotency-Key가 없거나 7자이거나 129자이거나 허용 밖 문자를 담으면 400 IDEMPOTENCY_KEY_REQUIRED | 11 멱등 처리 절 머리, BOOK-01 에러 표 |
 | K15 | 6 | 같은 키 같은 body 재전송이 같은 id와 같은 body와 201과 Idempotency-Replayed: true를 내고 heldCount가 더 오르지 않는다 | T10, R3, 멱등 규칙 3 |
 | K16 | 6 | 같은 키 다른 body는 409 IDEMPOTENCY_KEY_REUSED. 키 순서만 바꾼 body는 같은 body로 판정돼 재전송이다 | T11, 멱등 규칙 2 |
@@ -338,13 +339,13 @@ K5로 앞 묶음 8-1 V2가 닫힌다. 앞 묶음이 I1a 검사 코드를 DailyIn
 
 T12와 T13이 절반인 이유. 둘 다 요금과 프로모션 두 갈래가 있다. 1차 어댑터는 요금만 합산하므로 요금 변경으로 인한 PRICE_CHANGED와 요금 변경 뒤 스냅샷 유지까지만 닫는다. 프로모션 갈래는 2차가 PricingService 어댑터를 붙인 뒤 닫는다. T29는 만료가 있어야 하므로 2차다.
 
-## 10. 승인과 진행 (2026-09-12 9단계 기입)
+## 10. 승인과 진행 (2026-09-12 개정 수용과 완료 판단 기입)
 
 | 항목 | 기록 |
 |---|---|
 | 작업 계약 승인 | 승인. join5201, 2026-09-11. 결정 5건은 D-1부터 D-4 가, D-5 나 |
-| 개정 | 후보 3건. 사용자 완료 판단에서 확정한다. 근거는 harness/out/task-S9-booking-R1/step9-verification.md 4절. 개정 1: 2절과 K13의 응답 모델 Booking 21개 필드는 셈 오류이고 11 명세 2557행 표대로 20개다. 코드와 K13은 20이다. 개정 2: 2절 검사 순서 표 3행의 날짜 순서와 30박과 서울 오늘 이상은 api가 아니라 StayPeriod가 앱 서비스 안에서 본다. api는 날짜 형식만 본다. 응답은 같은 400 INVALID_DATE_RANGE다. 개정 3: 행위자 없음과 body 오류가 겹치면 프레임워크의 인자 해석 때문에 400이 401보다 먼저다. 행위자와 멱등키의 순서는 계약대로다. 계약 본문 2절은 고치지 않았다 |
-| 마지막 성공 단계 | 8절 9단계 완료(2026-09-12). BOOK-01부터 BOOK-03과 HoldInventory가 서고 테스트 196건이 통과하며 검증 표와 회고 표가 나왔다. 이 Task의 모델 몫은 끝났고 남은 것은 사용자 완료 판단과 개정 후보 셋의 확정이다. 그 전 기록. 1단계 완료(2026-09-11). 계약과 결정 5건 승인 |
+| 개정 | 3건 수용. join5201, 2026-09-12. 2절 검사 순서 표와 응답 모델 문장, 2-1절 I3, 8-1절 K13에 반영했다. 코드는 바꾸지 않았다. 근거는 harness/out/task-S9-booking-R1/step9-verification.md 4절. 개정 1: 2절과 K13의 응답 모델 Booking 21개 필드는 셈 오류이고 11 명세 2557행 표대로 20개다. 코드와 K13은 20이다. 개정 2: 2절 검사 순서 표 3행의 날짜 순서와 30박과 서울 오늘 이상은 api가 아니라 StayPeriod가 앱 서비스 안에서 본다. api는 날짜 형식만 본다. 응답은 같은 400 INVALID_DATE_RANGE다. 개정 3: 행위자 없음과 body 오류가 겹치면 프레임워크의 인자 해석 때문에 400이 401보다 먼저다. 행위자와 멱등키의 순서는 계약대로다. 반영하면서 날짜 형식 해석도 멱등 실행기 안이라 4와 5 뒤임을 5-1행에 같이 적었다 |
+| 마지막 성공 단계 | 사용자 완료 판단(2026-09-12). 개정 3건 수용과 PR 127 병합 지시. 그 전 기록. 8절 9단계 완료(2026-09-12). BOOK-01부터 BOOK-03과 HoldInventory가 서고 테스트 196건이 통과하며 검증 표와 회고 표가 나왔다. 그 전 기록. 1단계 완료(2026-09-11). 계약과 결정 5건 승인 |
 | 실제 사용 시간 (1단계) | 20분 |
 | 실제 사용 시간 (2단계) | 4분 |
 | 실제 사용 시간 (3단계) | 건너뜀. 앞 묶음이 세웠다 |
@@ -352,9 +353,8 @@ T12와 T13이 절반인 이유. 둘 다 요금과 프로모션 두 갈래가 있
 | 실제 사용 시간 (5단계) | 11분 |
 | 실제 사용 시간 (6단계) | 10분. 첫 실행 11건 500(멱등 기록 열 크기)을 같은 턴에 고쳤다 |
 | 실제 사용 시간 (6-2단계) | 6분 |
-| 미해결 사항과 다음 작업 | 사용자 완료 판단과 개정 후보 셋의 확정. PR 127은 origin/main을 병합한 상태이고 union 검사를 통과했다. 2차는 D-5 나에 따라 새 계약 task-S9-booking-lifecycle.md이고 세션 P와 Y의 PR이 main에 들어온 뒤 연다. T12와 T13의 프로모션 절반과 T29는 2차다. shared 후보 둘(ApiFormat, PageResponse)은 셋째 컨텍스트가 쓰기 시작했으니 layers.md 3-2로 올릴 때가 됐고 별도 이슈 몫이다 |
+| 미해결 사항과 다음 작업 | 1차는 닫혔다. PR 127 병합은 이 개정 커밋 뒤다. 2차는 D-5 나에 따라 새 계약 task-S9-booking-lifecycle.md이고 세션 P와 Y의 PR이 main에 들어온 뒤 연다. T12와 T13의 프로모션 절반과 T29는 2차다. shared 후보 둘(ApiFormat, PageResponse)은 셋째 컨텍스트가 쓰기 시작했으니 layers.md 3-2로 올릴 때가 됐고 별도 이슈 몫이다 |
 | 최종 산출물과 버전 | backend/ 아래 프로덕션 58파일(새 53, 고침 5)과 테스트 10파일 73건. harness/out/task-S9-booking-R1/ 아래 step5, step6, step6-2와 step9-verification.md와 eval-target-files.md. 브랜치 feat/task-s9-booking, 기준 커밋 d111e66 |
 | 실제 사용 시간 | 측정된 개발 시간 합 44분. 4단계 17분, 5단계 11분, 6단계 10분, 6-2단계 6분. 1단계 20분과 2단계 4분은 승인과 브랜치라 개발 시간이 아니다. 5단계와 6단계 사이의 사용량 한도 대기는 세지 않았다. 9단계 문서는 아래 행 |
 | 실제 사용 시간 (9단계) | 8분. 검증 표와 회고 표, 평가 대상 목록, 이 절 |
-| 최종 완료 판단 | 대기 |
-| 최종 완료 판단 | 대기 |
+| 최종 완료 판단 | 완료. join5201, 2026-09-12. 개정 후보 셋 수용과 PR 127 병합 지시 |
