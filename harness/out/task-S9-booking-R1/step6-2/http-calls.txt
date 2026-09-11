@@ -1,0 +1,104 @@
+# 6-2단계 로컬 HTTP 호출 기록
+# 계약 8절 6-2단계의 완료 조건이다. gradlew bootRun으로 띄운 실제 서버에 curl로 쳤다.
+# 일시: 2026-09-11 19:10:07 UTC, 서버: http://127.0.0.1:8080, DB: o2o_catalog_test (127.0.0.1:3307)
+# 대상: BOOK-02와 BOOK-03과 오류 경로. 준비로 CAT-01, CAT-05, INV-01, RATE-01, BOOK-01을 쓴다
+# 날짜는 서울 오늘(2026-09-12)에서 센다. 본문에 한글이 있는 요청은 UTF-8 파일로 보낸다.
+# 준비: 숙소 prop_7a92f33d84bd44898038b92d8576aeb6, 객실 타입 room_5d4ec2313a574897a2a142918014ae90. BOOK-01로 guest_001의 예약 둘(booking_7865ace7a5c24910aa6c40e1084bd782, booking_bbbe6f4d78b14a89a5b7bf47cd4d9a18. 이 순서로 생성)과 guest_002의 예약 하나(booking_1069ae8b606c45f48d97b7f03e9f8616)
+
+== BOOK-02 GET /api/v1/bookings?size=2 (guest_001). 본인 것만, createdAt 내림차순이라 booking_bbbe6f4d78b14a89a5b7bf47cd4d9a18 가 먼저 ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 1722
+Date: Fri, 11 Sep 2026 19:10:09 GMT
+
+{"items":[{"id":"booking_bbbe6f4d78b14a89a5b7bf47cd4d9a18","guestId":"guest_001","propertyId":"prop_7a92f33d84bd44898038b92d8576aeb6","roomTypeId":"room_5d4ec2313a574897a2a142918014ae90","checkIn":"2026-10-03","checkOut":"2026-10-04","guestCount":1,"status":"HELD","expiresAt":"2026-09-11T19:20:08.873Z","expirationReason":null,"priceSnapshot":{"currency":"KRW","baseTotalAmount":100000,"discountTotalAmount":0,"totalAmount":100000,"appliedPromotion":null,"days":[{"date":"2026-10-03","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":0,"approvedAttemptId":null,"attempts":[],"refund":null},"cancellationReason":null,"createdAt":"2026-09-11T19:10:08.873Z","updatedAt":"2026-09-11T19:10:08.873Z","confirmedAt":null,"canceledAt":null,"expiredAt":null,"serverNow":"2026-09-11T19:10:09.298Z","version":0},{"id":"booking_7865ace7a5c24910aa6c40e1084bd782","guestId":"guest_001","propertyId":"prop_7a92f33d84bd44898038b92d8576aeb6","roomTypeId":"room_5d4ec2313a574897a2a142918014ae90","checkIn":"2026-10-02","checkOut":"2026-10-03","guestCount":1,"status":"HELD","expiresAt":"2026-09-11T19:20:08.497Z","expirationReason":null,"priceSnapshot":{"currency":"KRW","baseTotalAmount":100000,"discountTotalAmount":0,"totalAmount":100000,"appliedPromotion":null,"days":[{"date":"2026-10-02","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":0,"approvedAttemptId":null,"attempts":[],"refund":null},"cancellationReason":null,"createdAt":"2026-09-11T19:10:08.497Z","updatedAt":"2026-09-11T19:10:08.497Z","confirmedAt":null,"canceledAt":null,"expiredAt":null,"serverNow":"2026-09-11T19:10:09.298Z","version":0}],"page":0,"size":2,"totalElements":2,"totalPages":1}
+
+== BOOK-02 status=HELD 필터 (guest_002). 본인 예약 하나 ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 893
+Date: Fri, 11 Sep 2026 19:10:09 GMT
+
+{"items":[{"id":"booking_1069ae8b606c45f48d97b7f03e9f8616","guestId":"guest_002","propertyId":"prop_7a92f33d84bd44898038b92d8576aeb6","roomTypeId":"room_5d4ec2313a574897a2a142918014ae90","checkIn":"2026-10-02","checkOut":"2026-10-03","guestCount":1,"status":"HELD","expiresAt":"2026-09-11T19:20:09.186Z","expirationReason":null,"priceSnapshot":{"currency":"KRW","baseTotalAmount":100000,"discountTotalAmount":0,"totalAmount":100000,"appliedPromotion":null,"days":[{"date":"2026-10-02","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":0,"approvedAttemptId":null,"attempts":[],"refund":null},"cancellationReason":null,"createdAt":"2026-09-11T19:10:09.186Z","updatedAt":"2026-09-11T19:10:09.186Z","confirmedAt":null,"canceledAt":null,"expiredAt":null,"serverNow":"2026-09-11T19:10:09.420Z","version":0}],"page":0,"size":20,"totalElements":1,"totalPages":1}
+
+== BOOK-02 status=CONFIRMED (guest_002). 1차는 전이가 없어 빈 items ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 64
+Date: Fri, 11 Sep 2026 19:10:09 GMT
+
+{"items":[],"page":0,"size":20,"totalElements":0,"totalPages":0}
+
+== BOOK-02 status=BOGUS. 400 INVALID_REQUEST ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:10:09 GMT
+Connection: close
+
+{"code":"INVALID_REQUEST","message":"요청 값의 범위가 올바르지 않습니다.","traceId":"trace_6756808753654c03a78bd938eaec8c67","details":[]}
+
+== BOOK-02 size=101. 400 INVALID_REQUEST ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:10:09 GMT
+Connection: close
+
+{"code":"INVALID_REQUEST","message":"요청 값의 범위가 올바르지 않습니다.","traceId":"trace_be5e9fd7a1bb4ee4a64ca5967b2f1f9c","details":[]}
+
+== BOOK-02 page=9999. 200과 빈 items ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 66
+Date: Fri, 11 Sep 2026 19:10:09 GMT
+
+{"items":[],"page":9999,"size":1,"totalElements":1,"totalPages":1}
+
+== BOOK-02 행위자 없음. 401 ACTOR_REQUIRED ==
+HTTP/1.1 401 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:10:09 GMT
+
+{"code":"ACTOR_REQUIRED","message":"필요한 개발 행위자가 없거나 미등록입니다.","traceId":"trace_68101c4e5a514e7f85b84c0004f9666f","details":[]}
+
+== BOOK-02 HOST. 403 ACCESS_DENIED ==
+HTTP/1.1 403 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:10:09 GMT
+
+{"code":"ACCESS_DENIED","message":"이 작업에 필요한 역할이 아닙니다.","traceId":"trace_8b095d8cdd8e4988a14a4ac501309022","details":[]}
+
+== BOOK-03 GET /api/v1/bookings/booking_7865ace7a5c24910aa6c40e1084bd782 (소유자 guest_001). 200과 serverNow ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 829
+Date: Fri, 11 Sep 2026 19:10:09 GMT
+
+{"id":"booking_7865ace7a5c24910aa6c40e1084bd782","guestId":"guest_001","propertyId":"prop_7a92f33d84bd44898038b92d8576aeb6","roomTypeId":"room_5d4ec2313a574897a2a142918014ae90","checkIn":"2026-10-02","checkOut":"2026-10-03","guestCount":1,"status":"HELD","expiresAt":"2026-09-11T19:20:08.497Z","expirationReason":null,"priceSnapshot":{"currency":"KRW","baseTotalAmount":100000,"discountTotalAmount":0,"totalAmount":100000,"appliedPromotion":null,"days":[{"date":"2026-10-02","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":0,"approvedAttemptId":null,"attempts":[],"refund":null},"cancellationReason":null,"createdAt":"2026-09-11T19:10:08.497Z","updatedAt":"2026-09-11T19:10:08.497Z","confirmedAt":null,"canceledAt":null,"expiredAt":null,"serverNow":"2026-09-11T19:10:09.930Z","version":0}
+
+== T02 BOOK-03 남의 예약 (guest_002가 booking_7865ace7a5c24910aa6c40e1084bd782). 404 RESOURCE_NOT_FOUND ==
+HTTP/1.1 404 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:10:10 GMT
+
+{"code":"RESOURCE_NOT_FOUND","message":"자원을 찾을 수 없습니다.","traceId":"trace_de45f6b04ee14813917050a0994a0a9d","details":[]}
+
+== BOOK-03 없는 id. 404 RESOURCE_NOT_FOUND. 남의 예약과 같은 응답 ==
+HTTP/1.1 404 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:10:10 GMT
+
+{"code":"RESOURCE_NOT_FOUND","message":"자원을 찾을 수 없습니다.","traceId":"trace_e4f29bfd418a4a089c107e6c33913d22","details":[]}
+
+== BOOK-03 행위자 없음. 401 ACTOR_REQUIRED ==
+HTTP/1.1 401 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:10:10 GMT
+
+{"code":"ACTOR_REQUIRED","message":"필요한 개발 행위자가 없거나 미등록입니다.","traceId":"trace_782a13f618014e7db9945ad8ff56a341","details":[]}
