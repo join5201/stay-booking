@@ -11,6 +11,7 @@
 //   node harness/tools/check.mjs g1 <후보파일> --type doc|api|code [--end "<문장>"] [--require "a,b"] [--artifact <경로>]
 //   node harness/tools/check.mjs g2 <결정표파일> [--mode pre|final]
 //   node harness/tools/check.mjs answer <답변파일> [--grade A|B|C]
+//   node harness/tools/check.mjs numbers <디렉터리> [--ref <ref>] [--fetch] [--local-only]
 //   node --test harness/tools/tests/check.test.mjs
 //
 // 실행 예시
@@ -19,20 +20,23 @@
 //   node harness/tools/check.mjs g2 harness/decisions/task-S8-R1.md --mode pre
 //   node harness/tools/check.mjs answer /tmp/answer.md
 //   node harness/tools/check.mjs sweep harness/docs --type doc
+//   node harness/tools/check.mjs numbers harness/docs
+//   node harness/tools/check.mjs numbers harness/docs --fetch
 //   node harness/tools/check.mjs state harness/state/progress.md [--task task-S9-catalog]
 //   node harness/tools/check.mjs settings .claude/settings.json
 //
 // 통과 출력 예시
 //   PASS g1 harness/out/task-S8-R1/candidate.md
-//     검사 8건 통과
-//       doc.date-created doc.date-updated doc.no-emdash doc.no-middot doc.no-bold
-//       doc.end-sentence link.exists link.stale
+//     검사 9건 통과
+//       doc.date-created doc.date-updated doc.no-emdash doc.no-middot doc.no-bold doc.table-cells
+//       link.exists link.stale doc.end-sentence
 //   이름을 다 적는 이유는 그 명령이 무엇을 보는지 실행 한 번으로 알기 위해서다 (10-14 2-3절 A2).
 //
 // 범위 밖 출력 예시
 //   PASS g1 harness/docs/10-9-o2o-harness-answer-format-plan.md
-//     검사 7건 통과
-//       doc.date-created doc.date-updated doc.no-emdash doc.no-middot doc.no-bold link.exists link.stale
+//     검사 8건 통과
+//       doc.date-created doc.date-updated doc.no-emdash doc.no-middot doc.no-bold doc.table-cells
+//       link.exists link.stale
 //     범위 밖 1건
 //       doc.end-sentence  하네스 문서는 Step 산출물이 아니라 고정 종료 문장이 없다 (10-14 3절)
 //   범위 밖은 통과로 세지 않는다. 검사를 안 돌린 것과 돌려서 통과한 것을 가른다 (10-14 2-3절 A4).
@@ -41,7 +45,7 @@
 //   FAIL g1 harness/docs/README.md
 //     [doc.date-created] 1  최초 작성 줄이 없다 (F5)
 //     [doc.date-updated] 1  최종 갱신 줄이 없다 (F5)
-//     검사 7건 중 2건 실패
+//     검사 8건 중 2건 실패
 //   FAIL sweep harness/docs --type doc
 //     문서 13개 중 12개 통과
 //     실패 1개
@@ -101,9 +105,43 @@
 //     등급 A (자동)
 //   등급 줄이 뒤에 오는 것은 그것이 판정 결과지 실패가 아니기 때문이다
 //
+// 표 칸 수 실패 출력 예시 (종료 코드 1. 이슈 93)
+//   FAIL g1 harness/docs/10-99-example.md
+//     [doc.table-cells]  50  머리글 17행은 6칸인데 이 행은 4칸이다 (F4)
+//     [doc.table-cells]  62  머리글 17행은 6칸인데 이 행은 7칸이다 (F4)
+//     검사 8건 중 2건 실패
+//   칸이 모자란 것과 넘치는 것을 한 검사로 잡는다. 넘치는 쪽은 대개 이스케이프하지 않은
+//   파이프 기호이고, 마크다운이 넘치는 칸을 버려서 그 칸의 글이 화면에서 사라진다.
+//   파일 이름은 가상이다. 실재하는 파일을 적으면 그 파일을 고치는 순간 예시가 낡는다.
+//
+// numbers 통과 출력 예시
+//   PASS numbers harness/docs
+//     검사 19건 통과
+//       numbers.ref numbers.duplicate numbers.attachment
+//     번호 15개, 파일 18개
+//     대조 origin/main 0989199 2026-09-10 15:22. 로컬만 0개, origin/main만 1개
+//     이 ref는 마지막 fetch 시점이다. 지금 받아서 보려면 --fetch를 준다
+//   로컬만과 origin/main만의 수가 대조가 실제로 돌았는지를 말해 준다. 개발 중에 이
+//   두 수가 0과 17로 나와서 ls-tree 경로가 cwd 기준이라는 것을 잡았다
+//
+// numbers 실패 출력 예시 (종료 코드 1)
+//   FAIL numbers harness/docs
+//     [numbers.duplicate]  0  번호 10-15. 문서 2개가 같은 번호를 쓴다: 10-15-fix-plan.md(로컬만), 10-15-ondemand.md(origin/main만). 나중 것이 다음 번호로 내려간다 (16bb437)
+//     [numbers.attachment] 0  번호 10-18. 붙을 본문 md가 없는 첨부다: 10-18-b-fig1.svg. 본문 이름 뒤에 -를 붙여 짓는다
+//     검사 17건 중 2건 실패
+//     번호 15개, 파일 18개
+//   도형 파일은 겹침이 아니다. 10-17은 본문 하나에 fig 셋이 정상으로 붙어 파일 넷이다
+//   괄호는 대조가 돌았을 때만 붙는다. 누가 나중이고 누가 양보하는지를 그것으로 읽는다
+//
+// numbers 대조 실패 출력 예시 (종료 코드 1)
+//   FAIL numbers harness/docs
+//     [numbers.ref] 0  origin/main 값을 읽을 수 없다. fatal: Needed a single revision. git fetch origin을 부르거나 --fetch를 준다. 로컬만 볼 거면 --local-only를 준다
+//   대조 못 한 것을 통과로 두지 않는다. git 저장소가 아니면 범위 밖으로 세고 실패시키지 않는다
+//
 // 쓰기 정책
 //   g1과 g2는 아무 파일도 쓰지 않는다. 읽기만 한다.
 //   fill만 쓴다. 대상은 인자로 받은 그 파일 하나뿐이다. 보호 경로는 거부한다.
+//   numbers는 --fetch를 줬을 때만 git fetch origin을 부른다. 저장소 파일은 안 건드린다.
 //   보호 경로 비교는 대소문자를 무시한다. Windows에서 HARNESS/docs로 우회되던 구멍이다(HRV-05).
 //
 // 2026-09-08 하네스 구현 리뷰(HRV-01부터 12) 반영
@@ -119,6 +157,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 // 저장소 루트를 스크립트 위치에서 유도한다. 절대경로를 박아 두면 디렉터리를 옮길 때마다 깨진다
@@ -182,6 +221,11 @@ function isFile(p) {
   try { return fs.statSync(p).isFile(); } catch { return false; }
 }
 
+// 디렉터리 명령이 파일을 받으면 readdirSync가 ENOTDIR로 죽는다. 사용법 오류로 가른다
+function isDir(p) {
+  try { return fs.statSync(p).isDirectory(); } catch { return false; }
+}
+
 // 대소문자를 무시한다. Windows 파일시스템이 구분하지 않기 때문이다 (HRV-05)
 function isProtected(p) {
   const r = path.relative(ROOT, path.resolve(p)).toLowerCase();
@@ -202,6 +246,14 @@ function stripFences(text) {
   return out;
 }
 
+// 표 한 줄을 칸으로 가른다. 이스케이프한 파이프는 칸을 가르지 않는다 (이슈 93).
+// 마크다운이 그렇게 읽으므로 검사기도 그렇게 읽어야 --type doc\|api\|code 같은 칸이 셋으로 쪼개지지 않는다.
+function splitCells(line) {
+  return line.trim().replace(/^\|/, '').replace(/(?<!\\)\|$/, '')
+    .split(/(?<!\\)\|/)
+    .map((c) => c.trim());
+}
+
 // 마크다운 표를 셀 배열로. 구분선은 버린다
 function parseTables(text) {
   const tables = [];
@@ -210,11 +262,10 @@ function parseTables(text) {
     if (/^\s*\|/.test(line)) {
       if (!cur) { cur = { rows: [] }; tables.push(cur); }
       if (/^\s*\|[\s|:-]+\|\s*$/.test(line)) return;
-      cur.rows.push({
-        line: i + 1,
-        cells: line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim()),
-      });
-    } else if (line.trim() !== '') {
+      cur.rows.push({ line: i + 1, cells: splitCells(line) });
+    } else {
+      // 빈 줄도 표를 끊는다. 마크다운이 그렇게 읽는다. 안 끊으면 빈 줄로 나뉜 표 둘이
+      // 한 표가 되고, 뒤 표의 머리글이 앞 표의 행으로 읽혀 칸 수가 틀린 것처럼 나온다
       cur = null;
     }
   });
@@ -252,6 +303,8 @@ function findTableByHeaders(text, needed) {
 // 거는지 적어서 범위가 데이터다. 우리는 --type을 사람이 고르므로 경로로 성격을 못 박는다.
 // 이것이 없으면 harness/docs/ 문서에 g1 doc을 돌렸을 때 종료 문장 검사가 전원 실패한다.
 const SCOPE = [
+  // 앞자리가 아니라 파일 하나를 짚는다. 이 파일만 머리글이 자랐다 (이슈 93)
+  ['harness/state/progress.md', 'progress-log'],
   ['document/', 'step'],
   ['harness/out/', 'step'],
   ['harness/docs/', 'harness-doc'],
@@ -260,6 +313,9 @@ const SCOPE = [
 
 // 성격별로 적용하지 않는 검사와 그 이유. 범위 밖은 통과가 아니라 따로 센다.
 const OUT_OF_SCOPE = {
+  'progress-log': {
+    'doc.table-cells': '머리글이 12칸으로 자랐고 그 전 행은 아홉 칸이다. 추가 전용이라 기존 행을 못 고친다 (CLAUDE.md 4-1)',
+  },
   'harness-doc': {
     'doc.end-sentence': '하네스 문서는 Step 산출물이 아니라 고정 종료 문장이 없다 (10-14 3절)',
   },
@@ -304,6 +360,12 @@ class Report {
     if (!this.names.includes(name)) this.names.push(name);
     if (!ok) this.fails.push({ name, line, msg });
   }
+  // 검사를 안 돌린 것을 통과로 세지 않는다. 경로로 정하는 범위 밖과 같은 자리에 적되
+  // 이유가 실행 환경이라 SCOPE 표가 아니라 호출부가 정한다 (10-14 2-3절 A4)
+  skip(name, why) {
+    if (!this.skips.some((s) => s.name === name)) this.skips.push({ name, why });
+  }
+
   print(quiet = false) {
     const f = rel(this.file);
     if (this.fails.length === 0) {
@@ -515,6 +577,24 @@ function checkStyle(r, text, prefix = 'doc') {
   if (seen.bold) r.check(`${prefix}.no-bold`, 0, true, '');
 }
 
+// 표 행이 머리글과 같은 칸 수인가 (이슈 93). 원본이 표여도 렌더링이 표가 아니면 D3(F4)을 못 지킨다.
+// 칸이 넘치는 것과 모자란 것을 한 검사로 잡는다. 사람이 눈으로 세면 반드시 샌다.
+// 펜스 안은 데이터라 세지 않는다. stripFences가 줄 수를 유지하므로 줄 번호는 원본 그대로다
+function checkTables(r, text, prefix = 'doc') {
+  let ok = true;
+  for (const t of parseTables(stripFences(text).join('\n'))) {
+    const head = t.rows[0];
+    if (!head) continue;
+    for (const row of t.rows.slice(1)) {
+      if (row.cells.length === head.cells.length) continue;
+      ok = false;
+      r.check(`${prefix}.table-cells`, row.line, false,
+        `머리글 ${head.line}행은 ${head.cells.length}칸인데 이 행은 ${row.cells.length}칸이다 (F4)`);
+    }
+  }
+  if (ok) r.check(`${prefix}.table-cells`, 0, true, '');
+}
+
 // 결과 파일에서 실행 수와 실패 수와 오류 수와 건너뛴 수 넷을 읽는다 (D-1 다).
 // JUnit XML만 읽는다. 다른 형식을 추측으로 읽으면 그 형식이 바뀌었을 때 조용히 통과시킨다.
 // testsuite가 여럿이면 합산한다. Gradle이 테스트 클래스마다 파일 하나를 낸다.
@@ -546,6 +626,7 @@ export function g1(file, { type, end, require: required = [], artifacts = [], qu
       r.check('doc.required-item', 1, text.includes(item), `승인 양식의 필수 항목이 없다: ${item}`);
     }
     checkStyle(r, text);
+    checkTables(r, text);
     checkLinks(r, text, file);
     const nonEmpty = text.split('\n').filter((l) => l.trim() !== '');
     const last = (nonEmpty[nonEmpty.length - 1] || '').trim();
@@ -558,6 +639,7 @@ export function g1(file, { type, end, require: required = [], artifacts = [], qu
       r.check('api.section', 1, new RegExp('^#{1,6}\\s.*' + sec, 'm').test(text), `${sec} 절이 없다`);
     }
     checkStyle(r, text);
+    checkTables(r, text, 'api');
     checkLinks(r, text, file);
   } else if (type === 'code') {
     // 2026-09-09 task-S9-catalog 결정 D-1 다로 존재 확인에서 숫자 판정으로 올렸다.
@@ -625,6 +707,150 @@ export function sweep(dir, { type = 'doc', end, require: required = [] } = {}) {
     for (const f of fails) console.log(`    ${f}`);
   }
   return fails.length ? 1 : 0;
+}
+
+// ---------- numbers ----------
+// 디렉터리 아래 문서 번호가 겹치는지 본다 (이슈 75).
+// 왜 필요한가: 번호는 우리 파일명 규약이지 git이 아는 규칙이 아니다. 경로가 다르면
+// git은 서로 다른 파일 둘로 보고 충돌 없이 둘 다 병합한다. 2026-09-10에 한 브랜치가
+// 같은 문서에 10-14, 10-15, 10-17을 차례로 붙였고 앞의 둘은 origin/main의 다른 세션이
+// 먼저 가져가서 겹쳤다. 커밋 16bb437도 같은 종류(10-11 두 파일)를 고친 것이다.
+//
+// 로컬 트리만 보면 이 결함의 원래 모양이 그대로 남는다. 남이 먼저 가져간 번호는 내
+// 폴더에 없으므로 초록이 뜬다. 그래서 ref의 트리를 git ls-tree로 읽어 로컬과 합집합을
+// 만든 뒤 번호를 센다. 대조는 기본값이고 끄려면 --local-only를 명시해야 한다.
+
+const DEFAULT_REF = 'origin/main';
+
+// 문서 번호 접두. 10-4-o2o-harness-workflow-decisions.md의 10-4다.
+// 계열과 일련을 따로 읽는다. 문자열로 비교하면 10-14가 10-4보다 앞으로 온다
+const DOC_NUM_RE = /^(\d+)-(\d+)-/;
+
+// git 한 번 부르기. 실패를 예외로 던지지 않는다. 검사기가 죽으면 왜 죽었는지가 안 보이고
+// 죽은 것과 통과한 것을 종료 코드로 가릴 수 없다
+function git(args, cwd) {
+  try {
+    const out = execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+    return { ok: true, out: out.trim() };
+  } catch (e) {
+    return { ok: false, err: String(e.stderr || e.message || '').trim().split('\n')[0] };
+  }
+}
+
+// ref의 트리에서 이 디렉터리 바로 아래 파일 이름을 읽는다. 하위 디렉터리는 세지 않는다.
+// 로컬 쪽도 readdirSync로 한 층만 보므로 양쪽 기준을 맞춰야 합집합이 성립한다
+function refFiles(dir, ref) {
+  const top = git(['rev-parse', '--show-toplevel'], dir);
+  if (!top.ok) return { repo: false };
+  const prefix = path.relative(path.resolve(top.out), path.resolve(dir)).split(path.sep).join('/');
+  const commit = git(['rev-parse', '--short', ref], dir);
+  if (!commit.ok) return { repo: true, ok: false, why: `${ref} 값을 읽을 수 없다. ${commit.err}` };
+  // --full-tree가 필요하다. 없으면 경로가 저장소 루트가 아니라 cwd 기준이라
+  // harness/docs 안에서 부를 때 harness/docs/harness/docs/를 찾고 조용히 빈 값을 준다
+  const ls = git(prefix ? ['ls-tree', '--full-tree', ref, prefix + '/'] : ['ls-tree', '--full-tree', ref], dir);
+  if (!ls.ok) return { repo: true, ok: false, why: `${ref} 트리를 읽을 수 없다. ${ls.err}` };
+  const names = [];
+  for (const line of ls.out.split('\n')) {
+    // <mode> <type> <object>\t<경로>. 트리는 세지 않는다
+    const m = line.match(/^\S+ (\S+) \S+\t(.+)$/);
+    if (m && m[1] === 'blob') names.push(m[2].split('/').pop());
+  }
+  const when = git(['log', '-1', '--format=%cd', '--date=format:%Y-%m-%d %H:%M', ref], dir);
+  return { repo: true, ok: true, commit: commit.out, when: when.ok ? when.out : '', names };
+}
+
+// 번호를 주장하는 것은 본문 md 하나이고 다른 확장자는 그 본문에 붙는 첨부다.
+// 파일 수로 세면 안 된다. 10-17은 본문 하나에 fig1부터 fig3까지 svg 셋이 정상으로
+// 붙어 있어서 파일 넷이다. 그 배치를 겹침으로 잡으면 가드가 정상 값을 막는다
+export function numbers(dir, { ref = DEFAULT_REF, localOnly = false, fetch = false } = {}) {
+  if (!isDir(dir)) {
+    console.error(`사용법 오류: numbers는 디렉터리를 받는다: ${rel(dir)}`);
+    return 2;
+  }
+
+  // fetch는 옵션이다. 검사기가 매번 네트워크를 부르면 오프라인에서 못 돌고, ref를
+  // 갱신하는 것은 .git에 쓰는 일이라 읽기 전용이라는 약속이 깨진다
+  let fetchErr = null;
+  if (!localOnly && fetch) {
+    const f = git(['fetch', 'origin'], dir);
+    if (!f.ok) fetchErr = f.err;
+  }
+  const remote = localOnly ? null : refFiles(dir, ref);
+
+  // 로컬 트리와 ref 트리의 합집합. 같은 이름이 양쪽에 있으면 같은 파일이지 겹침이 아니다
+  const sides = new Map();
+  for (const name of fs.readdirSync(dir).sort()) {
+    if (isFile(path.join(dir, name))) sides.set(name, { local: true, ref: false });
+  }
+  if (remote && remote.ok) {
+    for (const name of remote.names) {
+      if (sides.has(name)) sides.get(name).ref = true;
+      else sides.set(name, { local: false, ref: true });
+    }
+  }
+
+  const groups = new Map();
+  for (const name of [...sides.keys()].sort()) {
+    const m = name.match(DOC_NUM_RE);
+    if (!m) continue; // README.md처럼 번호가 없는 파일은 번호를 주장하지 않는다
+    const key = `${m[1]}-${m[2]}`;
+    const ext = path.extname(name);
+    if (!groups.has(key)) groups.set(key, { series: Number(m[1]), index: Number(m[2]), files: [] });
+    groups.get(key).files.push({ name, ext, base: name.slice(0, name.length - ext.length), side: sides.get(name) });
+  }
+  const keys = [...groups.keys()].sort((a, b) =>
+    groups.get(a).series - groups.get(b).series || groups.get(a).index - groups.get(b).index);
+
+  // 어느 쪽에만 있는지가 누가 양보하는지를 가른다. 양쪽에 있으면 적을 것이 없고,
+  // 대조를 안 했으면 전부 로컬이라 적으면 대조한 것처럼 읽힌다
+  const compared = !localOnly && remote.ok;
+  const tag = (f) => (!compared || (f.side.local && f.side.ref) ? ''
+    : f.side.local ? '(로컬만)' : `(${ref}만)`);
+
+  const r = new Report('numbers', dir);
+  if (!localOnly) {
+    // 대조 못 한 것을 통과로 세지 않는다. 저장소가 아니면 대조할 ref 자체가 없으니
+    // 범위 밖이고, 저장소인데 ref를 못 읽으면 실패다 (10-14 2-3절 A4)
+    if (!remote.repo) r.skip('numbers.ref', 'git 저장소가 아니라 대조할 ref가 없다');
+    else r.check('numbers.ref', 0, remote.ok,
+      `${remote.why}. git fetch origin을 부르거나 --fetch를 준다. 로컬만 볼 거면 --local-only를 준다`);
+  }
+
+  let fileCount = 0;
+  let onlyLocal = 0;
+  let onlyRef = 0;
+  for (const key of keys) {
+    const g = groups.get(key);
+    fileCount += g.files.length;
+    for (const f of g.files) {
+      if (f.side.local && !f.side.ref) onlyLocal++;
+      else if (!f.side.local && f.side.ref) onlyRef++;
+    }
+    const docs = g.files.filter((f) => f.ext === '.md');
+    const rest = g.files.filter((f) => f.ext !== '.md');
+    r.check('numbers.duplicate', 0, docs.length <= 1,
+      `번호 ${key}. 문서 ${docs.length}개가 같은 번호를 쓴다: ${docs.map((f) => f.name + tag(f)).join(', ')}. 나중 것이 다음 번호로 내려간다 (16bb437)`);
+    // 첨부는 본문 이름 뒤에 -를 붙여 짓는다. 그러지 않으면 본문 없이 번호만 차지해서
+    // 다음 세션이 그 번호를 비었다고 읽는다
+    for (const f of rest) {
+      r.check('numbers.attachment', 0, docs.some((d) => f.base.startsWith(d.base + '-')),
+        `번호 ${key}. 붙을 본문 md가 없는 첨부다: ${f.name}${tag(f)}. 본문 이름 뒤에 -를 붙여 짓는다`);
+    }
+  }
+
+  const code = r.print();
+  console.log(`  번호 ${keys.length}개, 파일 ${fileCount}개`);
+  if (fetchErr) console.log(`  경고. git fetch origin이 실패했다. ${fetchErr}`);
+  if (localOnly) {
+    console.log('  로컬 트리만 봤다. origin/main이 먼저 가져간 번호는 여기 안 나온다 (--local-only)');
+  } else if (!remote.repo) {
+    console.log('  git 저장소가 아니라 로컬 트리만 봤다');
+  } else if (remote.ok) {
+    console.log(`  대조 ${ref} ${remote.commit}${remote.when ? ` ${remote.when}` : ''}. 로컬만 ${onlyLocal}개, ${ref}만 ${onlyRef}개`);
+    // ref는 마지막 fetch 시점이다. 이 줄이 없으면 낡은 ref와 대조하고도 최신인 줄 안다
+    if (!fetch) console.log('  이 ref는 마지막 fetch 시점이다. 지금 받아서 보려면 --fetch를 준다');
+  }
+  return code;
 }
 
 // ---------- 재개 브리핑 (10-14 9-4절 E1) ----------
@@ -768,8 +994,7 @@ export function settings(file) {
   return r.print();
 }
 
-export function parseReport
-(file) {
+export function parseReport(file) {
   const out = { file, ok: true, errors: [], rows: [], summary: null, detailCount: 0 };
   const text = fs.readFileSync(file, 'utf8');
 
@@ -1091,7 +1316,7 @@ export function answer(file, { grade } = {}) {
 export function main(argv) {
   const [cmd, file, ...rest] = argv;
   if (!cmd || !file) {
-    console.error('사용법: node harness/tools/check.mjs <fill|g1|g2|answer|sweep|state|settings> <파일 또는 디렉터리> [옵션]');
+    console.error('사용법: node harness/tools/check.mjs <fill|g1|g2|answer|sweep|numbers|state|settings> <파일 또는 디렉터리> [옵션]');
     return 2;
   }
   if (!fs.existsSync(file)) { console.error(`파일이 없다: ${file}`); return 2; }
@@ -1104,6 +1329,9 @@ export function main(argv) {
     else if (rest[i] === '--mode') opt.mode = rest[++i];
     else if (rest[i] === '--dry') opt.dry = true;
     else if (rest[i] === '--grade') opt.grade = rest[++i];
+    else if (rest[i] === '--ref') opt.ref = rest[++i];
+    else if (rest[i] === '--local-only') opt.localOnly = true;
+    else if (rest[i] === '--fetch') opt.fetch = true;
     else if (rest[i] === '--task') opt.task = rest[++i];
   }
   if (cmd === 'fill') return fill(file, opt);
@@ -1111,6 +1339,7 @@ export function main(argv) {
   if (cmd === 'g2') return g2(file, opt);
   if (cmd === 'answer') return answer(file, opt);
   if (cmd === 'sweep') return sweep(file, opt);
+  if (cmd === 'numbers') return numbers(file, opt);
   if (cmd === 'state') return state(file, opt);
   if (cmd === 'settings') return settings(file);
   console.error(`알 수 없는 명령: ${cmd}`);
