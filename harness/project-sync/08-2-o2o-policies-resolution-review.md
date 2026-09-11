@@ -364,9 +364,9 @@ Observation: 아래 표. 추천은 이 세션의 판단이고 [추측] 표시가
 
 | 안 | 내용 | 충돌 | 남는 구멍 |
 |---|---|---|---|
-| 가. Payment에 정산 표식(settledAt, settledBy). 예약 컨텍스트가 SettlePayment 커맨드로 찍는다. 확정 트랜잭션(승인 소비)과 결제 실패 만료 트랜잭션(3회 실패 소비)에서 같은 트랜잭션으로 | 이탈 선언에 결제 호출이 추가된다. 커맨드 22 → 23 | T2 조회 = 미정산 종착 결제. 집합이 진행 중인 건으로 한정된다 |
-| 나. T2를 Booking 기준으로 순찰. HELD 전수 + 시간창 안의 EXPIRED/CANCELED를 건별로 Payment 조회 | 없음 | 시간창 밖으로 밀린 유실은 못 잡는다. EXPIRED/CANCELED 집합은 무한 |
-| 다. 예약 테이블과 결제 테이블 SQL 조인 | 컨텍스트 경계를 쿼리가 넘는다 | 단일 모듈이라 가능하지만 MSA 전환 시 통째로 깨진다 |
+| 가. | Payment에 정산 표식(settledAt, settledBy). 예약 컨텍스트가 SettlePayment 커맨드로 찍는다. 확정 트랜잭션(승인 소비)과 결제 실패 만료 트랜잭션(3회 실패 소비)에서 같은 트랜잭션으로 | 이탈 선언에 결제 호출이 추가된다. 커맨드 22 → 23 | T2 조회 = 미정산 종착 결제. 집합이 진행 중인 건으로 한정된다 |
+| 나. | T2를 Booking 기준으로 순찰. HELD 전수 + 시간창 안의 EXPIRED/CANCELED를 건별로 Payment 조회 | 없음 | 시간창 밖으로 밀린 유실은 못 잡는다. EXPIRED/CANCELED 집합은 무한 |
+| 다. | 예약 테이블과 결제 테이블 SQL 조인 | 컨텍스트 경계를 쿼리가 넘는다 | 단일 모듈이라 가능하지만 MSA 전환 시 통째로 깨진다 |
 
 추천: 가. T2 조회 조건은 아래 D8에 있다. settledBy는 APPROVAL_HANDLER, FAILURE_HANDLER, T1, T2 넷 중 하나로, F 확인필요 5(관측 수단)를 겸한다.
 
@@ -374,9 +374,9 @@ Observation: 아래 표. 추천은 이 세션의 판단이고 [추측] 표시가
 
 | 안 | 내용 | 충돌 | 남는 구멍 |
 |---|---|---|---|
-| 가. recordApproval이 attemptId로 특정한 시도가 종착(FAILED)이면 거부하지 않고 OrphanApproval(attemptId, pgTransactionId, 금액, 수신 시각, 상태 REFUND_PENDING)을 Payment 안에 기록하고, 같은 트랜잭션에서 Mock PG 환불을 호출해 REFUNDED로 닫는다. 환불 실패면 REFUND_PENDING으로 남고 T2가 순찰한다 | I7(승인 유일)의 셈에서 고아를 제외한다고 명시해야 한다. Payment 내부 요소 +1 | Mock 환불이 항상 성공한다는 전제가 없으면 T2 의존 |
-| 나. 거부 + 미매칭 콜백 적재 테이블(UnmatchedPgCallback) + T2 원천 추가 | 애그리거트 밖 저장소가 하나 더 생긴다 | 적재 테이블의 처리 상태를 또 관리해야 한다 |
-| 다. recordFailure 전에 PG 조회 또는 망취소 | Mock 전제에 과하다 | 실 PG 전환 시 검토 |
+| 가. | recordApproval이 attemptId로 특정한 시도가 종착(FAILED)이면 거부하지 않고 OrphanApproval(attemptId, pgTransactionId, 금액, 수신 시각, 상태 REFUND_PENDING)을 Payment 안에 기록하고, 같은 트랜잭션에서 Mock PG 환불을 호출해 REFUNDED로 닫는다. 환불 실패면 REFUND_PENDING으로 남고 T2가 순찰한다 | I7(승인 유일)의 셈에서 고아를 제외한다고 명시해야 한다. Payment 내부 요소 +1 | Mock 환불이 항상 성공한다는 전제가 없으면 T2 의존 |
+| 나. | 거부 + 미매칭 콜백 적재 테이블(UnmatchedPgCallback) + T2 원천 추가 | 애그리거트 밖 저장소가 하나 더 생긴다 | 적재 테이블의 처리 상태를 또 관리해야 한다 |
+| 다. | recordFailure 전에 PG 조회 또는 망취소 | Mock 전제에 과하다 | 실 PG 전환 시 검토 |
 
 추천: 가. E 치명 3(PG 이중 승인)도 가로 닫힌다. 시도 1의 지연 승인은 고아로 환불되고 시도 2의 승인이 정식으로 남아 이용자 청구는 1건이 된다. 이벤트는 PaymentRefunded를 재사용하되 페이로드에 kind(NORMAL, ORPHAN)를 싣는다(22개 유지). AttemptAlreadyClosed 예외는 폐기.
 
@@ -384,8 +384,8 @@ Observation: 아래 표. 추천은 이 세션의 판단이고 [추측] 표시가
 
 | 안 | 내용 | 평가 |
 |---|---|---|
-| 가. 확정 우선. T1이 후보 Booking을 잠근 뒤 Payment를 조회해 미정산 APPROVED가 있으면 만료 대신 확정 경로(승인 처리 정책과 같은 코드)로 간다. confirm()에 expiresAt 검사 없음. A4의 "TTL이 먼저 이겼다"를 "expire 커밋이 승인 기록 커밋보다 먼저"로 정의 | 결과가 폴링 위상에 좌우되지 않는다. 승인이 기록됐으면 언제나 확정. T1이 후보마다 Payment를 한 번 읽는 비용(후보는 기한 지난 HELD뿐이라 유한) |
-| 나. TTL 우선. confirm() Pre에 expiresAt > now 추가, 지나면 환불 | 결제한 이용자가 방을 잃는 빈도가 T1 폴링 위상에 좌우된다 |
+| 가. | 확정 우선. T1이 후보 Booking을 잠근 뒤 Payment를 조회해 미정산 APPROVED가 있으면 만료 대신 확정 경로(승인 처리 정책과 같은 코드)로 간다. confirm()에 expiresAt 검사 없음. A4의 "TTL이 먼저 이겼다"를 "expire 커밋이 승인 기록 커밋보다 먼저"로 정의 | 결과가 폴링 위상에 좌우되지 않는다. 승인이 기록됐으면 언제나 확정. T1이 후보마다 Payment를 한 번 읽는 비용(후보는 기한 지난 HELD뿐이라 유한) |
+| 나. | TTL 우선. confirm() Pre에 expiresAt > now 추가, 지나면 환불 | 결제한 이용자가 방을 잃는 빈도가 T1 폴링 위상에 좌우된다 |
 
 추천: 가. 이 결정으로 R-9(잔여 TTL 임계 거부)는 정확성에 불필요해진다. F 보통 13(거부 후 이용자 경로 없음)까지 같이 없어지므로 R-9 삭제. RequestPayment 중계의 잠금은 유지한다(E 막힌 공격 "동시 RequestPayment 2건"의 근거).
 
@@ -393,8 +393,8 @@ Observation: 아래 표. 추천은 이 세션의 판단이고 [추측] 표시가
 
 | 안 | 내용 | 평가 |
 |---|---|---|
-| 가. 동기, 취소 트랜잭션 안. 이탈 선언 넷째 항목(결제로 가는 호출)에 포함. RefundPayment(bookingId)로 시그니처를 바꿔 paymentId 조달 문제(F 보통 1)를 U3로 해소 | Mock 전제에서 기계가 제일 적다. 실 PG 전환 시 비동기 + Outbox로 되돌린다고 전환 조건을 적는다 |
-| 나. 비동기 유지 + T2 보정 | 취소 후 정산 표식을 되돌리는 규칙(unsettle)이 또 필요하다. 08-1이 나를 택한 근거(실 PG 락 보유 시간)를 따르면 R-2의 EXPIRED 분기 동기 환불도 안 된다는 것이 E 보통 5의 지적이라 일관성이 없다 |
+| 가. | 동기, 취소 트랜잭션 안. 이탈 선언 넷째 항목(결제로 가는 호출)에 포함. RefundPayment(bookingId)로 시그니처를 바꿔 paymentId 조달 문제(F 보통 1)를 U3로 해소 | Mock 전제에서 기계가 제일 적다. 실 PG 전환 시 비동기 + Outbox로 되돌린다고 전환 조건을 적는다 |
+| 나. | 비동기 유지 + T2 보정 | 취소 후 정산 표식을 되돌리는 규칙(unsettle)이 또 필요하다. 08-1이 나를 택한 근거(실 PG 락 보유 시간)를 따르면 R-2의 EXPIRED 분기 동기 환불도 안 된다는 것이 E 보통 5의 지적이라 일관성이 없다 |
 
 추천: 가. 승인 처리 정책의 EXPIRED 분기 환불도 같은 항목 아래 동기다. 이탈 선언은 "재고로 가는 셋 + 결제로 가는 셋(승인 처리의 환불, 취소 환불, 정산 표식)"이 된다.
 
