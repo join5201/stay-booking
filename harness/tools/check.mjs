@@ -42,15 +42,17 @@
 //   범위 밖은 통과로 세지 않는다. 검사를 안 돌린 것과 돌려서 통과한 것을 가른다 (10-14 2-3절 A4).
 //
 // 쓸기 출력 예시 (종료 코드 1)
-//   FAIL g1 harness/docs/README.md
+//   FAIL g1 harness/docs/10-99-example.md
 //     [doc.date-created] 1  최초 작성 줄이 없다 (F5)
 //     [doc.date-updated] 1  최종 갱신 줄이 없다 (F5)
 //     검사 8건 중 2건 실패
 //   FAIL sweep harness/docs --type doc
-//     문서 13개 중 12개 통과
+//     문서 16개 중 15개 통과
 //     실패 1개
-//       harness/docs/README.md
+//       harness/docs/10-99-example.md
 //   통과한 파일은 이름도 안 찍는다. 스물일곱 개를 돌려도 읽히는 출력이어야 한다 (10-14 8-4절 D1).
+//   실패 예시의 파일 이름은 가상이다. 실재하는 파일을 적으면 그 파일을 고치는 순간
+//   예시가 낡는다. 이 자리가 실제로 그렇게 낡았다 (이슈 74).
 //
 // 재개 브리핑 출력 예시 (종료 코드 0. 게이트가 아니라 보고다)
 //   재개 브리핑 harness/state/progress.md
@@ -319,11 +321,19 @@ const OUT_OF_SCOPE = {
   'harness-doc': {
     'doc.end-sentence': '하네스 문서는 Step 산출물이 아니라 고정 종료 문장이 없다 (10-14 3절)',
   },
+  'index': {
+    'doc.end-sentence': 'README는 디렉터리 색인이지 Step 산출물이 아니다',
+  },
 };
 
 // 저장소 밖 파일은 성격이 없다. 테스트가 임시 폴더에 쓰므로 그 경우 기존 동작을 그대로 둔다.
 export function scopeKind(file) {
   const p = rel(file);
+  // 저장소 밖은 성격이 없다. rel이 ..이거나 ../로 시작하거나 다른 드라이브면 절대경로다.
+  // 구분자까지 본다. 점 두 개로 시작하는 폴더 이름은 저장소 안이다
+  if (p === '..' || p.startsWith('../') || path.isAbsolute(p)) return null;
+  // 이름이 앞자리보다 세다. README는 어디에 있든 색인이라 위치가 성격을 바꾸지 않는다
+  if (p === 'README.md' || p.endsWith('/README.md')) return 'index';
   for (const [prefix, kind] of SCOPE) if (p.startsWith(prefix)) return kind;
   return null;
 }
