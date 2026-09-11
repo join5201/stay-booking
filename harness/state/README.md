@@ -21,7 +21,7 @@ progress.md의 행 형식과 status 값은 그 파일 머리에 있다. troubles
 
 ## 여러 세션이 같이 쓸 때 (2026-09-08 신설)
 
-세 파일에 merge=union을 걸었다. .gitattributes에 있다. 두 세션이 같은 자리에 행을 추가해도 충돌 표시 없이 둘 다 남는다.
+세 파일에 merge=union을 걸었다. .gitattributes에 있다. 두 세션이 같은 자리에 행을 추가해도 로컬 병합에서는 충돌 표시 없이 둘 다 남는다. GitHub의 서버 병합에는 안 걸린다. PR을 올리기 전에 브랜치에서 origin/main을 병합한다(CLAUDE.md 4-1의 5단계).
 
 | 규칙 | 이유 |
 |---|---|
