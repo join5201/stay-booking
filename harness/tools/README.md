@@ -18,8 +18,8 @@
 | 명령 | 검사 |
 |---|---|
 | node harness/tools/check.mjs fill <양식> [--dry] | 빈칸 잔존 0, 경로가 절대경로이고 존재, 버전 칸에 sha256 기입 |
-| node harness/tools/check.mjs g1 <후보> --type doc\|api\|code | doc은 날짜 2종, 금지 기호 3종, 내부 링크, 종료 문장. api는 요청과 응답과 오류 절. code는 빌드와 테스트 결과 파일 존재 |
-| node harness/tools/check.mjs answer <답변파일> [--grade A|B|C] | 첫 줄이 결론인지, 마지막 절이 결과인지, 결과 절 다섯 행이 다 있는지. 등급은 안 주면 기계가 정한다 (harness/prompts/answer-format.md 4절) |
+| node harness/tools/check.mjs g1 <후보> --type doc\|api\|code | doc은 날짜 2종, 금지 기호 3종, 표 칸 수, 내부 링크, 종료 문장. api는 요청과 응답과 오류 절과 표 칸 수. code는 빌드와 테스트 결과 파일 존재 |
+| node harness/tools/check.mjs answer <답변파일> [--grade A\|B\|C] | 첫 줄이 결론인지, 마지막 절이 결과인지, 결과 절 다섯 행이 다 있는지. 등급은 안 주면 기계가 정한다 (harness/prompts/answer-format.md 4절) |
 | node harness/tools/check.mjs sweep <디렉터리> --type doc | 디렉터리 아래 마크다운을 전부 g1으로 돌고 한 줄로 요약한다. 통과한 파일은 안 찍고 실패만 상세를 낸다. 하나라도 실패하면 종료 코드 1 |
 | node harness/tools/check.mjs numbers <디렉터리> [--fetch] | 파일명의 10-N 접두를 모아 한 번호를 문서 둘이 쓰는지 본다. 로컬 트리와 origin/main 트리의 합집합으로 센다. 번호를 주장하는 것은 본문 md 하나이고 다른 확장자는 그 본문 이름으로 시작하는 첨부다. 겹치면 종료 코드 1 |
 | node harness/tools/check.mjs state <진행 기록> [--task <이름>] | 안 끝난 Task의 마지막 행과 막힌 채로 남은 행을 고정 형식으로 낸다. 게이트가 아니라 보고라 실패해도 종료 코드가 0이다 |
@@ -43,11 +43,15 @@ fill만 쓴다. 대상은 인자로 받은 그 파일 하나뿐이고 document/,
 |---|---|
 | --type doc\|api\|code | g1 필수 |
 | --end "<문장>" | g1 doc의 종료 문장을 바꾼다. 기본값은 07 v3 F16의 문장이다 |
+| --require "a,b" | g1 doc이 확인할 승인 양식 필수 항목 |
 | --artifact <경로> | g1 code에서 빌드나 테스트 결과 파일을 지정한다. 여러 번 쓸 수 있다 |
+| --mode pre 또는 final | g2의 반영 전 검사와 최종 완료 검사를 가른다 |
+| --grade A\|B\|C | answer가 쓸 등급을 지정한다. 안 주면 기계가 정한다 (harness/prompts/answer-format.md 4절) |
 | --dry | fill이 쓰지 않고 결과만 보여 준다 |
 | --ref <ref> | numbers가 대조할 ref. 기본값은 origin/main |
 | --fetch | numbers가 대조 전에 git fetch origin을 부른다 |
 | --local-only | numbers가 대조를 끄고 로컬 트리만 본다. 남이 먼저 가져간 번호를 못 본다 |
+| --task <이름> | state가 그 Task의 행만 본다 |
 
 경로 칸의 허용 값 넷이다. 절대경로, 해당 없음, 생성 후 기입, 그리고 아직 안 채운 빈칸 표시다. 앞의 셋은 통과하고 빈칸 표시는 실패한다. 생성 후 기입은 계약 시점에 아직 없는 대상을 가리키는 유예이며 fill이 건수를 출력한다.
 
@@ -56,15 +60,22 @@ fill만 쓴다. 대상은 인자로 받은 그 파일 하나뿐이고 document/,
 검사 대상 파일이 자기 자신을 가리키는 행도 실패한다. 해시를 적는 순간 파일이 바뀌기 때문이다.
 
 줄바꿈은 저장소 루트의 .gitattributes가 LF로 고정한다. core.autocrlf가 true인 채로 두면 커밋 전에 계산한 해시가 체크아웃 뒤 어긋난다.
-| --require "a,b" | g1 doc이 확인할 승인 양식 필수 항목 |
-| --mode pre 또는 final | g2의 반영 전 검사와 최종 완료 검사를 가른다 |
-| --task <이름> | state가 그 Task의 행만 본다 |
 
 ## 경로 규칙
 
 check.mjs는 저장소 루트를 스크립트 위치에서 유도한다(../..). 절대경로를 상수로 박지 않는다. 이전 판이 그렇게 해서 디렉터리 개편 두 번에 두 번 다 깨졌다.
 
 명령을 적을 때 경로 구분자는 슬래시로 고정한다. .claude/settings.json의 allow 규칙이 명령 문자열 앞부분을 그대로 비교한다.
+
+## 표 칸 수 (2026-09-10 신설. 이슈 93)
+
+doc.table-cells는 표 행이 자기 표 머리글과 같은 칸 수인지 본다. 칸이 넘치는 것과 모자란 것을 한 검사로 잡는다.
+
+넘치는 쪽은 대개 이스케이프하지 않은 파이프 기호다. 값에 파이프가 들어가면 그 자리에서 칸이 갈리고, 마크다운은 머리글보다 넘치는 칸을 버린다. 그래서 그 칸의 글이 화면에서 사라진다. 표 안에 파이프를 적을 때는 --type doc\|api\|code처럼 이스케이프한다.
+
+두 가지를 마크다운과 같게 읽는다. 빈 줄은 표를 끊는다. 이스케이프한 파이프는 칸을 가르지 않는다. 펜스 안은 데이터라 세지 않는다(F11).
+
+harness/state/progress.md만 이 검사의 범위 밖이다. 머리글이 12칸으로 자랐는데 그 전에 쓴 행은 아홉 칸이고, 추가 전용이라 기존 행을 고칠 수 없다(CLAUDE.md 4-1). 고치면 merge=union이 옛 행과 새 행을 둘 다 남긴다. troubleshooting.md에서 실제로 그렇게 됐다.
 
 ## 훅 (2026-09-10 추가)
 
