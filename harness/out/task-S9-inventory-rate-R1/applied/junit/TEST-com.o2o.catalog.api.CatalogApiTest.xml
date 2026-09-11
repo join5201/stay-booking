@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.catalog.api.CatalogApiTest" tests="24" skipped="0" failures="0" errors="0" timestamp="2026-09-11T05:25:33.014Z" hostname="BOOK-QD5U7FFOBT" time="0.504">
+  <properties/>
+  <testcase name="C10_역할이_다르면_403이다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.009"/>
+  <testcase name="C6_body에_hostId를_넣으면_거절한다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.015"/>
+  <testcase name="C9_maxOccupancy가_0이면_400이다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.043"/>
+  <testcase name="CAT_08_등록한_객실_타입을_인증_없이_조회한다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.037"/>
+  <testcase name="C9_정상_body는_통과한다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.013"/>
+  <testcase name="C9_명세에_없는_필드를_보내면_400이다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.008"/>
+  <testcase name="객실_타입_응답_여덟_필드의_타입과_값이_명세대로다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.025"/>
+  <testcase name="CAT_06_객실_타입을_등록하면_201과_Location이_온다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.023"/>
+  <testcase name="응답_아홉_필드의_타입과_값이_명세대로다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.016"/>
+  <testcase name="CAT_03_등록한_숙소를_인증_없이_조회한다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.023"/>
+  <testcase name="CAT_01_숙소를_등록하면_201과_Location이_온다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.013"/>
+  <testcase name="C6_남의_숙소에_객실_타입을_등록하면_404다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.016"/>
+  <testcase name="C10_헤더가_없으면_401이다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.005"/>
+  <testcase name="C10_공개_조회는_헤더_없이_된다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.025"/>
+  <testcase name="주소는_300자까지_받고_301자는_거절한다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.017"/>
+  <testcase name="C6_응답의_hostId는_헤더_행위자다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.013"/>
+  <testcase name="CAT_03_없는_숙소는_404이고_코드가_RESOURCE_NOT_FOUND다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.012"/>
+  <testcase name="설명은_2000자까지_받고_2001자는_거절한다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.019"/>
+  <testcase name="시각이_UTC_소수점_셋_형식이다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.015"/>
+  <testcase name="지역_코드는_32자까지_받고_33자는_거절한다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.018"/>
+  <testcase name="C10_미등록_행위자면_401이다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.006"/>
+  <testcase name="C9_필수_필드가_빠지면_400이고_어느_필드인지_알려준다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.005"/>
+  <testcase name="최대_인원은_100까지_받고_101은_거절한다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.029"/>
+  <testcase name="이름은_100자까지_받고_101자는_거절한다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.016"/>
+  <system-out><![CDATA[2026-09-11T14:25:33.015+09:00  INFO 55596 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.catalog.api.CatalogApiTest]: CatalogApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-11T14:25:33.032+09:00  INFO 55596 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.catalog.api.CatalogApiTest
+2026-09-11T14:25:33.033+09:00  INFO 55596 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.catalog.api.CatalogApiTest]: CatalogApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-11T14:25:33.034+09:00  INFO 55596 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.catalog.api.CatalogApiTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

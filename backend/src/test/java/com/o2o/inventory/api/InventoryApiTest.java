@@ -6,27 +6,39 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.sql.Date;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import com.o2o.inventory.domain.DailyInventory;
 import com.o2o.inventory.domain.DailyInventoryRepository;
+import com.o2o.inventory.domain.DailyRate;
+import com.o2o.inventory.domain.DailyRateRepository;
 import com.o2o.shared.RoomTypeId;
+import com.o2o.shared.SeoulDate;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * 8-1절 V5와 V6과 V7과 V8과 V9, 그리고 INV-01과 INV-02와 INV-03과 RATE-01과 RATE-02의
+ * 8-1절 V5와 V6과 V7과 V8과 V9와 V14, 그리고 INV-01과 INV-02와 INV-03과 RATE-01과 RATE-02의
  * 상태 코드와 오류 코드. 설계 근거: 11 재고 절, 11 요금 절, 11 에러 응답 표, T03과 T04와 T05.
  *
  * CatalogApiTest와 같은 방식이다. 진짜 포트를 열고 JDK HttpClient로 친다. 계약 8절 6단계의
@@ -35,7 +47,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * 날짜를 상수로 박지 않고 오늘에서 센다. 앱 서비스의 과거 날짜 검사가 서버의 오늘을 보므로
  * 날짜를 박아 두면 그 날이 지나는 순간 테스트가 다른 것을 검사한다. 단위 테스트는 Clock을
  * 고정해서 막았는데 여기는 서버가 다른 스레드에서 돌아 그 방법이 안 맞는다. 그래서 상대
- * 날짜를 쓴다. 과거 날짜 검사인 V9는 반대로 오늘에서 하루를 뺀다.
+ * 날짜를 쓴다. 과거 날짜 검사인 V9는 반대로 오늘에서 하루를 뺀다. 오늘은 서울 날짜다. 서버와
+ * 테스트가 같은 지역을 쓰지 않으면 한국 새벽에 V9가 엉뚱한 것을 검사한다. UTC 날짜와 서울
+ * 날짜가 갈리는 경계 자체는 서버를 띄우지 않는 InventoryApplicationServiceTest가 Clock을
+ * 고정해서 본다.
  *
  * 테스트마다 숙소와 객실 타입을 새로 만든다. 트랜잭션 롤백을 쓸 수 없어 데이터가 남기
  * 때문이다. 같은 객실 타입을 쓰면 앞 테스트가 만든 날짜와 겹쳐 유일성 검사가 엉뚱하게 걸린다.
@@ -58,10 +73,17 @@ class InventoryApiTest {
     private DailyInventoryRepository inventoryRepository;
 
     @Autowired
+    private DailyRateRepository rateRepository;
+
+    @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+
+    /** 서버와 같은 오늘. 서버가 서울 날짜로 판정하므로 여기도 서울 날짜다(11 명세 35행) */
     private static LocalDate today() {
-        return LocalDate.now(ZoneOffset.UTC);
+        return LocalDate.now(SeoulDate.ZONE);
     }
 
     private HttpResponse<String> send(String method, String path, String actorId, String body)
@@ -257,6 +279,11 @@ class InventoryApiTest {
         HttpResponse<String> rate = registerRate(roomTypeId, yesterday, 100_000, "KRW");
         assertEquals(400, rate.statusCode(), rate.body());
         assertTrue(rate.body().contains("INVALID_DATE_RANGE"), rate.body());
+
+        // RATE-02도 같은 규칙이다. 11 명세 259행. R1 평가 A-03이 이 호출이 빠진 것을 짚었다
+        HttpResponse<String> adjustRate = adjustRate(roomTypeId, yesterday, 0, 110_000);
+        assertEquals(400, adjustRate.statusCode(), adjustRate.body());
+        assertTrue(adjustRate.body().contains("INVALID_DATE_RANGE"), adjustRate.body());
     }
 
     @Test
@@ -300,6 +327,84 @@ class InventoryApiTest {
         assertEquals(8, inventoryRepository
                 .findByRoomTypeIdAndStayDate(RoomTypeId.of(roomTypeId), date)
                 .orElseThrow().totalCount());
+    }
+
+    /**
+     * V14. 두 트랜잭션이 실제 MySQL에서 같은 행을 두고 경합한다. T05의 잠금 몫이고 R1 평가
+     * A-02의 반영이다. 계약 7절 D-2가 잠근 뒤 version을 대조한다고 정했고 06-4 0절이 잠금을
+     * 비관적 락으로 적는다.
+     *
+     * 방법. 테스트 트랜잭션이 행을 잠근 채 다른 스레드로 서버에 수정을 보낸다. 서버는 잠금이
+     * 풀릴 때까지 끝나면 안 되고, 풀린 뒤에는 그때의 version과 대조해서 409를 내야 한다.
+     * 순차 호출 둘로는 이것을 볼 수 없다. 잠금 없이 읽는 구현도 순차 호출은 통과한다.
+     *
+     * 실패 방식 둘을 다 잡는다. 잠금 없이 읽고 version 0을 통과시키면 갱신이 잠금에 막혀
+     * 2초 안에 끝나지 않으므로 앞 단정은 지나가지만 풀린 뒤 200으로 덮어써서 뒤 단정이 깨진다.
+     * 잠금도 대조도 없으면 2초 안에 200이 와서 앞 단정이 깨진다.
+     */
+    @Test
+    void V14_잠긴_재고_행은_잠금이_풀린_뒤의_version과_대조한다() throws Exception {
+        String roomTypeId = roomTypeOf(HOST);
+        LocalDate date = today().plusDays(10);
+        assertEquals(201, registerInventory(roomTypeId, date, 5).statusCode());
+        RoomTypeId id = RoomTypeId.of(roomTypeId);
+
+        ExecutorService waiter = Executors.newSingleThreadExecutor();
+        try {
+            Future<HttpResponse<String>> request = new TransactionTemplate(transactionManager)
+                    .execute(status -> {
+                        DailyInventory locked = inventoryRepository.findForUpdate(id, date).orElseThrow();
+                        Future<HttpResponse<String>> sent = waiter.submit(
+                                () -> adjustInventory(roomTypeId, date, 0, 3));
+                        // 잠금을 쥔 동안 서버 요청이 끝나면 잠금 없이 읽은 것이다
+                        assertThrows(TimeoutException.class, () -> sent.get(2, TimeUnit.SECONDS));
+                        locked.adjust(0, 8, Instant.now());
+                        inventoryRepository.save(locked);
+                        return sent;
+                    });
+
+            HttpResponse<String> res = request.get(30, TimeUnit.SECONDS);
+            assertEquals(409, res.statusCode(), res.body());
+            assertTrue(res.body().contains("VERSION_CONFLICT"), res.body());
+        } finally {
+            waiter.shutdownNow();
+        }
+        // 잠금을 쥐었던 쪽의 8이 남고 기다린 쪽의 3은 적용되지 않는다
+        DailyInventory after = inventoryRepository.findByRoomTypeIdAndStayDate(id, date).orElseThrow();
+        assertEquals(8, after.totalCount());
+        assertEquals(1L, after.version());
+    }
+
+    @Test
+    void V14_잠긴_요금_행도_잠금이_풀린_뒤의_version과_대조한다() throws Exception {
+        // 재고 쪽과 같은 방법이다. 요금 수정 경로도 D-2가 같은 잠금을 요구한다
+        String roomTypeId = roomTypeOf(HOST);
+        LocalDate date = today().plusDays(10);
+        assertEquals(201, registerRate(roomTypeId, date, 100_000, "KRW").statusCode());
+        RoomTypeId id = RoomTypeId.of(roomTypeId);
+
+        ExecutorService waiter = Executors.newSingleThreadExecutor();
+        try {
+            Future<HttpResponse<String>> request = new TransactionTemplate(transactionManager)
+                    .execute(status -> {
+                        DailyRate locked = rateRepository.findForUpdate(id, date).orElseThrow();
+                        Future<HttpResponse<String>> sent = waiter.submit(
+                                () -> adjustRate(roomTypeId, date, 0, 120_000));
+                        assertThrows(TimeoutException.class, () -> sent.get(2, TimeUnit.SECONDS));
+                        locked.adjust(0, 130_000, Instant.now());
+                        rateRepository.save(locked);
+                        return sent;
+                    });
+
+            HttpResponse<String> res = request.get(30, TimeUnit.SECONDS);
+            assertEquals(409, res.statusCode(), res.body());
+            assertTrue(res.body().contains("VERSION_CONFLICT"), res.body());
+        } finally {
+            waiter.shutdownNow();
+        }
+        DailyRate after = rateRepository.findByRoomTypeIdAndStayDate(id, date).orElseThrow();
+        assertEquals(130_000L, after.rate().amount());
+        assertEquals(1L, after.version());
     }
 
     @Test
