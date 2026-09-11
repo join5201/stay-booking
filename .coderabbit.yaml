@@ -53,8 +53,11 @@ reviews:
     - "!harness/state/troubleshooting.md"
     - "!harness/state/knowledge.md"
     # 생성 후보와 형식 보정 이력. 반영판은 document/로 가므로 거기서 본다.
-    # 하위 폴더 안쪽만 막는다. 맨 위의 README.md는 남긴다
-    - "!harness/out/*/**"
+    # 어느 깊이든 README.md만 남기고 다 막는다. 앞의 느낌표는 제외이고
+    # 괄호의 느낌표는 minimatch의 부정 글롭이다. 뜻이 다른 둘이 한 줄에 있다.
+    # 부정 글롭이 안 먹으면 이 줄이 아무것도 안 막아 harness/out 전체가 리뷰에 쏟아진다.
+    # 그러면 조용히 숨는 것이 아니라 시끄럽게 드러나므로 바로 알 수 있다
+    - "!harness/out/**/!(README.md)"
     # 빌드 도구가 만든 파일
     - "!backend/gradle/wrapper/**"
     - "!backend/gradlew"
