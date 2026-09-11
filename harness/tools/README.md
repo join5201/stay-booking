@@ -6,10 +6,10 @@
 
 | 파일 | 상태 |
 |---|---|
-| check.mjs | fill, g1, g2, answer, sweep, numbers, state, settings 여덟 명령. 2026-09-08 H3에서 재작성, 같은 날 하네스 리뷰 12건 반영. 2026-09-10 sweep과 state와 settings 추가 (10-14 8-4절과 9-4절, 10-19 4절), 같은 날 numbers 추가 (이슈 75) |
+| check.mjs | fill, g1, g2, answer, sweep, numbers, state, settings, union 아홉 명령. 2026-09-08 H3에서 재작성, 같은 날 하네스 리뷰 12건 반영. 2026-09-10 sweep과 state와 settings 추가 (10-14 8-4절과 9-4절, 10-19 4절), 같은 날 numbers 추가 (이슈 75). 2026-09-11 union 추가 (이슈 119) |
 | numbers-gate.mjs | PostToolUse 훅용 다리. 방금 건드린 파일이 harness/docs 아래면 numbers를 부른다 (2026-09-10 추가) |
 | build-v2.mjs | tmp/api-spec-v2/build-v2.mjs 사본. API 명세 조립용. 미검증 |
-| tests/ | 골든 fixture 6개와 테스트 129건 (2026-09-10 실측). fixture는 harness/prompts/의 양식에서 만든다. numbers의 대조 테스트는 임시 git 저장소를 만들어 refs/remotes/origin/main을 직접 박는다 |
+| tests/ | 골든 fixture 6개와 테스트 145건 (2026-09-11 실측). fixture는 harness/prompts/의 양식에서 만든다. numbers의 대조 테스트는 임시 git 저장소를 만들어 refs/remotes/origin/main을 직접 박는다 |
 
 원본은 tmp/ 아래에 그대로 둔다. 삭제하지 않는다.
 
@@ -24,6 +24,7 @@
 | node harness/tools/check.mjs numbers <디렉터리> [--fetch] | 파일명의 10-N 접두를 모아 한 번호를 문서 둘이 쓰는지 본다. 로컬 트리와 origin/main 트리의 합집합으로 센다. 번호를 주장하는 것은 본문 md 하나이고 다른 확장자는 그 본문 이름으로 시작하는 첨부다. 겹치면 종료 코드 1 |
 | node harness/tools/check.mjs state <진행 기록> [--task <이름>] | 안 끝난 Task의 마지막 행과 막힌 채로 남은 행을 고정 형식으로 낸다. 게이트가 아니라 보고라 실패해도 종료 코드가 0이다 |
 | node harness/tools/check.mjs settings <권한 설정> | Bash와 PowerShell 규칙의 짝, deny와 allow 겹침. 한쪽만 고쳐 규칙이 조용히 사라지는 것을 잡는다 |
+| node harness/tools/check.mjs union <.gitattributes> | merge=union으로 선언한 기록 파일에서 같은 행이 두 번, 옛 판이 새 판의 접두로, 칸 수가 머리글과 다른 행을 잡는다. 4-1의 5단계 뒤에 돌린다 |
 | node harness/tools/check.mjs g2 <결정표> --mode pre 또는 final | 버전 일치, 원본 리포트 스키마, 지적 ID 집합, 행 수, 심각도 보존, 빈 결정, 거부 이유, 반박 등급, 치명 거부 필수 필드. 남은 치명과 반영본은 final에서만 |
 | node --test harness/tools/tests/check.test.mjs | 골든 파일 테스트 |
 
@@ -31,7 +32,7 @@
 
 ## 쓰기 정책
 
-g1과 g2와 sweep과 numbers와 state와 settings는 저장소 파일을 쓰지 않는다. 읽기만 한다.
+g1과 g2와 sweep과 numbers와 state와 settings와 union은 저장소 파일을 쓰지 않는다. 읽기만 한다.
 
 numbers는 --fetch를 줬을 때만 git fetch origin을 부른다. 그때 .git의 원격 추적 ref가 갱신된다. 기본값은 부르지 않는다. 검사기가 매번 네트워크를 부르면 오프라인에서 못 돌기 때문이다. 대신 어느 커밋과 대조했는지를 출력에 적어서 낡은 ref로 대조하고도 최신인 줄 아는 일을 막는다.
 
@@ -76,6 +77,20 @@ doc.table-cells는 표 행이 자기 표 머리글과 같은 칸 수인지 본�
 두 가지를 마크다운과 같게 읽는다. 빈 줄은 표를 끊는다. 이스케이프한 파이프는 칸을 가르지 않는다. 펜스 안은 데이터라 세지 않는다(F11).
 
 harness/state/progress.md만 이 검사의 범위 밖이다. 머리글이 12칸으로 자랐는데 그 전에 쓴 행은 아홉 칸이고, 추가 전용이라 기존 행을 고칠 수 없다(CLAUDE.md 4-1). 고치면 merge=union이 옛 행과 새 행을 둘 다 남긴다. troubleshooting.md에서 실제로 그렇게 됐다.
+
+## union 흔적 (2026-09-11 신설. 이슈 119)
+
+merge=union은 양쪽이 같은 구간을 건드리면 충돌 표시 대신 두 판을 다 남긴다. 그 흔적이 네 번 났고 네 번 다 사람이 눈으로 찾았다(10-10 6-1절, 이슈 93과 106과 112). union 명령이 그것을 센다.
+
+| 검사 | 무엇 | 났던 곳 |
+|---|---|---|
+| union.dup-row | 한 표 안에 같은 행이 두 번 | progress.md 15:29 행과 15:31 행 (이슈 112) |
+| union.prefix-row | 한 행의 칸 전부가 다른 행의 앞 칸과 같다. 칸을 붙여 고친 행의 옛 판이 남은 것 | troubleshooting.md 50행 (이슈 93), knowledge.md 54행에서 111행 (이슈 106) |
+| union.table-cells | 칸 수가 머리글과 다르다. 옛 판의 칸까지 고쳐져 접두도 아닌 것을 잡는다 | troubleshooting.md 51행 (이슈 93) |
+
+인자는 .gitattributes다. 어느 파일이 union인지의 정본이 그 파일이라 목록을 코드에 박지 않는다. 표 읽기는 doc.table-cells와 같다. 펜스 안은 세지 않고 이스케이프한 파이프는 칸을 가르지 않는다. progress.md의 칸 수만 범위 밖이다. 머리글이 12칸으로 자랐고 그 전 행은 아홉 칸이라 걸면 전부 걸린다.
+
+날짜시각이 같은 행 둘은 잡지 않는다. 같은 분에 두 세션이 쓰는 것은 정상이고 main에 12쌍 있다.
 
 ## 훅 (2026-09-10 추가)
 
