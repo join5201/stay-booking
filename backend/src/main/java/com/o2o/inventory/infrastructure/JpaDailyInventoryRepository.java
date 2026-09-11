@@ -63,4 +63,11 @@ public class JpaDailyInventoryRepository implements DailyInventoryRepository {
                                           LocalDate toExclusive) {
         return jpaRepository.findRange(roomTypeId.value(), from, toExclusive);
     }
+
+    /** HoldInventory. 06-4 1-2 hold(n)의 Pre 열이 요구하는 오름차순 잠금. PESSIMISTIC_WRITE다 */
+    @Override
+    public List<DailyInventory> findRangeForUpdate(RoomTypeId roomTypeId, LocalDate from,
+                                                   LocalDate toExclusive) {
+        return jpaRepository.findRangeForUpdate(roomTypeId.value(), from, toExclusive);
+    }
 }
