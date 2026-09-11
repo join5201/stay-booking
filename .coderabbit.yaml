@@ -43,12 +43,18 @@ reviews:
   path_filters:
     # 원본 사본. 모델도 못 고치는 자리다(CLAUDE.md 3-1)
     - "!harness/project-sync/**"
-    # 평가자 리포트 원문. 원문 그대로 두는 파일이라 지적할 자리가 아니다
-    - "!harness/reviews/**"
-    # 추가 전용 기록. 같은 형식 지적이 매 PR마다 반복된다
-    - "!harness/state/**"
-    # 생성 후보와 형식 보정 이력. 반영판은 document/로 가므로 거기서 본다
-    - "!harness/out/**"
+    # 평가자 리포트 원문. 원문 그대로 두는 파일이라 지적할 자리가 아니다.
+    # 폴더가 아니라 파일 이름으로 막는다. README.md는 색인이라 리뷰 대상이다
+    - "!harness/reviews/task-*.md"
+    - "!harness/reviews/harness-*.md"
+    # 추가 전용 기록 셋. 같은 형식 지적이 매 PR마다 반복된다.
+    # 이 폴더의 기록 파일은 이 셋으로 고정이다(CLAUDE.md 3절)
+    - "!harness/state/progress.md"
+    - "!harness/state/troubleshooting.md"
+    - "!harness/state/knowledge.md"
+    # 생성 후보와 형식 보정 이력. 반영판은 document/로 가므로 거기서 본다.
+    # 하위 폴더 안쪽만 막는다. 맨 위의 README.md는 남긴다
+    - "!harness/out/*/**"
     # 빌드 도구가 만든 파일
     - "!backend/gradle/wrapper/**"
     - "!backend/gradlew"
