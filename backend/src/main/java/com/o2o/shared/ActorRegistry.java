@@ -26,6 +26,9 @@ public class ActorRegistry {
             "host_002", ActorRole.HOST,
             "operator_001", ActorRole.OPERATOR,
             "guest_001", ActorRole.GUEST,
+            // guest_002도 11의 예시에 없다. T02의 남의 예약 조회와 T08의 두 손님 경합에 GUEST가
+            // 둘 필요해서 더했다. host_002와 같은 이유다. task-S9-booking 6절 P07 행의 승인
+            "guest_002", ActorRole.GUEST,
             "mock_001", ActorRole.MOCK_SYSTEM);
 
     public Optional<Actor> find(String actorId) {

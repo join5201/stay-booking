@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.promotion.domain.PriceCalculationTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-09-11T19:08:00.838Z" hostname="BOOK-QD5U7FFOBT" time="0.015">
+  <properties/>
+  <testcase name="상한_단가_30박에_99퍼센트도_넘치지_않고_배분_합계가_맞는다()" classname="com.o2o.promotion.domain.PriceCalculationTest" time="0.004"/>
+  <testcase name="동률이면_ID_오름차순으로_하나가_뽑히고_결과가_재현된다()" classname="com.o2o.promotion.domain.PriceCalculationTest" time="0.006"/>
+  <testcase name="단수가_없으면_마지막_날짜에_더하는_것이_없다()" classname="com.o2o.promotion.domain.PriceCalculationTest" time="0.0"/>
+  <testcase name="스냅샷_행_수가_박수와_같고_총액이_날짜별_합과_같다()" classname="com.o2o.promotion.domain.PriceCalculationTest" time="0.0"/>
+  <testcase name="할인액이_큰_하나를_적용하고_후보는_할인액_내림차순이다()" classname="com.o2o.promotion.domain.PriceCalculationTest" time="0.001"/>
+  <testcase name="후보가_없으면_할인이_0이고_적용_프로모션이_null이다()" classname="com.o2o.promotion.domain.PriceCalculationTest" time="0.0"/>
+  <testcase name="날짜별_비례_내림_뒤_마지막_날짜에_가산해_배분_합계가_할인_총액과_같다()" classname="com.o2o.promotion.domain.PriceCalculationTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

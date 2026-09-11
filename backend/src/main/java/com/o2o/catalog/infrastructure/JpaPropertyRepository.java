@@ -1,5 +1,6 @@
 package com.o2o.catalog.infrastructure;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
@@ -59,5 +60,11 @@ public class JpaPropertyRepository implements PropertyRepository {
     public PageResult<Property> findByHostId(HostId hostId, PageQuery pageQuery) {
         return SpringPage.toResult(
                 jpaRepository.findAllByHostId(hostId.value(), SpringPage.toPageable(pageQuery)));
+    }
+
+    /** SEARCH-01. 쪽 없는 지역 읽기, id 오름차순. 2026-09-12 추가 */
+    @Override
+    public List<Property> findAllByRegionCode(String regionCode) {
+        return jpaRepository.findAllByRegionCode(regionCode);
     }
 }
