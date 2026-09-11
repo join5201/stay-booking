@@ -66,8 +66,10 @@ public class IdempotencyRecord {
     @Column(name = "response_location", length = 300)
     private String responseLocation;
 
+    // length가 없으면 MySQL 방언이 기본 길이 255에 맞춰 tinytext를 고른다. 30박 응답이 3KB를
+    // 넘어 K13이 500으로 잡았다. 65535는 text 열이고 2차의 결제 시도 셋을 더해도 10KB 안이다
     @Lob
-    @Column(name = "response_body")
+    @Column(name = "response_body", length = 65535)
     private String responseBody;
 
     @Column(name = "created_at", nullable = false)
