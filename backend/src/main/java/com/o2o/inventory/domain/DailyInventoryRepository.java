@@ -43,4 +43,13 @@ public interface DailyInventoryRepository {
      * 많아질 때 값을 두 번 옮긴다.
      */
     List<DailyInventory> findRange(RoomTypeId roomTypeId, LocalDate from, LocalDate toExclusive);
+
+    /**
+     * HoldInventory. findRange와 같은 범위와 정렬에 잠금이 붙는다. 06-4 1-2 hold(n)의 Pre가
+     * 오름차순 잠금을 적고 08-3 결정 3이 재고 N행을 날짜 오름차순으로 잠근다고 적는다.
+     * 정렬을 질의가 보장하므로 잠금 순서가 호출 루프에 기대지 않는다(task-S9-booking 7절 D-2).
+     * 존재하는 날짜만 돌아오므로 행 수가 박수보다 적으면 미개설 날짜가 있는 것이다.
+     */
+    List<DailyInventory> findRangeForUpdate(RoomTypeId roomTypeId, LocalDate from,
+                                            LocalDate toExclusive);
 }
