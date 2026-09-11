@@ -1122,6 +1122,18 @@ test('union 실패. 선언한 파일이 없다', () => {
   assert.match(r.out, /\[union\.exists\] +0 +state\/없음\.md 파일이 없다/);
 });
 
+test('union 통과. 글롭 패턴과 앞 슬래시도 읽는다', () => {
+  const r = run(() => union(unionRepo([U_ROW_A, U_ROW_B], '/state/*.md merge=union')));
+  assert.equal(r.code, 0, r.out);
+  assert.match(r.out, /union 파일 1개/);
+});
+
+test('union 실패. 글롭 패턴에 맞는 파일이 없다', () => {
+  const r = run(() => union(unionRepo([U_ROW_A], 'state/log.md merge=union\nstate/없음-*.md merge=union')));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /\[union\.exists\] +0 +state\/없음-\*\.md 에 맞는 파일이 없다/);
+});
+
 test('union. merge=union 선언이 없으면 사용법 오류다', () => {
   const r = run(() => union(unionRepo([U_ROW_A], '*.png binary')));
   assert.equal(r.code, 2);

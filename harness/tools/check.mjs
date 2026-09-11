@@ -154,7 +154,7 @@
 //     [union.dup-row]     193  harness/state/progress.md 193행이 188행과 같다. 병합이 두 번 남겼다
 //     [union.prefix-row]  50  harness/state/troubleshooting.md 50행이 55행의 접두다. 칸을 붙여 고친 행의 옛 판이 남았다
 //     [union.table-cells] 51  harness/state/troubleshooting.md 51행이 5칸이다. 머리글 17행은 6칸
-//     검사 9건 중 3건 실패
+//     검사 8건 중 3건 실패
 //     union 파일 3개
 //   4-1의 5단계에서 origin/main을 병합한 직후에 돌린다. 세 줄이 실제로 났던 세 모양이다.
 //   같은 행 두 번(이슈 112), 옛 판이 접두로(이슈 93), 옛 판의 칸이 고쳐져 접두도 아닌 것(같은 이슈).
@@ -1018,22 +1018,29 @@ export function settings(file) {
 }
 
 // ---------- union 병합 흔적 검사 (이슈 119) ----------
-// merge=union은 양쪽이 같은 구간을 건드리면 충돌 표시 대신 두 판을 다 남긴다. 흔적은 두 모양이다.
-// 같은 행이 두 번 남는 것과, 칸을 붙여 고친 행의 옛 판이 새 판의 접두로 남는 것. 네 번 났고
-// 네 번 다 사람이 눈으로 찾았다 (10-10 6-1절, 이슈 93, 106, 112). 어느 파일이 union인지는
-// .gitattributes가 정본이라 그 파일을 인자로 받고 목록을 코드에 박지 않는다.
+// merge=union은 양쪽이 같은 구간을 건드리면 충돌 표시 대신 두 판을 다 남긴다. 흔적은 세 모양이다.
+// 같은 행이 두 번 남는 것, 칸을 붙여 고친 행의 옛 판이 새 판의 접두로 남는 것, 옛 판의 칸까지
+// 고쳐져 접두도 아닌 것. 마지막은 칸 수로 잡는다. 네 번 났고 네 번 다 사람이 눈으로 찾았다
+// (10-10 6-1절, 이슈 93, 106, 112). 어느 파일이 union인지는 .gitattributes가 정본이라 그 파일을
+// 인자로 받고 목록을 코드에 박지 않는다.
 // 날짜시각이 같은 행 둘은 잡지 않는다. 같은 분에 두 세션이 쓰는 것은 정상이다.
 
-// .gitattributes에서 merge=union을 선언한 경로를 뽑는다
+// .gitattributes에서 merge=union을 선언한 패턴을 뽑는다. 앞의 슬래시는 저장소 루트 기준이라는 뜻이라 뗀다
 export function unionFiles(attrText) {
   const out = [];
   for (const raw of attrText.split('\n')) {
     const line = raw.replace(/#.*$/, '').trim();
     if (!line) continue;
     const [pattern, ...attrs] = line.split(/\s+/);
-    if (attrs.includes('merge=union')) out.push(pattern);
+    if (attrs.includes('merge=union')) out.push(pattern.replace(/^\//, ''));
   }
   return out;
+}
+
+// 패턴을 파일 목록으로. 지금은 파일 하나씩 적혀 있지만 harness/state/*.md처럼 적어도 읽는다
+function expandPattern(pattern, base) {
+  if (!/[*?[]/.test(pattern)) return [pattern];
+  return fs.globSync(pattern, { cwd: base }).map((p) => p.split(path.sep).join('/')).sort();
 }
 
 // 표마다 같은 행과 접두 행을 찾는다. 머리글도 행으로 센다. 머리글이 두 번이면 표가 두 벌이다
@@ -1059,12 +1066,18 @@ export function unionMarks(text) {
 
 export function union(attrFile) {
   const r = new Report('union', attrFile);
-  const files = unionFiles(fs.readFileSync(attrFile, 'utf8'));
-  if (files.length === 0) {
+  const patterns = unionFiles(fs.readFileSync(attrFile, 'utf8'));
+  if (patterns.length === 0) {
     console.error(`merge=union으로 선언한 파일이 없다: ${rel(attrFile)}`);
     return 2;
   }
   const base = path.dirname(path.resolve(attrFile));
+  const files = [];
+  for (const pat of patterns) {
+    const found = expandPattern(pat, base);
+    if (found.length === 0) r.check('union.exists', 0, false, `${pat} 에 맞는 파일이 없다`);
+    files.push(...found);
+  }
   for (const f of files) {
     const p = path.join(base, f);
     if (!isFile(p)) { r.check('union.exists', 0, false, `${f} 파일이 없다`); continue; }

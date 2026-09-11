@@ -9,7 +9,7 @@
 | check.mjs | fill, g1, g2, answer, sweep, numbers, state, settings, union 아홉 명령. 2026-09-08 H3에서 재작성, 같은 날 하네스 리뷰 12건 반영. 2026-09-10 sweep과 state와 settings 추가 (10-14 8-4절과 9-4절, 10-19 4절), 같은 날 numbers 추가 (이슈 75). 2026-09-11 union 추가 (이슈 119) |
 | numbers-gate.mjs | PostToolUse 훅용 다리. 방금 건드린 파일이 harness/docs 아래면 numbers를 부른다 (2026-09-10 추가) |
 | build-v2.mjs | tmp/api-spec-v2/build-v2.mjs 사본. API 명세 조립용. 미검증 |
-| tests/ | 골든 fixture 6개와 테스트 143건 (2026-09-11 실측). fixture는 harness/prompts/의 양식에서 만든다. numbers의 대조 테스트는 임시 git 저장소를 만들어 refs/remotes/origin/main을 직접 박는다 |
+| tests/ | 골든 fixture 6개와 테스트 145건 (2026-09-11 실측). fixture는 harness/prompts/의 양식에서 만든다. numbers의 대조 테스트는 임시 git 저장소를 만들어 refs/remotes/origin/main을 직접 박는다 |
 
 원본은 tmp/ 아래에 그대로 둔다. 삭제하지 않는다.
 
