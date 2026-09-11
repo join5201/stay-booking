@@ -12,6 +12,7 @@
 //   node harness/tools/check.mjs g2 <결정표파일> [--mode pre|final]
 //   node harness/tools/check.mjs answer <답변파일> [--grade A|B|C]
 //   node harness/tools/check.mjs numbers <디렉터리> [--ref <ref>] [--fetch] [--local-only]
+//   node harness/tools/check.mjs union <.gitattributes>
 //   node --test harness/tools/tests/check.test.mjs
 //
 // 실행 예시
@@ -24,6 +25,7 @@
 //   node harness/tools/check.mjs numbers harness/docs --fetch
 //   node harness/tools/check.mjs state harness/state/progress.md [--task task-S9-catalog]
 //   node harness/tools/check.mjs settings .claude/settings.json
+//   node harness/tools/check.mjs union .gitattributes
 //
 // 통과 출력 예시
 //   PASS g1 harness/out/task-S8-R1/candidate.md
@@ -138,10 +140,31 @@
 //     [numbers.ref] 0  origin/main 값을 읽을 수 없다. fatal: Needed a single revision. git fetch origin을 부르거나 --fetch를 준다. 로컬만 볼 거면 --local-only를 준다
 //   대조 못 한 것을 통과로 두지 않는다. git 저장소가 아니면 범위 밖으로 세고 실패시키지 않는다
 //
+// union 통과 출력 예시 (이슈 119)
+//   PASS union .gitattributes
+//     검사 8건 통과
+//       union.dup-row union.prefix-row union.table-cells
+//     범위 밖 1건
+//       union.table-cells  harness/state/progress.md  머리글이 12칸으로 자랐고 그 전 행은 아홉 칸이다. 추가 전용이라 기존 행을 못 고친다 (CLAUDE.md 4-1)
+//     union 파일 3개
+//   어느 파일이 union인지는 .gitattributes가 정본이라 그 파일에서 읽는다. 목록을 코드에 박지 않는다
+//
+// union 실패 출력 예시 (종료 코드 1)
+//   FAIL union .gitattributes
+//     [union.dup-row]     193  harness/state/progress.md 193행이 188행과 같다. 병합이 두 번 남겼다
+//     [union.prefix-row]  50  harness/state/troubleshooting.md 50행이 55행의 접두다. 칸을 붙여 고친 행의 옛 판이 남았다
+//     [union.table-cells] 51  harness/state/troubleshooting.md 51행이 5칸이다. 머리글 17행은 6칸
+//     검사 9건 중 3건 실패
+//     union 파일 3개
+//   4-1의 5단계에서 origin/main을 병합한 직후에 돌린다. 세 줄이 실제로 났던 세 모양이다.
+//   같은 행 두 번(이슈 112), 옛 판이 접두로(이슈 93), 옛 판의 칸이 고쳐져 접두도 아닌 것(같은 이슈).
+//   행 번호는 그때 것이라 지금 파일과 다르다
+//
 // 쓰기 정책
 //   g1과 g2는 아무 파일도 쓰지 않는다. 읽기만 한다.
 //   fill만 쓴다. 대상은 인자로 받은 그 파일 하나뿐이다. 보호 경로는 거부한다.
 //   numbers는 --fetch를 줬을 때만 git fetch origin을 부른다. 저장소 파일은 안 건드린다.
+//   union은 .gitattributes와 거기 적힌 파일을 읽기만 한다.
 //   보호 경로 비교는 대소문자를 무시한다. Windows에서 HARNESS/docs로 우회되던 구멍이다(HRV-05).
 //
 // 2026-09-08 하네스 구현 리뷰(HRV-01부터 12) 반영
@@ -994,6 +1017,92 @@ export function settings(file) {
   return r.print();
 }
 
+// ---------- union 병합 흔적 검사 (이슈 119) ----------
+// merge=union은 양쪽이 같은 구간을 건드리면 충돌 표시 대신 두 판을 다 남긴다. 흔적은 두 모양이다.
+// 같은 행이 두 번 남는 것과, 칸을 붙여 고친 행의 옛 판이 새 판의 접두로 남는 것. 네 번 났고
+// 네 번 다 사람이 눈으로 찾았다 (10-10 6-1절, 이슈 93, 106, 112). 어느 파일이 union인지는
+// .gitattributes가 정본이라 그 파일을 인자로 받고 목록을 코드에 박지 않는다.
+// 날짜시각이 같은 행 둘은 잡지 않는다. 같은 분에 두 세션이 쓰는 것은 정상이다.
+
+// .gitattributes에서 merge=union을 선언한 경로를 뽑는다
+export function unionFiles(attrText) {
+  const out = [];
+  for (const raw of attrText.split('\n')) {
+    const line = raw.replace(/#.*$/, '').trim();
+    if (!line) continue;
+    const [pattern, ...attrs] = line.split(/\s+/);
+    if (attrs.includes('merge=union')) out.push(pattern);
+  }
+  return out;
+}
+
+// 표마다 같은 행과 접두 행을 찾는다. 머리글도 행으로 센다. 머리글이 두 번이면 표가 두 벌이다
+export function unionMarks(text) {
+  const marks = [];
+  for (const t of parseTables(stripFences(text).join('\n'))) {
+    const seen = new Map();
+    for (const row of t.rows) {
+      // 칸 경계를 남겨야 ab,c와 a,bc가 다른 행이다
+      const key = row.cells.join('\u001f');
+      if (seen.has(key)) marks.push({ kind: 'dup', line: row.line, other: seen.get(key) });
+      else seen.set(key, row.line);
+    }
+    for (const a of t.rows) {
+      for (const b of t.rows) {
+        if (a === b || a.cells.length >= b.cells.length) continue;
+        if (a.cells.every((c, i) => c === b.cells[i])) marks.push({ kind: 'prefix', line: a.line, other: b.line });
+      }
+    }
+  }
+  return marks.sort((x, y) => x.line - y.line);
+}
+
+export function union(attrFile) {
+  const r = new Report('union', attrFile);
+  const files = unionFiles(fs.readFileSync(attrFile, 'utf8'));
+  if (files.length === 0) {
+    console.error(`merge=union으로 선언한 파일이 없다: ${rel(attrFile)}`);
+    return 2;
+  }
+  const base = path.dirname(path.resolve(attrFile));
+  for (const f of files) {
+    const p = path.join(base, f);
+    if (!isFile(p)) { r.check('union.exists', 0, false, `${f} 파일이 없다`); continue; }
+    const text = fs.readFileSync(p, 'utf8');
+    let dup = 0, prefix = 0;
+    for (const m of unionMarks(text)) {
+      if (m.kind === 'dup') {
+        dup++;
+        r.check('union.dup-row', m.line, false, `${f} ${m.line}행이 ${m.other}행과 같다. 병합이 두 번 남겼다`);
+      } else {
+        prefix++;
+        r.check('union.prefix-row', m.line, false, `${f} ${m.line}행이 ${m.other}행의 접두다. 칸을 붙여 고친 행의 옛 판이 남았다`);
+      }
+    }
+    if (dup === 0) r.check('union.dup-row', 0, true, '');
+    if (prefix === 0) r.check('union.prefix-row', 0, true, '');
+
+    // 옛 판의 칸을 고친 뒤 새 판과 같이 남으면 접두가 아니라 못 잡는다. 그 행은 칸 수로 잡는다.
+    // 머리글이 자란 progress.md만 SCOPE 선언대로 뺀다. 아홉 칸 행이 전부 걸리기 때문이다
+    const why = skipReason(p, 'doc.table-cells');
+    if (why) { r.skip('union.table-cells', `${f}  ${why}`); continue; }
+    let bad = 0;
+    for (const t of parseTables(stripFences(text).join('\n'))) {
+      const head = t.rows[0];
+      if (!head) continue;
+      for (const row of t.rows.slice(1)) {
+        if (row.cells.length === head.cells.length) continue;
+        bad++;
+        r.check('union.table-cells', row.line, false, `${f} ${row.line}행이 ${row.cells.length}칸이다. 머리글 ${head.line}행은 ${head.cells.length}칸`);
+      }
+    }
+    if (bad === 0) r.check('union.table-cells', 0, true, '');
+  }
+  const code = r.print();
+  console.log(`  union 파일 ${files.length}개`);
+  return code;
+}
+
 export function parseReport(file) {
   const out = { file, ok: true, errors: [], rows: [], summary: null, detailCount: 0 };
   const text = fs.readFileSync(file, 'utf8');
@@ -1316,7 +1425,7 @@ export function answer(file, { grade } = {}) {
 export function main(argv) {
   const [cmd, file, ...rest] = argv;
   if (!cmd || !file) {
-    console.error('사용법: node harness/tools/check.mjs <fill|g1|g2|answer|sweep|numbers|state|settings> <파일 또는 디렉터리> [옵션]');
+    console.error('사용법: node harness/tools/check.mjs <fill|g1|g2|answer|sweep|numbers|state|settings|union> <파일 또는 디렉터리> [옵션]');
     return 2;
   }
   if (!fs.existsSync(file)) { console.error(`파일이 없다: ${file}`); return 2; }
@@ -1342,6 +1451,7 @@ export function main(argv) {
   if (cmd === 'numbers') return numbers(file, opt);
   if (cmd === 'state') return state(file, opt);
   if (cmd === 'settings') return settings(file);
+  if (cmd === 'union') return union(file);
   console.error(`알 수 없는 명령: ${cmd}`);
   return 2;
 }
