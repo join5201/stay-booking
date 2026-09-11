@@ -1,7 +1,7 @@
 # 진행 기록 (harness/state/progress.md)
 
 최초 작성: 2026-09-07
-최종 갱신: 2026-09-10 (아홉 칸을 열두 칸으로. 증거와 안 해 본 것과 대체 신설. 기존 행은 아홉 칸 그대로 둔다)
+최종 갱신: 2026-09-11 (표 중간에 있던 재작성 주석을 표 앞으로 옮김. 그 주석 뒤에 더한 행 130개가 머리글과 떨어져 표로 렌더링되지 않았다. 행은 고치지 않았다)
 
 왜 이 파일이 필요한가: 재개할 때 어디까지 성공했는지 모르면 이미 성공한 생성과 검증을 다시 돌린다(HR6). 이 파일이 그 반복을 막는다. 매 턴 단계 판정의 근거도 이 파일의 마지막 행이다.
 
@@ -58,7 +58,15 @@ done은 사용자 최종 승인 행에서만 쓴다. 스크립트도 모델도 �
 3. 이 파일에는 단계의 진행만 적는다. 막힌 것과 원인은 harness/state/troubleshooting.md, 재사용되는 지식은 harness/state/knowledge.md, 확정된 결정은 harness/decisions/다.
 4. 파일 수정 이력은 두지 않는다(2026-09-07 사용자 결정). 2026-09-08 저장소 편입 이후로는 git 로그가 그 역할을 한다.
 
-## 진행
+## 재작성 주석 (2026-09-08 H5. 2026-09-11 진행 표 앞으로 옮김)
+
+아래 진행 표의 앞 열한 행 중 H5 이전의 열 행은 임시 4칸 형식으로 적혀 있던 것을 이 표의 9칸으로 옮긴 것이다. 날짜시각과 결과 요약은 원래 값을 그대로 두었고, 실패 원인과 교훈과 다음 작업과 실제 시간 네 칸은 이번에 채웠다. 교훈은 각 턴에서 실제로 있었던 일만 적었다.
+
+done이 붙은 네 행의 근거는 다르다. H0과 H1은 사용자가 진행 또는 승인이라고 명시했다. 저장소 편입과 디렉터리 통합은 사용자가 그 작업을 직접 지시하고 결과를 받았다. H2, H3, H4, H5는 drafted다. 사용자 승인을 아직 받지 않았다.
+
+## 진행 (2026-09-11 재작성 주석을 표 앞으로 옮김)
+
+표 뒤에는 행만 더한다. 산문은 이 절 앞에 둔다. 표 중간이나 표 뒤에 산문이 들어가면 그다음에 더한 행은 머리글과 떨어져 표가 아니라 본문으로 렌더링된다. 2026-09-08 H5의 재작성 주석이 그 자리에 있어서 그 뒤에 더한 행 130개가 2026-09-11까지 그렇게 보였다. 옮기면서 행은 고치지 않았다.
 
 | 날짜시각 | Task | 라운드 | 단계 | 결과 | 실패 원인 | 교훈 | 다음 작업 | 실제 시간 | 증거 | 안 해 본 것 | 대체 |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -75,12 +83,6 @@ done은 사용자 최종 승인 행에서만 쓴다. 스크립트도 모델도 �
 | 2026-09-08 14:52 | H4 | 해당 없음 | 준비 | drafted. 양식 5종과 10-4 갱신. 평가 입력을 01 전체에서 입력 팩으로 되돌림 | 없음 | 10-4 v4의 01 전체 제공 결정이 스킬 원본과 정면 충돌했다. 결정 문서끼리도 대조가 필요하다 | H5 | 미측정 |
 | 2026-09-08 14:58 | H5 | 해당 없음 | 준비 | drafted. 행 형식 9칸과 status 6값 확정, H0~H5 행을 정식 형식으로 재작성 | 없음 | 임시 형식으로 열 턴을 돌았더니 재작성할 행이 열한 개가 됐다. 형식은 첫 행 전에 정하는 편이 쌌다 | H6 | 미측정 |
 | 2026-09-08 14:51 | task-S8 | 해당 없음 | 계약 | drafted. 08-3 반영을 첫 Task로 정하고 tasks/task-S8.md 초안 작성. check fill 통과, 검사 37건, sha256 18건 기입 | 없음 | 반영 대상 9종 중 02, 03, 04는 로컬이 이미 08-3 목표 판 번호를 달고 있으면서 내용은 미반영이었다. 판 번호를 반영 완료의 증거로 쓰면 안 된다 | 계약 승인 뒤 생성 | 미측정 |
-
-## 재작성 주석 (2026-09-08 H5)
-
-위 열한 행 중 H5 이전의 열 행은 임시 4칸 형식으로 적혀 있던 것을 이 표의 9칸으로 옮긴 것이다. 날짜시각과 결과 요약은 원래 값을 그대로 두었고, 실패 원인과 교훈과 다음 작업과 실제 시간 네 칸은 이번에 채웠다. 교훈은 각 턴에서 실제로 있었던 일만 적었다.
-
-done이 붙은 네 행의 근거는 다르다. H0과 H1은 사용자가 진행 또는 승인이라고 명시했다. 저장소 편입과 디렉터리 통합은 사용자가 그 작업을 직접 지시하고 결과를 받았다. H2, H3, H4, H5는 drafted다. 사용자 승인을 아직 받지 않았다.
 | 2026-09-08 14:55 | task-S8 | 해당 없음 | 계약 | drafted. 정책 적용 표의 승인 필요 두 행을 대안 없음으로 정정 | 없음 | 승인 필요는 대안이 실제로 설 때만 붙인다 | 계약 승인 뒤 생성 | 미측정 |
 | 2026-09-08 15:14 | task-S8 | R1 | 계약 | done. 사용자 승인. 판 번호와 04-5 반입은 계약이 결정 | 없음 | 없음 | 생성 | 미측정 |
 | 2026-09-08 15:14 | task-S8 | R1 | 생성 | drafted. 후보 9개 생성, g1 doc 9건 전부 통과. 형식 보정 0회 | 없음 | 종료 문장 규칙을 후보 공통 한 문장으로 고정해 --end 하나로 9건을 검사했다. 문서마다 다른 문장을 주면 검사가 의미를 잃는다 | 평가 요청 2벌 준비 | 미측정 |
@@ -217,3 +219,5 @@ done이 붙은 네 행의 근거는 다르다. H0과 H1은 사용자가 진행 �
 | 2026-09-11 17:54 | task-S9-promotion-search | R1 | 5단계 | applied. 테스트 47건 추가로 합계 170건, 실패 0. V1부터 V5는 ConditionTest와 PromotionTest 단위 테스트, V6부터 V8은 PriceCalculationTest 단위 테스트(단수 1 남는 33333, 33333, 33334 케이스와 30박 10억 99퍼센트 상한), V5의 DB 몫과 V9부터 V12의 응용 몫은 PromotionApplicationServiceTest 통합 테스트, 이벤트 둘은 PromotionEventTest. g1 code 테스트 5건과 프로덕션 5건 통과. junit XML 18건을 harness/out/task-S9-promotion-search-R1/step5/에 복사 | 없음 | 계약이 그은 경계(만들어 내는 쪽만 이번 묶음)를 지키면 I10과 I11과 I15의 검사가 스냅샷 생성자가 아니라 테스트에만 있다. 예약 묶음이 Booking 생성자에 검증을 넣을 때 이 테스트가 그 검증의 통과 표본이 된다. 셸 heredoc은 한글이 많은 200줄 파일에서 두 번 깨져 Write 도구로 대신했다 | 6단계 프로모션 API 다섯과 shared 응답 보조 파일 | 17:46부터 17:54까지 8분 | gradlew -p backend test exit 0, junit XML 합계 tests=170 failures=0 errors=0, g1 PASS 10건, SPRING_DATASOURCE_URL=jdbc:mysql://127.0.0.1:3307/o2o_promo_test 를 같은 명령에서 echo | PricingService.quote를 직접 부르는 테스트는 따로 두지 않았다. evaluate가 같은 경로이고 quote는 그 결과의 snapshot만 돌려준다. 6-2단계 SEARCH-03 테스트가 quote 경로를 HTTP로 덮는다 | 없음 |
 | 2026-09-12 04:08 | task-S9-promotion-search | R1 | 6단계 | applied. 프로모션 API 다섯. PromotionController(PROMO-01부터 05), 요청 둘, 응답 둘, PromotionExceptionHandler, shared에 ApiDate와 ApiTime과 PageResponse와 InvalidDateFormatException 신설. PromotionApiTest 18건 추가로 합계 188건, 실패 0. V9는 409 뒤 최근 변경 유지, V10은 종료일만 보내도 합친 상태로 400, V11은 details에 빠진 날짜 둘, V12는 409와 빈 배열과 null. bootRun 8085에 curl 19건을 http-calls.txt에 기록, 상태 코드 전부 명세와 일치. g1 code 5건 통과 | 처음 돌린 API 테스트 18건 중 PATCH 넷이 400 INVALID_REQUEST로 실패. 레코드 생성자 인자에 JsonSetter(nulls=FAIL)을 걸면 생략된 인자까지 실패한다. jackson-databind 3.1.5의 PropertyValueBuffer._findMissing이 NullsFailProvider.getAbsentValue를 부르고 그것이 getNullValue로 넘어가 예외를 낸다(javap 확인). 요청 클래스를 필드 주입 클래스로 바꿔 해결 | 생략과 명시적 null을 가르는 요청은 레코드로 못 만든다. 필드 주입이면 생략은 세터가 안 불리고 명시적 null만 FAIL에 걸린다. 그 이유를 요청 클래스 주석에 javap 근거와 함께 남겼다. Git Bash의 TZ=Asia/Seoul은 무시되어 UTC 날짜가 나온다. curl 스크립트의 오늘 값을 그렇게 냈고 기록 파일 머리에 정정을 적었다 | 6-2단계 검색 API 셋. 카탈로그 리포지토리 읽기 메서드 추가는 diff 요약을 낸다 | 2026-09-11 17:54부터 17:58까지 4분, 2026-09-12 03:57부터 04:08까지 11분. 합계 15분 | gradlew -p backend test exit 0, junit XML 합계 tests=188 failures=0 errors=0, harness/out/task-S9-promotion-search-R1/step6/http-calls.txt HTTP 응답 19건, bootRun 로그 Database JDBC URL jdbc:mysql://127.0.0.1:3307/o2o_promo_test, g1 PASS 5건 | 필수 쿼리 파라미터(checkIn 등) 누락은 스프링 기본 400 본문이 나가고 ErrorResponse 모양이 아니다. shared 핸들러가 동결이라 손대지 않았고 9단계 표에 적는다. shared의 InvalidDateFormatException 핸들러가 promotion/api에 있는 것도 같은 이유다 | 없음 |
 | 2026-09-12 04:24 | task-S9-promotion-search | R1 | 6-2단계 | applied. 검색 API 셋. SearchController(SEARCH-01부터 03), SearchApplicationService(읽기 전용, 카탈로그와 재고와 요금 리포지토리를 직접 읽고 가격은 PricingService), 결과 넷과 응답 넷, promotion/api에 PriceSnapshotResponse. 카탈로그 기존 파일 여섯에 읽기 메서드 둘만 추가(PropertyRepository.findAllByRegionCode, RoomTypeRepository.findAllByPropertyId와 JPA 질의와 어댑터 위임, +43줄 삭제 0줄). SearchApiTest 21건 추가로 합계 209건, 실패 0. V13은 재고 0인 날에 200과 available false와 INVENTORY_UNAVAILABLE, V14는 days의 null과 missingInventoryDates와 missingRateDates 둘 다, V15는 인원 초과와 재고 0과 요금 누락과 재고 누락 객실 제외와 객실 없는 숙소 제외와 빈 items 200, V16은 날짜별 finalAmount 합이 totalAmount. 서버 8085에 curl 14건 상태 코드 전부 명세와 일치 | 처음 돌린 21건 중 1건 실패. availableRoomTypes 순서를 등록 순으로 가정했는데 id 오름차순이고 id가 무작위라 두 객실 순서가 뒤집혔다. 테스트를 순서 대신 합으로 고쳤다 | 검색 결과 배열의 순서는 명세가 정하지 않았다. 무작위 id로 정렬하는 목록은 테스트가 순서를 가정하면 안 된다. 쿼리 파라미터 검증은 애너테이션 대신 값 객체와 검사문으로 했다. 공유 핸들러가 고정이라 메서드 검증 예외를 ErrorResponse로 바꿀 자리가 없다 | 9단계 검증 표. step9-verification.md, 계약 9절과 10절 갱신, fill 검사, origin/main 병합과 union 검사, PR 98 본문 갱신 | 2026-09-12 04:08부터 04:24까지 16분 | gradlew -p backend test exit 0, junit XML 합계 tests=209 failures=0 errors=0, harness/out/task-S9-promotion-search-R1/step6-2/http-calls.txt 14건, junit XML 사본 20개, check.mjs g1 SearchController.java와 SearchApplicationService.java PASS | 검색 앱 서비스의 단위 테스트를 따로 두지 않았다. 21건이 HTTP로 앱 서비스 경로를 전부 지나므로 중복이라 보았다. 프로젝션 테이블과 이벤트 구독은 D-1 나로 이번 범위 밖. availableRoomTypes와 items의 정렬 기준은 명세에 없어 id 오름차순으로 두었고 검증 표에 적는다 | 없음 |
+| 2026-09-11 16:54 | 하네스 기록 | 해당 없음 | 준비 | drafted. 이슈 124. progress.md 진행 표 복구. 표 중간에 있던 재작성 주석 여섯 줄을 표 앞으로 옮기고 진행 절에 표 뒤에는 행만 더한다는 안내 한 문단을 넣었다. 행 143개는 글자 하나 안 고쳤다. troubleshooting.md에 원인 한 행 | 없음 | 추가 전용 파일에서 산문은 표 앞에만 둔다. 마크다운은 머리글 바로 아래 이어진 줄만 표로 읽어서 표 뒤에 산문이 한 번 붙으면 그다음에 더하는 행은 전부 본문이 된다. 파일 끝에 붙이는 습관이 표를 끊었다 | PR 병합. 사용자. 브랜치 fix/progress-table-render-124 | 부분 측정. 편집 16:53부터 검사 통과 16:54까지 약 1분. 조사는 미측정 | check.mjs state가 옮기기 전후 모두 행 143개 Task 33종. union 검사 8건 통과. 머리글 71행 뒤에 세로줄로 시작하지 않는 줄 0. 정렬한 행 집합이 origin/main과 diff 0 | 주석 뒤에 머리글을 한 벌 더 넣어 표를 둘로 가르는 방법. 파서는 첫 칸이 날짜시각인 줄만 읽어 그것도 통하지만 산문이 표 사이에 남아 같은 실수가 날 자리를 남긴다 | 없음 |
+| 2026-09-11 17:29 | 하네스 기록 | 해당 없음 | 병합 | done. PR 125를 main에 병합. 병합 커밋 4839b5c, 커밋 2개(표 복구, 기록 행). 이슈 124 닫힘. main의 progress.md가 머리글 71행부터 마지막 행까지 한 표다. 브랜치는 원격과 로컬에서 지웠다 | 없음 | 표가 끊겼는지는 검사기가 못 잰다. stateRows는 산문 위치와 무관하게 행을 읽는다. 사람이 보는 렌더링은 GitHub에서 표의 행 수를 세어 재야 한다. main 13행, 브랜치 144행이 그 증거였다 | 없음. 이슈 124 계열은 끝. 작업 트리 셋은 각자 origin/main을 병합한다 | 병합과 정리 약 5분 | gh pr view 125가 MERGED 4839b5c. gh issue view 124가 CLOSED. main에서 union .gitattributes PASS 8건, state 행 144 Task 33, 머리글 뒤 세로줄 아닌 줄 0, 중복 행 0 | check.mjs state에 머리글 뒤 세로줄 아닌 줄을 세는 검사를 붙이는 것. 같은 고장이 두 번 나면 올린다 | 없음 |
