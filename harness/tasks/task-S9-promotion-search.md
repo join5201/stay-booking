@@ -1,7 +1,7 @@
 # 작업 계약 task-S9-promotion-search (프로모션과 검색 묶음)
 
 최초 작성: 2026-09-10
-최종 갱신: 2026-09-10 (1단계 승인. 결정 4건과 정책 4행 확정)
+최종 갱신: 2026-09-12 (9단계 완료. 4절 해시 둘, 9절 실행 결과, 10절 갱신)
 양식: harness/prompts/task-contract.md v6
 
 이 계약은 세 번째 구현 묶음이다. 첫 묶음 task-S9-catalog와 두 번째 묶음 task-S9-inventory-rate가 세운 것 위에 얹는다. 두 번째 묶음의 최종 완료 판단은 이 계약을 쓰는 시점에 대기 상태이고, N9가 요구하는 것은 백엔드와 테스트와 백엔드 검증까지 내려가는 것이라 그 조건은 9단계 완료로 이미 충족됐다.
@@ -105,8 +105,8 @@ Region은 카탈로그 소유다(R3, Conformist). 프로모션이 Region 애그�
 | 대상 03 이벤트 스토밍 | document/03-o2o-event-storming.md | sha256:3334e5a73cb8f896 | 프로모션 커맨드와 이벤트 행 |
 | 확정 전제 입력 팩 | harness/project-sync/o2o-review-input-pack.md | sha256:1608942c0815f911 | 1절 확정 전제와 2절 요구사항 |
 | 구현 계획 10-6 | harness/docs/10-6-o2o-harness-implementation-plan.md | sha256:eec97503b53ffff0 | 3절 실행 순서와 기능별 API와 검증 연결 표 |
-| 앞 묶음의 계약 | harness/tasks/task-S9-inventory-rate.md | sha256:896a9868f73b3eed | 3절 범위 밖, 6절 정책 적용, 8절 단계표 |
-| 적용할 코드 양식 | harness/prompts/dev-ptcf-prompt.v3.md | sha256:d4531cd7eeddb42d | Format 절 |
+| 앞 묶음의 계약 | harness/tasks/task-S9-inventory-rate.md | sha256:4eb9f268cf82319a | 3절 범위 밖, 6절 정책 적용, 8절 단계표. 해시는 2026-09-12 9단계에서 갱신. 그 계약이 09-11 개정 1로 바뀌었고 이 묶음이 읽은 범위의 변화는 6절 P03의 서울 날짜뿐이며 이 코드는 처음부터 SeoulDate를 쓴다 |
+| 적용할 코드 양식 | harness/prompts/dev-ptcf-prompt.v3.md | sha256:4fd959abf491efe0 | Format 절. 해시는 2026-09-12 9단계에서 갱신. 09-10에 T9의 progress 칸 수가 열둘로 바뀐 것이고 이 묶음의 행은 전부 열두 칸이다 |
 | 실제 평가 기준 | harness/prompts/eval-criteria-code.md | sha256:c5ed835951fe09a5 | 축, 심각도, 출력 스키마 |
 
 10-6과 앞 묶음의 계약은 이 표에만 있고 5절에는 없다. harness/docs/는 하네스 설계 근거라 평가 입력이 될 수 없고(CLAUDE.md 3절), 앞 묶음의 계약은 이 묶음 코드의 근거가 아니다.
@@ -260,11 +260,11 @@ V6과 V7과 V8은 MySQL 없이 도는 단위 테스트로 둔다. 계산이라 �
 |---|---|
 | 작업 디렉터리 | backend/ |
 | 실행 환경 | Spring Boot 4.1.1, Gradle 9.7.1, Java 21 toolchain. JAVA_HOME을 JDK 21로 준다. PATH의 java는 17이다 |
-| 실행할 명령 | docker compose -f backend/docker-compose.yml up -d로 테스트 DB를 올린다. gradlew test로 테스트를 돌린다. node harness/tools/check.mjs g1 <소스> --type code --artifact <junit.xml>로 게이트를 돌린다 |
-| 테스트 DB | 127.0.0.1:3307, DB명 o2o_catalog_test, 컨테이너 o2o-catalog-mysql. 앞 묶음이 세운 것을 그대로 쓴다 |
-| 데이터 초기화 허용 범위 | o2o_catalog_test 안에서만. ddl-auto는 테스트에서 create-drop |
+| 실행할 명령 | docker compose -f backend/docker-compose.yml up -d로 테스트 DB를 올린다. gradlew test로 테스트를 돌린다. node harness/tools/check.mjs g1 <소스> --type code --artifact <junit.xml>로 게이트를 돌린다. 실행 결과(2026-09-12): 저장소 루트에서 export SPRING_DATASOURCE_URL=jdbc:mysql://127.0.0.1:3307/o2o_promo_test 를 앞에 붙이고 같은 명령에서 echo로 값을 남긴 뒤 ./backend/gradlew.bat -p backend test를 돌렸다. 6단계와 6-2단계의 서버는 bootRun --args='--server.port=8085'로 띄웠다 |
+| 테스트 DB | 127.0.0.1:3307, DB명 o2o_catalog_test, 컨테이너 o2o-catalog-mysql. 앞 묶음이 세운 것을 그대로 쓴다. 실행 결과(2026-09-12): 같은 컨테이너의 o2o_promo_test를 썼다. 예약과 결제 세션이 o2o_catalog_test와 8080을 나란히 쓰므로 세션별로 DB와 포트를 가르는 것이 2026-09-11 사용자 승인 조치다. 값은 명령마다 SPRING_DATASOURCE_URL로 넘겼고 설정 파일은 고치지 않았다 |
+| 데이터 초기화 허용 범위 | o2o_catalog_test 안에서만. ddl-auto는 테스트에서 create-drop. 실행 결과(2026-09-12): o2o_promo_test 안에서만 |
 | 빌드 출력과 로그 경로 | harness/out/task-S9-promotion-search-R1/step{단계}/ |
-| 계약 테스트 ID | T27과 T28 전부. T12와 T13은 부분이고 나머지 절반은 예약 묶음이 받는다 |
+| 계약 테스트 ID | T27과 T28 전부. T12와 T13은 부분이고 나머지 절반은 예약 묶음이 받는다. 실행 결과(2026-09-12): T27 통과, T28 통과, T12 부분, T13 부분. 미실행 없음. 대조표는 harness/out/task-S9-promotion-search-R1/step9-verification.md |
 | A와 B 평가 범위 | A는 구조 축과 코드 전용 축과 검증 ID 판정. B는 추적성 양방향과 결정 근거의 자립성과 요구사항 역추적 |
 | 필수 검증을 실행하지 못했을 때 | 미실행으로 적고 사유를 harness/state/progress.md 실패 원인 칸에 남긴다. 통과로 바꾸지 않는다. 9절 계약 테스트 ID에 미실행이 하나라도 있으면 완료 기준을 만족하지 않는다 |
 
@@ -275,11 +275,19 @@ BN6에 따라 이 표의 검증 환경은 승인 없이 바꾸지 않는다. 앞
 | 항목 | 기록 |
 |---|---|
 | 작업 계약 승인 | 승인. join5201, 2026-09-10. 사용자 발언은 다음 작업 진행해라이고 7절 추천안 넷을 그대로 받은 것으로 기록한다 |
-| 개정 | 없음 |
-| 마지막 성공 단계 | 8절 2단계 완료(2026-09-10). 이슈와 브랜치가 서고 이 계약이 커밋됐다 |
-| 미해결 사항과 다음 작업 | 없음. 다음은 4단계 도메인 코드다. 3단계는 앞 묶음이 세워 건너뛴다 |
-| 최종 산출물과 버전 | 작업 후 기록 |
-| 실제 사용 시간 | 미측정 |
+| 개정 | 1회. 2026-09-11 사용자 지시로 전제 셋이 8절보다 앞선다. 4절의 앞 묶음 계약과 코드 양식 해시 둘을 2026-09-12에 현재 파일로 갱신했다(fill 검사의 hash-stale). 정지점은 9단계 검증 표 하나이고 2단계부터 6-2단계까지 사용자 확인 없이 잇되 단계마다 progress.md 행과 실제 시간은 남긴다, N9는 세션 단위로 읽어 예약과 결제 세션이 나란히 돈다, 블라인드 평가는 MVP 코드가 다 나올 때까지 미룬다(D-4 보류). 계약 본문은 다시 쓰지 않았다 |
+| 마지막 성공 단계 | 8절 9단계 완료(2026-09-12). 프로모션 API 다섯과 검색 API 셋이 서고 테스트 209건이 통과하며 검증 표와 회고 표가 나왔다. 이 Task의 모델 몫은 끝났고 남은 것은 사용자 최종 완료 판단이다. 그 전 기록. 8절 2단계 완료(2026-09-10). 이슈와 브랜치가 서고 이 계약이 커밋됐다 |
+| 실제 사용 시간 (1단계) | 29분 |
+| 실제 사용 시간 (2단계) | 4분 |
+| 실제 사용 시간 (3단계) | 건너뜀. 앞 묶음이 세웠다 |
+| 실제 사용 시간 (4단계) | 55분 |
+| 실제 사용 시간 (5단계) | 8분 |
+| 실제 사용 시간 (6단계) | 15분. 두 구간이다. 2026-09-11 17:54부터 17:58, 2026-09-12 03:57부터 04:08 |
+| 실제 사용 시간 (6-2단계) | 16분 |
+| 실제 사용 시간 (9단계) | progress.md의 9단계 행 |
+| 미해결 사항과 다음 작업 | 이월 셋은 V17과 V18이 예약 묶음, V19가 D-2 다의 CLOSED 상태다. 공유 핸들러가 동결이라 남긴 둘은 필수 쿼리 파라미터 누락의 스프링 기본 400 본문과 promotion/api에 둔 InvalidDateFormatException 핸들러다. PriceSnapshotResponse는 예약 묶음이 쓰면 shared로 옮긴다. 블라인드 평가 A와 B는 D-4 보류라 요청문을 만들지 않았다. 검색 프로젝션은 D-1 나로 예약 묶음 뒤다 |
+| 최종 산출물과 버전 | backend/ 아래 프로덕션 52 클래스(promotion 37, search 9, shared 6)와 테스트 7 파일, 카탈로그 기존 파일 여섯에 읽기 메서드 둘. harness/out/task-S9-promotion-search-R1/ 아래 step5, step6, step6-2와 step9-verification.md. 브랜치 feat/task-s9-promotion-search, PR 98, 코드 기준 커밋 468b3cf |
+| 실제 사용 시간 | 측정된 개발 시간 합 94분. 4단계 55분, 5단계 8분, 6단계 15분, 6-2단계 16분. 1단계와 2단계는 승인과 브랜치라 개발 시간이 아니다. 9단계는 progress.md 행 |
 | 최종 완료 판단 | 대기 |
 
 작업 계약 승인과 최종 완료 승인은 구분한다. 빈 양식을 작성했다는 사실만으로 승인하거나 실행한 것으로 처리하지 않는다.
