@@ -22,7 +22,7 @@
 |---|---|
 | node harness/tools/check.mjs fill <양식> [--dry] | 빈칸 잔존 0, 경로가 절대경로이고 존재, 버전 칸에 sha256 기입 |
 | node harness/tools/check.mjs g1 <후보> --type doc\|api\|code | doc은 날짜 2종, 금지 기호 3종, 표 칸 수, 내부 링크, 종료 문장. api는 요청과 응답과 오류 절과 표 칸 수. code는 빌드와 테스트 결과 파일 존재 |
-| node harness/tools/check.mjs answer <답변파일> [--grade A|B|C] | 첫 줄이 결론인지, 마지막 절이 결과인지, 결과 절 다섯 행이 다 있는지. 등급은 안 주면 기계가 정한다 (harness/prompts/answer-format.md 4절) |
+| node harness/tools/check.mjs answer <답변파일> [--grade A\|B\|C] | 첫 줄이 결론인지, 마지막 절이 결과인지, 결과 절 다섯 행이 다 있는지. 등급은 안 주면 기계가 정한다 (harness/prompts/answer-format.md 4절) |
 | node harness/tools/check.mjs sweep <디렉터리> --type doc | 디렉터리 아래 마크다운을 전부 g1으로 돌고 한 줄로 요약한다. 통과한 파일은 안 찍고 실패만 상세를 낸다. 하나라도 실패하면 종료 코드 1 |
 | node harness/tools/check.mjs numbers <디렉터리> [--fetch] | 파일명의 10-N 접두를 모아 한 번호를 문서 둘이 쓰는지 본다. 로컬 트리와 origin/main 트리의 합집합으로 센다. 번호를 주장하는 것은 본문 md 하나이고 다른 확장자는 그 본문 이름으로 시작하는 첨부다. 겹치면 종료 코드 1 |
 | node harness/tools/check.mjs state <진행 기록> [--task <이름>] | 안 끝난 Task의 마지막 행과 막힌 채로 남은 행을 고정 형식으로 낸다. 게이트가 아니라 보고라 실패해도 종료 코드가 0이다 |
@@ -46,11 +46,15 @@ fill만 쓴다. 대상은 인자로 받은 그 파일 하나뿐이고 document/,
 |---|---|
 | --type doc\|api\|code | g1 필수 |
 | --end "<문장>" | g1 doc의 종료 문장을 바꾼다. 기본값은 07 v3 F16의 문장이다 |
+| --require "a,b" | g1 doc이 확인할 승인 양식 필수 항목 |
 | --artifact <경로> | g1 code에서 빌드나 테스트 결과 파일을 지정한다. 여러 번 쓸 수 있다 |
+| --mode pre 또는 final | g2의 반영 전 검사와 최종 완료 검사를 가른다 |
+| --grade A\|B\|C | answer가 쓸 등급을 지정한다. 안 주면 기계가 정한다 (harness/prompts/answer-format.md 4절) |
 | --dry | fill이 쓰지 않고 결과만 보여 준다 |
 | --ref <ref> | numbers가 대조할 ref. 기본값은 origin/main |
 | --fetch | numbers가 대조 전에 git fetch origin을 부른다 |
 | --local-only | numbers가 대조를 끄고 로컬 트리만 본다. 남이 먼저 가져간 번호를 못 본다 |
+| --task <이름> | state가 그 Task의 행만 본다 |
 
 경로 칸의 허용 값 넷이다. 절대경로, 해당 없음, 생성 후 기입, 그리고 아직 안 채운 빈칸 표시다. 앞의 셋은 통과하고 빈칸 표시는 실패한다. 생성 후 기입은 계약 시점에 아직 없는 대상을 가리키는 유예이며 fill이 건수를 출력한다.
 
@@ -59,9 +63,6 @@ fill만 쓴다. 대상은 인자로 받은 그 파일 하나뿐이고 document/,
 검사 대상 파일이 자기 자신을 가리키는 행도 실패한다. 해시를 적는 순간 파일이 바뀌기 때문이다.
 
 줄바꿈은 저장소 루트의 .gitattributes가 LF로 고정한다. core.autocrlf가 true인 채로 두면 커밋 전에 계산한 해시가 체크아웃 뒤 어긋난다.
-| --require "a,b" | g1 doc이 확인할 승인 양식 필수 항목 |
-| --mode pre 또는 final | g2의 반영 전 검사와 최종 완료 검사를 가른다 |
-| --task <이름> | state가 그 Task의 행만 본다 |
 
 ## 경로 규칙
 
