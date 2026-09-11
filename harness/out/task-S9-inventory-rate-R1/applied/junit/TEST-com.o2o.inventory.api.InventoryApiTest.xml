@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.inventory.api.InventoryApiTest" tests="24" skipped="0" failures="0" errors="0" timestamp="2026-09-11T05:25:18.829Z" hostname="BOOK-QD5U7FFOBT" time="13.523">
+  <properties/>
+  <testcase name="V14_잠긴_요금_행도_잠금이_풀린_뒤의_version과_대조한다()" classname="com.o2o.inventory.api.InventoryApiTest" time="2.955"/>
+  <testcase name="날짜_형식이_틀리면_400_INVALID_DATE_RANGE다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.044"/>
+  <testcase name="V9_과거_날짜는_등록도_수정도_400이다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.093"/>
+  <testcase name="V7_없는_객실_타입도_같은_404다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.017"/>
+  <testcase name="V5_일괄_등록은_한_날짜라도_겹치면_전부_실패한다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.085"/>
+  <testcase name="INV_01_총_수량_0도_등록된다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.073"/>
+  <testcase name="V6_지난_version으로_수정하면_409이고_최근_변경이_남는다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.09"/>
+  <testcase name="V7_남의_객실_타입에_등록하면_404다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.038"/>
+  <testcase name="INV_03_판매분_아래로_수정하면_409_INVENTORY_BELOW_COMMITTED다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.075"/>
+  <testcase name="RATE_01_통화가_KRW가_아니면_400이다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.043"/>
+  <testcase name="RATE_01_같은_날짜를_두_번_등록하면_409다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.069"/>
+  <testcase name="INV_03_수정하면_200이고_version이_오른다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.066"/>
+  <testcase name="V14_잠긴_재고_행은_잠금이_풀린_뒤의_version과_대조한다()" classname="com.o2o.inventory.api.InventoryApiTest" time="2.076"/>
+  <testcase name="INV_02_기간을_일괄_등록하면_201이고_끝_날짜는_빠진다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.068"/>
+  <testcase name="V9_오늘은_등록된다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.045"/>
+  <testcase name="V8_기간이_366일을_넘으면_400이고_366일은_등록된다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.871"/>
+  <testcase name="RATE_01_요금을_등록하면_201과_Location과_다섯_필드가_온다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.042"/>
+  <testcase name="V8_from이_to보다_뒤면_400이다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.037"/>
+  <testcase name="RATE_02_수정하면_200이고_통화는_그대로다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.054"/>
+  <testcase name="INV_01_재고를_등록하면_201과_Location과_일곱_필드가_온다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.04"/>
+  <testcase name="INV_01_같은_날짜를_두_번_등록하면_409다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.051"/>
+  <testcase name="V6_요금도_지난_version이면_409다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.068"/>
+  <testcase name="행위자가_없으면_401이고_GUEST면_403이다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.031"/>
+  <testcase name="INV_03_없는_날짜를_수정하면_404다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.039"/>
+  <system-out><![CDATA[14:25:19.012 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.o2o.inventory.api.InventoryApiTest]: InventoryApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+14:25:19.157 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.inventory.api.InventoryApiTest
+14:25:19.253 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.o2o.inventory.api.InventoryApiTest]: InventoryApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+14:25:19.256 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.inventory.api.InventoryApiTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.1)
+
+2026-09-11T14:25:19.857+09:00  INFO 55596 --- [    Test worker] com.o2o.inventory.api.InventoryApiTest   : Starting InventoryApiTest using Java 21.0.11 with PID 55596 (started by user in C:\Dev\potenup\99_projects\o2o-dev\backend)
+2026-09-11T14:25:19.859+09:00  INFO 55596 --- [    Test worker] com.o2o.inventory.api.InventoryApiTest   : No active profile set, falling back to 1 default profile: "default"
+2026-09-11T14:25:20.445+09:00  INFO 55596 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-09-11T14:25:20.511+09:00  INFO 55596 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 57 ms. Found 4 JPA repository interfaces.
+2026-09-11T14:25:21.196+09:00  INFO 55596 --- [    Test worker] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 0 (http)
+2026-09-11T14:25:21.215+09:00  INFO 55596 --- [    Test worker] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-09-11T14:25:21.215+09:00  INFO 55596 --- [    Test worker] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.24]
+2026-09-11T14:25:21.298+09:00  INFO 55596 --- [    Test worker] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 1417 ms
+2026-09-11T14:25:21.590+09:00  INFO 55596 --- [    Test worker] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-09-11T14:25:21.667+09:00  INFO 55596 --- [    Test worker] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.4.5.Final
+2026-09-11T14:25:22.176+09:00  INFO 55596 --- [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-09-11T14:25:22.209+09:00  INFO 55596 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-09-11T14:25:22.463+09:00  INFO 55596 --- [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@956cf3d
+2026-09-11T14:25:22.466+09:00  INFO 55596 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-09-11T14:25:22.563+09:00  INFO 55596 --- [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://127.0.0.1:3307/o2o_catalog_test]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 9.7.2
+	Default catalog/schema: o2o_catalog_test/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-09-11T14:25:23.603+09:00  INFO 55596 --- [    Test worker] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-09-11T14:25:23.807+09:00  INFO 55596 --- [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-11T14:25:23.880+09:00  INFO 55596 --- [    Test worker] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-09-11T14:25:24.799+09:00  WARN 55596 --- [    Test worker] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-09-11T14:25:25.209+09:00  INFO 55596 --- [    Test worker] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 61788 (http) with context path '/'
+2026-09-11T14:25:25.215+09:00  INFO 55596 --- [    Test worker] com.o2o.inventory.api.InventoryApiTest   : Started InventoryApiTest in 5.639 seconds (process running for 7.331)
+2026-09-11T14:25:25.607+09:00  INFO 55596 --- [o-auto-1-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-09-11T14:25:25.608+09:00  INFO 55596 --- [o-auto-1-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-09-11T14:25:25.609+09:00  INFO 55596 --- [o-auto-1-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+]]></system-out>
+  <system-err><![CDATA[Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+WARNING: A Java agent has been loaded dynamically (C:\Users\user\.gradle\caches\modules-2\files-2.1\net.bytebuddy\byte-buddy-agent\1.18.11\82212e5b3633e7a65fca8bec525762cfb6c9bae4\byte-buddy-agent-1.18.11.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+]]></system-err>
+</testsuite>

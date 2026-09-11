@@ -1,0 +1,445 @@
+diff --git a/backend/CLAUDE.md b/backend/CLAUDE.md
+index ba80cc3..d0cfd43 100644
+--- a/backend/CLAUDE.md
++++ b/backend/CLAUDE.md
+@@ -1,7 +1,7 @@
+ # CLAUDE.md (backend 규칙)
+ 
+ 최초 작성: 2026-09-10
+-최종 갱신: 2026-09-10 (신설)
++최종 갱신: 2026-09-11 (3-3절 이벤트 구독 규칙 신설. R1 평가 B-03)
+ 독자: backend/ 아래에서 일하는 Claude Code와 코딩 에이전트
+ 
+ 왜 이 파일이 필요한가: 루트 CLAUDE.md는 하네스 규칙이라 백엔드 코드를 어디부터 읽어야 하는지, 층마다 무엇을 하는지, 지금 어느 단계인지를 적지 않는다. 그래서 세션마다 사람이 그것을 말로 설명하게 된다. 이 파일이 그 설명을 대신한다.
+@@ -75,6 +75,17 @@
+ 
+ 두 번째 컨텍스트가 쓰기 시작하면 올린다. 하나만 쓰는 것을 미리 올리지 않는다. 근거는 `../document/06-1` 4절이다. `Clock` 빈이 이 기준으로 catalog에서 shared로 옮겨졌다(2026-09-09).
+ 
++### 3-3. 이벤트는 구독 쪽이 커밋 뒤를 지킨다 (2026-09-11 신설)
++
++`../document/06-2` 94행은 이벤트 발행을 커밋 후로 적는다. 앱 서비스는 `@Transactional` 안에서 `publishEvent`를 부르고 그 자리는 바꾸지 않는다. 발행을 커밋 뒤로 옮기면 롤백된 요청이 이벤트를 내지 않는지를 보는 이벤트 테스트가 전부 깨진다. 대신 구독자가 지킨다.
++
++| 번호 | 규칙 |
++|---|---|
++| E1 | 구독자는 `@TransactionalEventListener`로 건다. 기본 phase가 AFTER_COMMIT이라 커밋된 사실만 받는다. `@EventListener`로 걸지 않는다 |
++| E2 | 첫 구독자가 생기는 묶음은 롤백된 요청의 이벤트를 구독자가 받지 않는 테스트를 8-1에 필수로 올린다 |
++
++지금은 구독자가 없어 겉으로 드러나지 않는다. task-S9-inventory-rate R1 평가 B-03이 이 어긋남을 짚었고 결정표가 코드 대신 이 규칙으로 닫았다.
++
+ ## 4. 만드는 순서
+ 
+ 묶음 하나는 아래에서 위로 올라간다. 계약 8절의 단계 번호와 같다.
+diff --git a/backend/src/main/java/com/o2o/inventory/application/InventoryApplicationService.java b/backend/src/main/java/com/o2o/inventory/application/InventoryApplicationService.java
+index e36c038..0a52543 100644
+--- a/backend/src/main/java/com/o2o/inventory/application/InventoryApplicationService.java
++++ b/backend/src/main/java/com/o2o/inventory/application/InventoryApplicationService.java
+@@ -3,7 +3,6 @@ package com.o2o.inventory.application;
+ import java.time.Clock;
+ import java.time.Instant;
+ import java.time.LocalDate;
+-import java.time.ZoneOffset;
+ import java.time.temporal.ChronoUnit;
+ import java.util.ArrayList;
+ import java.util.HashSet;
+@@ -36,6 +35,7 @@ import com.o2o.inventory.domain.RateRegistered;
+ import com.o2o.shared.HostId;
+ import com.o2o.shared.Money;
+ import com.o2o.shared.RoomTypeId;
++import com.o2o.shared.SeoulDate;
+ 
+ /**
+  * 설계 근거: 06-2 6절 재고와 요금 CRC의 InventoryApplicationService 책임 세 행.
+@@ -261,9 +261,9 @@ public class InventoryApplicationService {
+         }
+     }
+ 
+-    /** 서버의 오늘. 11 명세가 오늘 이상을 요구하고 그 오늘의 기준은 UTC다(11 공통 절) */
++    /** 서버의 오늘. 11 명세 198행과 259행이 오늘 이상을 요구하고 그 오늘은 서울 날짜다(11 명세 35행) */
+     private LocalDate today() {
+-        return LocalDate.ofInstant(Instant.now(clock), ZoneOffset.UTC);
++        return SeoulDate.today(clock);
+     }
+ 
+     private void requireNotPast(LocalDate stayDate, LocalDate today) {
+diff --git a/backend/src/main/java/com/o2o/shared/ClockConfiguration.java b/backend/src/main/java/com/o2o/shared/ClockConfiguration.java
+index 2042c8e..1734d82 100644
+--- a/backend/src/main/java/com/o2o/shared/ClockConfiguration.java
++++ b/backend/src/main/java/com/o2o/shared/ClockConfiguration.java
+@@ -6,8 +6,11 @@ import org.springframework.context.annotation.Bean;
+ import org.springframework.context.annotation.Configuration;
+ 
+ /**
+- * 설계 근거: 11 공통 요청과 응답 규칙. 시각은 UTC의 YYYY-MM-DDTHH:mm:ss.SSSZ 형식이다.
+- * 그래서 systemUTC를 쓴다. 숙박 날짜의 오늘 판정도 같은 UTC 기준으로 한다.
++ * 설계 근거: 11 공통 요청과 응답 규칙 35행. 시각은 UTC의 YYYY-MM-DDTHH:mm:ss.SSSZ 형식이다.
++ * 그래서 systemUTC를 쓴다. 이 Clock은 Instant를 주는 자리다. 숙박 날짜의 오늘은 이 Clock으로
++ * 정하지 않는다. 같은 줄이 날짜는 Asia/Seoul 기준이라 적으므로 오늘은 SeoulDate.today가 낸다.
++ * 2026-09-11 R1 평가 A-01과 B-01의 반영이다. 그 전에는 이 주석이 오늘도 UTC라고 적었고
++ * 그것이 틀렸다.
+  *
+  * 앱 서비스가 Clock을 주입받는 이유는 eval-criteria-code.md의 테스트 격리와 재현성 축이
+  * 시간 제어를 요구하기 때문이다. 테스트는 이 빈을 고정 Clock으로 바꿔 끼운다.
+diff --git a/backend/src/main/java/com/o2o/shared/SeoulDate.java b/backend/src/main/java/com/o2o/shared/SeoulDate.java
+new file mode 100644
+index 0000000..2b9298f
+--- /dev/null
++++ b/backend/src/main/java/com/o2o/shared/SeoulDate.java
+@@ -0,0 +1,31 @@
++package com.o2o.shared;
++
++import java.time.Clock;
++import java.time.Instant;
++import java.time.LocalDate;
++import java.time.ZoneId;
++
++/**
++ * 숙박과 캠페인 날짜의 오늘. 설계 근거: 11 공통 요청과 응답 규칙 35행.
++ *
++ * 그 줄이 날짜와 시각을 가른다. 날짜(숙박, 캠페인)는 Asia/Seoul 기준이고 시각은 UTC다.
++ * 시각이 UTC라고 해서 날짜까지 UTC로 자르면 한국 새벽 아홉 시간 동안 서울 기준 어제가
++ * 오늘로 통한다. R1 평가 A-01과 B-01이 짚은 자리다. Instant는 그대로 UTC Clock에서 받고
++ * 날짜로 자를 때만 이 지역을 쓴다.
++ *
++ * shared에 두는 근거는 06-1 4절과 backend/CLAUDE.md 3-2다. 재고와 요금이 첫 사용처이고
++ * 프로모션 캠페인 기간이 두 번째다. 오늘을 계산하는 자리를 여기 하나로 두어야 컨텍스트마다
++ * 다른 지역을 쓰는 사고가 안 난다.
++ */
++public final class SeoulDate {
++
++    public static final ZoneId ZONE = ZoneId.of("Asia/Seoul");
++
++    private SeoulDate() {
++    }
++
++    /** Clock이 주는 지금 이 순간을 서울 날짜로 자른다. Clock의 zone은 쓰지 않는다 */
++    public static LocalDate today(Clock clock) {
++        return LocalDate.ofInstant(Instant.now(clock), ZONE);
++    }
++}
+diff --git a/backend/src/test/java/com/o2o/inventory/api/InventoryApiTest.java b/backend/src/test/java/com/o2o/inventory/api/InventoryApiTest.java
+index 3832c61..377a302 100644
+--- a/backend/src/test/java/com/o2o/inventory/api/InventoryApiTest.java
++++ b/backend/src/test/java/com/o2o/inventory/api/InventoryApiTest.java
+@@ -6,27 +6,39 @@ import java.net.http.HttpRequest;
+ import java.net.http.HttpResponse;
+ import java.sql.Date;
+ import java.time.Duration;
++import java.time.Instant;
+ import java.time.LocalDate;
+-import java.time.ZoneOffset;
++import java.util.concurrent.ExecutorService;
++import java.util.concurrent.Executors;
++import java.util.concurrent.Future;
++import java.util.concurrent.TimeUnit;
++import java.util.concurrent.TimeoutException;
+ 
+ import org.junit.jupiter.api.Test;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.boot.test.web.server.LocalServerPort;
+ import org.springframework.jdbc.core.JdbcTemplate;
++import org.springframework.transaction.PlatformTransactionManager;
++import org.springframework.transaction.support.TransactionTemplate;
+ 
++import com.o2o.inventory.domain.DailyInventory;
+ import com.o2o.inventory.domain.DailyInventoryRepository;
++import com.o2o.inventory.domain.DailyRate;
++import com.o2o.inventory.domain.DailyRateRepository;
+ import com.o2o.shared.RoomTypeId;
++import com.o2o.shared.SeoulDate;
+ 
+ import tools.jackson.databind.JsonNode;
+ import tools.jackson.databind.json.JsonMapper;
+ 
+ import static org.junit.jupiter.api.Assertions.assertEquals;
+ import static org.junit.jupiter.api.Assertions.assertFalse;
++import static org.junit.jupiter.api.Assertions.assertThrows;
+ import static org.junit.jupiter.api.Assertions.assertTrue;
+ 
+ /**
+- * 8-1절 V5와 V6과 V7과 V8과 V9, 그리고 INV-01과 INV-02와 INV-03과 RATE-01과 RATE-02의
++ * 8-1절 V5와 V6과 V7과 V8과 V9와 V14, 그리고 INV-01과 INV-02와 INV-03과 RATE-01과 RATE-02의
+  * 상태 코드와 오류 코드. 설계 근거: 11 재고 절, 11 요금 절, 11 에러 응답 표, T03과 T04와 T05.
+  *
+  * CatalogApiTest와 같은 방식이다. 진짜 포트를 열고 JDK HttpClient로 친다. 계약 8절 6단계의
+@@ -35,7 +47,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
+  * 날짜를 상수로 박지 않고 오늘에서 센다. 앱 서비스의 과거 날짜 검사가 서버의 오늘을 보므로
+  * 날짜를 박아 두면 그 날이 지나는 순간 테스트가 다른 것을 검사한다. 단위 테스트는 Clock을
+  * 고정해서 막았는데 여기는 서버가 다른 스레드에서 돌아 그 방법이 안 맞는다. 그래서 상대
+- * 날짜를 쓴다. 과거 날짜 검사인 V9는 반대로 오늘에서 하루를 뺀다.
++ * 날짜를 쓴다. 과거 날짜 검사인 V9는 반대로 오늘에서 하루를 뺀다. 오늘은 서울 날짜다. 서버와
++ * 테스트가 같은 지역을 쓰지 않으면 한국 새벽에 V9가 엉뚱한 것을 검사한다. UTC 날짜와 서울
++ * 날짜가 갈리는 경계 자체는 서버를 띄우지 않는 InventoryApplicationServiceTest가 Clock을
++ * 고정해서 본다.
+  *
+  * 테스트마다 숙소와 객실 타입을 새로 만든다. 트랜잭션 롤백을 쓸 수 없어 데이터가 남기
+  * 때문이다. 같은 객실 타입을 쓰면 앞 테스트가 만든 날짜와 겹쳐 유일성 검사가 엉뚱하게 걸린다.
+@@ -57,11 +72,18 @@ class InventoryApiTest {
+     @Autowired
+     private DailyInventoryRepository inventoryRepository;
+ 
++    @Autowired
++    private DailyRateRepository rateRepository;
++
+     @Autowired
+     private JdbcTemplate jdbcTemplate;
+ 
++    @Autowired
++    private PlatformTransactionManager transactionManager;
++
++    /** 서버와 같은 오늘. 서버가 서울 날짜로 판정하므로 여기도 서울 날짜다(11 명세 35행) */
+     private static LocalDate today() {
+-        return LocalDate.now(ZoneOffset.UTC);
++        return LocalDate.now(SeoulDate.ZONE);
+     }
+ 
+     private HttpResponse<String> send(String method, String path, String actorId, String body)
+@@ -257,6 +279,11 @@ class InventoryApiTest {
+         HttpResponse<String> rate = registerRate(roomTypeId, yesterday, 100_000, "KRW");
+         assertEquals(400, rate.statusCode(), rate.body());
+         assertTrue(rate.body().contains("INVALID_DATE_RANGE"), rate.body());
++
++        // RATE-02도 같은 규칙이다. 11 명세 259행. R1 평가 A-03이 이 호출이 빠진 것을 짚었다
++        HttpResponse<String> adjustRate = adjustRate(roomTypeId, yesterday, 0, 110_000);
++        assertEquals(400, adjustRate.statusCode(), adjustRate.body());
++        assertTrue(adjustRate.body().contains("INVALID_DATE_RANGE"), adjustRate.body());
+     }
+ 
+     @Test
+@@ -302,6 +329,84 @@ class InventoryApiTest {
+                 .orElseThrow().totalCount());
+     }
+ 
++    /**
++     * V14. 두 트랜잭션이 실제 MySQL에서 같은 행을 두고 경합한다. T05의 잠금 몫이고 R1 평가
++     * A-02의 반영이다. 계약 7절 D-2가 잠근 뒤 version을 대조한다고 정했고 06-4 0절이 잠금을
++     * 비관적 락으로 적는다.
++     *
++     * 방법. 테스트 트랜잭션이 행을 잠근 채 다른 스레드로 서버에 수정을 보낸다. 서버는 잠금이
++     * 풀릴 때까지 끝나면 안 되고, 풀린 뒤에는 그때의 version과 대조해서 409를 내야 한다.
++     * 순차 호출 둘로는 이것을 볼 수 없다. 잠금 없이 읽는 구현도 순차 호출은 통과한다.
++     *
++     * 실패 방식 둘을 다 잡는다. 잠금 없이 읽고 version 0을 통과시키면 갱신이 잠금에 막혀
++     * 2초 안에 끝나지 않으므로 앞 단정은 지나가지만 풀린 뒤 200으로 덮어써서 뒤 단정이 깨진다.
++     * 잠금도 대조도 없으면 2초 안에 200이 와서 앞 단정이 깨진다.
++     */
++    @Test
++    void V14_잠긴_재고_행은_잠금이_풀린_뒤의_version과_대조한다() throws Exception {
++        String roomTypeId = roomTypeOf(HOST);
++        LocalDate date = today().plusDays(10);
++        assertEquals(201, registerInventory(roomTypeId, date, 5).statusCode());
++        RoomTypeId id = RoomTypeId.of(roomTypeId);
++
++        ExecutorService waiter = Executors.newSingleThreadExecutor();
++        try {
++            Future<HttpResponse<String>> request = new TransactionTemplate(transactionManager)
++                    .execute(status -> {
++                        DailyInventory locked = inventoryRepository.findForUpdate(id, date).orElseThrow();
++                        Future<HttpResponse<String>> sent = waiter.submit(
++                                () -> adjustInventory(roomTypeId, date, 0, 3));
++                        // 잠금을 쥔 동안 서버 요청이 끝나면 잠금 없이 읽은 것이다
++                        assertThrows(TimeoutException.class, () -> sent.get(2, TimeUnit.SECONDS));
++                        locked.adjust(0, 8, Instant.now());
++                        inventoryRepository.save(locked);
++                        return sent;
++                    });
++
++            HttpResponse<String> res = request.get(30, TimeUnit.SECONDS);
++            assertEquals(409, res.statusCode(), res.body());
++            assertTrue(res.body().contains("VERSION_CONFLICT"), res.body());
++        } finally {
++            waiter.shutdownNow();
++        }
++        // 잠금을 쥐었던 쪽의 8이 남고 기다린 쪽의 3은 적용되지 않는다
++        DailyInventory after = inventoryRepository.findByRoomTypeIdAndStayDate(id, date).orElseThrow();
++        assertEquals(8, after.totalCount());
++        assertEquals(1L, after.version());
++    }
++
++    @Test
++    void V14_잠긴_요금_행도_잠금이_풀린_뒤의_version과_대조한다() throws Exception {
++        // 재고 쪽과 같은 방법이다. 요금 수정 경로도 D-2가 같은 잠금을 요구한다
++        String roomTypeId = roomTypeOf(HOST);
++        LocalDate date = today().plusDays(10);
++        assertEquals(201, registerRate(roomTypeId, date, 100_000, "KRW").statusCode());
++        RoomTypeId id = RoomTypeId.of(roomTypeId);
++
++        ExecutorService waiter = Executors.newSingleThreadExecutor();
++        try {
++            Future<HttpResponse<String>> request = new TransactionTemplate(transactionManager)
++                    .execute(status -> {
++                        DailyRate locked = rateRepository.findForUpdate(id, date).orElseThrow();
++                        Future<HttpResponse<String>> sent = waiter.submit(
++                                () -> adjustRate(roomTypeId, date, 0, 120_000));
++                        assertThrows(TimeoutException.class, () -> sent.get(2, TimeUnit.SECONDS));
++                        locked.adjust(0, 130_000, Instant.now());
++                        rateRepository.save(locked);
++                        return sent;
++                    });
++
++            HttpResponse<String> res = request.get(30, TimeUnit.SECONDS);
++            assertEquals(409, res.statusCode(), res.body());
++            assertTrue(res.body().contains("VERSION_CONFLICT"), res.body());
++        } finally {
++            waiter.shutdownNow();
++        }
++        DailyRate after = rateRepository.findByRoomTypeIdAndStayDate(id, date).orElseThrow();
++        assertEquals(130_000L, after.rate().amount());
++        assertEquals(1L, after.version());
++    }
++
+     @Test
+     void INV_03_판매분_아래로_수정하면_409_INVENTORY_BELOW_COMMITTED다() throws Exception {
+         // T04. 판매 수를 올리는 코드가 이번 묶음에 없어 상태를 DB에 직접 놓는다.
+diff --git a/backend/src/test/java/com/o2o/inventory/api/InventoryQueryApiTest.java b/backend/src/test/java/com/o2o/inventory/api/InventoryQueryApiTest.java
+index 3dcc92c..d8b6671 100644
+--- a/backend/src/test/java/com/o2o/inventory/api/InventoryQueryApiTest.java
++++ b/backend/src/test/java/com/o2o/inventory/api/InventoryQueryApiTest.java
+@@ -9,7 +9,6 @@ import java.sql.Timestamp;
+ import java.time.Duration;
+ import java.time.Instant;
+ import java.time.LocalDate;
+-import java.time.ZoneOffset;
+ import java.util.UUID;
+ 
+ import org.junit.jupiter.api.Test;
+@@ -18,6 +17,8 @@ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.boot.test.web.server.LocalServerPort;
+ import org.springframework.jdbc.core.JdbcTemplate;
+ 
++import com.o2o.shared.SeoulDate;
++
+ import tools.jackson.databind.JsonNode;
+ import tools.jackson.databind.json.JsonMapper;
+ 
+@@ -53,8 +54,9 @@ class InventoryQueryApiTest {
+     @Autowired
+     private JdbcTemplate jdbcTemplate;
+ 
++    /** 서버와 같은 오늘. 서버가 서울 날짜로 판정하므로 여기도 서울 날짜다(11 명세 35행) */
+     private static LocalDate today() {
+-        return LocalDate.now(ZoneOffset.UTC);
++        return LocalDate.now(SeoulDate.ZONE);
+     }
+ 
+     private HttpResponse<String> send(String method, String path, String actorId, String body)
+@@ -119,6 +121,16 @@ class InventoryQueryApiTest {
+                 roomTypeId, Date.valueOf(date), total, now, now);
+     }
+ 
++    /** 과거 요금 행을 직접 놓는다. 이유는 위 재고 쪽과 같다 */
++    private void 과거_요금을_직접_놓는다(String roomTypeId, LocalDate date, long amount) {
++        Timestamp now = Timestamp.from(Instant.now());
++        jdbcTemplate.update(
++                "insert into daily_rate (id, room_type_id, stay_date, amount, currency, "
++                        + "version, created_at, updated_at) values (?, ?, ?, ?, 'KRW', 0, ?, ?)",
++                "rate_" + UUID.randomUUID().toString().replace("-", ""),
++                roomTypeId, Date.valueOf(date), amount, now, now);
++    }
++
+     @Test
+     void INV_04_기간을_조회하면_200이고_날짜_오름차순이다() throws Exception {
+         String roomTypeId = roomTypeOf(HOST);
+@@ -262,6 +274,27 @@ class InventoryQueryApiTest {
+         assertEquals(200, single.statusCode(), single.body());
+     }
+ 
++    @Test
++    void V9_과거_요금_조회도_허용된다() throws Exception {
++        // 재고 쪽의 짝이다. RATE-03과 RATE-04도 과거를 400으로 막지 않는다.
++        // R1 평가 A-03이 요금 조회 둘이 V9에 빠진 것을 짚었다
++        String roomTypeId = roomTypeOf(HOST);
++        LocalDate past = today().minusDays(5);
++        과거_요금을_직접_놓는다(roomTypeId, past, 90_000);
++
++        HttpResponse<String> range = send("GET", "/api/v1/room-types/" + roomTypeId
++                + "/rates?from=" + past + "&to=" + past.plusDays(2), HOST, null);
++        assertEquals(200, range.statusCode(), range.body());
++        JsonNode body = JSON.readTree(range.body());
++        assertEquals(1, body.get("items").size(), range.body());
++        assertEquals(90_000L, body.get("items").get(0).get("amount").asLong());
++
++        HttpResponse<String> single = send("GET",
++                "/api/v1/room-types/" + roomTypeId + "/rates/" + past, HOST, null);
++        assertEquals(200, single.statusCode(), single.body());
++        assertEquals(90_000L, JSON.readTree(single.body()).get("amount").asLong());
++    }
++
+     @Test
+     void 조회도_366일_상한에_걸린다() throws Exception {
+         // 과거 조건만 빠지고 순서와 상한은 쓰기와 같다
+diff --git a/backend/src/test/java/com/o2o/inventory/application/InventoryApplicationServiceTest.java b/backend/src/test/java/com/o2o/inventory/application/InventoryApplicationServiceTest.java
+index 61cd4a9..ede3297 100644
+--- a/backend/src/test/java/com/o2o/inventory/application/InventoryApplicationServiceTest.java
++++ b/backend/src/test/java/com/o2o/inventory/application/InventoryApplicationServiceTest.java
+@@ -23,6 +23,7 @@ import com.o2o.inventory.domain.DailyInventoryRepository;
+ import com.o2o.inventory.domain.DuplicateInventoryException;
+ import com.o2o.inventory.domain.DuplicateRateException;
+ import com.o2o.inventory.domain.InventoryBelowOccupiedException;
++import com.o2o.inventory.domain.PastStayDateException;
+ import com.o2o.shared.HostId;
+ import com.o2o.shared.RoomTypeId;
+ 
+@@ -32,7 +33,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
+ import static org.junit.jupiter.api.Assertions.assertThrows;
+ 
+ /**
+- * V1과 V4. 설계 근거: 계약 8-1절, 06-4 1-2 adjust와 openInventory와 registerRate, T04.
++ * V1과 V4와 V13. 설계 근거: 계약 8-1절, 06-4 1-2 adjust와 openInventory와 registerRate, T04,
++ * 11 명세 35행.
+  *
+  * 실제 MySQL에 붙는다. 메모리 저장소로 대신하지 않는 근거는 eval-criteria-code.md의 테스트
+  * 격리와 재현성 축이다. V4가 확인하는 유일성은 DB 책임이고(06-4 1-4) 진짜 DB에서만 확인된다.
+@@ -45,12 +47,20 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
+  *
+  * 시각을 고정한다. 같은 축이 시간 제어를 요구하고, 앱 서비스의 과거 날짜 검사가 서버의
+  * 오늘을 기준으로 하기 때문이다. 고정하지 않으면 며칠 뒤에 이 테스트가 다른 것을 검사한다.
++ *
++ * 고정 시각을 UTC 20시로 둔 이유. 그 순간 UTC 날짜는 10월 1일이고 서울 날짜는 10월 2일
++ * 05시다. 11 명세 35행이 숙박 날짜를 Asia/Seoul 기준으로 적으므로 오늘은 10월 2일이어야
++ * 하고 10월 1일은 과거다. UTC로 자르면 10월 1일이 오늘로 통한다. R1 평가 A-01과 B-01이
++ * 짚은 자리이고 V13이 그 경계를 본다. Clock의 zone을 일부러 UTC로 둔다. 서비스가 Clock의
++ * zone으로 날짜를 자르면 V13이 잡는다.
+  */
+ @SpringBootTest
+ @Transactional
+ class InventoryApplicationServiceTest {
+ 
+-    private static final Instant FIXED_NOW = Instant.parse("2026-10-01T00:00:00Z");
++    private static final Instant FIXED_NOW = Instant.parse("2026-10-01T20:00:00Z");
++    private static final LocalDate UTC_TODAY = LocalDate.parse("2026-10-01");
++    private static final LocalDate SEOUL_TODAY = LocalDate.parse("2026-10-02");
+     private static final HostId HOST = HostId.of("host_001");
+     private static final LocalDate STAY_DATE = LocalDate.parse("2026-10-10");
+ 
+@@ -168,6 +178,30 @@ class InventoryApplicationServiceTest {
+                         HOST, RoomTypeId.of("room_없는것"), STAY_DATE, 100_000));
+     }
+ 
++    @Test
++    void V13_오늘은_UTC가_아니라_서울_날짜다() {
++        // A-01과 B-01. 고정 시각 UTC 10월 1일 20시는 서울 10월 2일 05시다. 서울 기준으로
++        // 10월 1일은 어제라 등록이 거부돼야 한다. UTC로 자르면 오늘로 통해서 이 테스트가 깨진다
++        RoomTypeId roomTypeId = 내_객실_타입();
++
++        assertThrows(PastStayDateException.class,
++                () -> inventoryApplicationService.openInventory(HOST, roomTypeId, UTC_TODAY, 5));
++        assertThrows(PastStayDateException.class,
++                () -> inventoryApplicationService.registerRate(HOST, roomTypeId, UTC_TODAY, 100_000));
++    }
++
++    @Test
++    void V13_서울_오늘은_등록된다() {
++        // 거절 케이스의 짝이다. 서울 날짜로 오늘인 10월 2일은 오늘 이상이라 허용 값이다.
++        // 이 짝이 없으면 오늘까지 막는 가드도 위 테스트를 통과한다(backend/CLAUDE.md T1)
++        RoomTypeId roomTypeId = 내_객실_타입();
++
++        DailyInventory opened = inventoryApplicationService.openInventory(
++                HOST, roomTypeId, SEOUL_TODAY, 5);
++
++        assertEquals(SEOUL_TODAY, opened.stayDate());
++    }
++
+     private RoomTypeId 내_객실_타입() {
+         Property property = catalogApplicationService.registerProperty(
+                 HOST, "테스트 스테이", "SEOUL", "서울특별시 중구 예시로 1", "");
