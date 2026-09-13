@@ -1,7 +1,7 @@
 # 작업 계약 task-S9-payment (결제 컨텍스트 묶음)
 
 최초 작성: 2026-09-12
-최종 갱신: 2026-09-12 (계약 승인과 결정 6건 기입. 사용자 지시 일단 진행해라, 05:21. 브랜치 사정은 10절)
+최종 갱신: 2026-09-13 (9단계. 5절 평가 대상 코드 행, 4절 고친 파일 셋의 반영 뒤 해시, 10절 진행 기록과 개정 후보 다섯. 그 전 2026-09-12 계약 승인과 결정 6건 기입)
 양식: harness/prompts/task-contract.md v6
 
 이 계약은 네 번째 구현 묶음이다. task-S9-catalog, task-S9-inventory-rate, task-S9-booking 1차(PR 127), task-S9-promotion-search(PR 98)가 main a22041c에 들어간 위에 얹는다. 2026-09-11 사용자 결정 셋(harness/out/mvp-parallel-2026-09-11/README.md 1절)의 세션 Y이고, 2026-09-12 사용자 전제 셋이 그 위에 얹힌다. 첫째, 기준선은 123건이 아니라 282건 실패 0이다. 둘째, 애그리거트 루트는 06-2대로 Payment(예약당 하나)이고 PaymentAttempt는 그 안의 엔티티다. 프롬프트의 PaymentAttempt 애그리거트 표기는 그 뜻으로 읽는다. 셋째, 승인 뒤에는 한 턴에 한 단계만 하고 멈추며 커밋은 이유 하나씩 가른다.
@@ -168,20 +168,20 @@ I6과 I7과 I9가 06-2 1절 결제 행의 불변식 전부다. U4는 06-2 v4가 
 | 실제 평가 기준 | harness/prompts/eval-criteria-code.md | sha256:c5ed835951fe09a5 | 축, 심각도, 출력 스키마 |
 | 백엔드 층 규칙 | backend/.claude/rules/layers.md | sha256:cb9e4f68bdc4c43c | 3절 전부. 특히 3-2와 3-3 |
 | 백엔드 테스트 규칙 | backend/.claude/rules/testing.md | sha256:0639a76427f449a3 | T1부터 T6 |
-| 고칠 shared 파일 | backend/src/main/java/com/o2o/shared/ActorResolver.java | sha256:67e8187be496b0cc | 전문. D-3이 이 파일의 require에 프로파일 판정을 더한다 |
-| 고칠 설정 파일 하나 | backend/src/main/resources/application.properties | sha256:f091e83f098bd0d1 | 전문. D-3의 줄 하나가 붙는다 |
-| 고칠 설정 파일 둘 | backend/src/test/resources/application.properties | sha256:91aabc6eb58fa044 | 전문. 같다 |
+| 고칠 shared 파일 | backend/src/main/java/com/o2o/shared/ActorResolver.java | sha256:c40ff8e6d5a4547b | 전문. D-3이 이 파일의 require에 프로파일 판정을 더한다. 고치기 전 해시는 sha256:67e8187be496b0cc이고 버전 칸은 반영 뒤(커밋 e0cc55f) 값이다(2026-09-13 9단계 갱신. fill이 기록된 해시와 실제가 다르면 실패시켜서다) |
+| 고칠 설정 파일 하나 | backend/src/main/resources/application.properties | sha256:9db2d1b00336b040 | 전문. D-3의 줄 하나가 붙는다. 고치기 전 해시는 sha256:f091e83f098bd0d1이고 버전 칸은 반영 뒤(커밋 e0cc55f) 값이다(2026-09-13 9단계 갱신) |
+| 고칠 설정 파일 둘 | backend/src/test/resources/application.properties | sha256:bdd763f4c0dd0d01 | 전문. 같다. 고치기 전 해시는 sha256:91aabc6eb58fa044이고 버전 칸은 반영 뒤(커밋 e0cc55f) 값이다(2026-09-13 9단계 갱신) |
 | 본보기 코드 | backend/src/test/java/com/o2o/inventory/api/InventoryApiTest.java | sha256:df6b9c10b619bbae | V14의 TransactionTemplate 두 트랜잭션 경합 방식. Y10과 Y22가 같은 방식이다 |
 
 10-6과 앞 묶음의 계약과 오늘의 전제와 프롬프트는 이 표에만 있고 5절에는 없다. harness/docs/와 harness/out/의 계획 문서는 평가 입력이 될 수 없고(CLAUDE.md 3절), 앞 묶음의 계약은 이 묶음 코드의 근거가 아니다.
 
-## 5. A와 B 평가 허용 입력 (HR1)
+## 5. A와 B 평가 허용 입력 (HR1) (2026-09-13 평가 대상 코드 행 기입)
 
 오늘의 전제 결정 3에 따라 평가는 MVP 코드가 다 붙은 뒤 한 번이다. 이 표는 그 라운드에서 이 묶음 몫으로 넘길 것이다.
 
 | 자료 | 경로 | 버전 또는 해시 | 읽을 범위 |
 |---|---|---|---|
-| 평가 대상 코드 | 생성 후 기입 | 생성 후 기입 | 브랜치 feat/task-s9-payment의 payment 패키지 전체와 ActorResolver와 설정 파일 둘의 diff와 테스트. 목록 파일은 9단계에 harness/out/task-S9-payment-R1/eval-target-files.md로 만든다 |
+| 평가 대상 코드 | harness/out/task-S9-payment-R1/eval-target-files.md | sha256:7b8c86d83284e099 | 전문. 브랜치 feat/task-s9-payment, 기준 커밋 d56f04d. 프로덕션 52개(payment 새 49, shared 고침 1, 설정 파일 고침 2)와 테스트 7파일 55건. 목록과 커밋 아홉은 그 파일 |
 | 입력 팩 | harness/project-sync/o2o-review-input-pack.md | sha256:1608942c0815f911 | 전문 |
 | 이 작업 계약 | harness/tasks/task-S9-payment.md | 자기 해시 없음 | 전문 |
 | 실제 평가 기준 | harness/prompts/eval-criteria-code.md | sha256:c5ed835951fe09a5 | 축, 심각도, 출력 스키마 |
@@ -191,7 +191,7 @@ I6과 I7과 I9가 06-2 1절 결제 행의 불변식 전부다. U4는 06-2 v4가 
 | 대상이 참조하는 06-1 | document/06-1-o2o-context-map.md | sha256:95bc2b1079d3b739 | 2절 R6과 R7 |
 | 대상이 참조하는 08-3 결정 | harness/decisions/decisions-08-3.md | sha256:1b8580aa86c18fd8 | 1, 2, 3, 4, 6, 9, 10, 11과 표 아래의 11 v2와 부딪히는 번호 문장. 코드가 11 명세 대신 이 결정을 따른 자리(6절 충돌 행)를 평가자가 위반으로 적지 않게 한다 |
 | 백엔드 층 규칙 | backend/.claude/rules/layers.md | sha256:cb9e4f68bdc4c43c | 3-2 shared 기준, 3-3 이벤트 규칙 E1과 E2 |
-| 전역 역직렬화 설정 | backend/src/main/resources/application.properties | sha256:f091e83f098bd0d1 | 7행 fail-on-unknown-properties와 D-3의 프로파일 줄 |
+| 전역 역직렬화 설정 | backend/src/main/resources/application.properties | sha256:9db2d1b00336b040 | 7행 fail-on-unknown-properties와 D-3의 프로파일 줄. 해시는 D-3 반영 뒤 값이고 반영 전은 sha256:f091e83f098bd0d1(4절과 같다. 2026-09-13 9단계 갱신) |
 
 이 표에 넣지 않는 것: 01 전체, 과거 감사 문서, 이전 평가 리포트, 사용자 결정표, harness/docs/ 전체, harness/out/의 계획 문서, harness/state/ 전체, 생성 대화.
 
@@ -385,14 +385,22 @@ Y9부터 Y13과 Y22는 MySQL 통합 테스트다. 메모리 저장소로 대신�
 
 T15부터 T23이 결제 몫인 이유. 아홉 검증 대부분이 예약 상태(HELD, EXPIRED, CANCELED)와 재고 반환을 함께 본다. 이 세션은 결제 컨텍스트가 내는 예외와 이벤트와 중복 판정까지 닫고 예약 상태와 재고 몫은 예약 2차가 닫는다. T14와 T18과 T19는 예약 몫뿐이라 해당 없음이다.
 
-## 10. 승인과 진행
+## 10. 승인과 진행 (2026-09-13 9단계 기입)
 
 | 항목 | 기록 |
 |---|---|
 | 작업 계약 승인 | 승인. join5201, 2026-09-12. 사용자 지시 일단 진행해라(05:21)를 승인으로 읽었다. 결정 6건은 추천대로 D-1부터 D-5 가, D-6 나 |
-| 마지막 성공 단계 | 1단계 완료(2026-09-12). 계약과 결정 6건 승인. 그 전 기록. 1단계 초안(2026-09-12 05:21). 계약 작성과 fill 통과 |
-| 실제 사용 시간 (1단계) | 28분. 2026-09-12 04:53부터 05:21까지. 상태 확인 표, 기준선 282건 실측, 문서 읽기, 계약 작성, fill 통과 |
-| 미해결 사항과 다음 작업 | 브랜치. feat/task-s9-payment가 워크트리 o2o-payment에 체크아웃돼 있어 이 워크트리(o2o-dev, a22041c에서 분리된 HEAD)로 가져오지 못했다. 승인 턴에 그 워크트리의 HEAD를 분리하는 명령과 다른 이름의 브랜치를 새로 따는 명령이 둘 다 도구 권한에서 막혔다. 사용자가 o2o-payment에서 브랜치를 놓거나 다른 이름을 허용해야 커밋과 2단계(이슈와 초안 PR)로 간다. 계약과 기록 행은 작업 트리에만 있다 |
-| 최종 산출물과 버전 | 작업 후 기록 |
-| 실제 사용 시간 | 미측정 |
+| 개정 | 후보 5건. 사용자 완료 판단에서 확정한다. 근거는 harness/out/task-S9-payment-R1/step9-verification.md 4절. 개정 1: 2절 검사 순서 표 4행과 7절 D-2의 Payment 잠금에 격리 수준 READ COMMITTED가 붙는다. 루트만 잠그는 조회가 조인한 시도 표를 잠금 없이 읽어 REPEATABLE READ 스냅샷이 잠금 전에 굳기 때문이다(Y22). 개정 2: 8절 4단계의 resumeAutoResults는 앱 서비스가 아니라 infrastructure의 MockAutoResultResumeRunner 메서드다. 자기 호출은 REQUIRES_NEW 프록시를 타지 않는다. 개정 3: 8-1절 마지막 문단의 Y21 강제 실패 구독자는 @EventListener가 아니라 @TransactionalEventListener(BEFORE_COMMIT)다. 발행이 이벤트 기록 저장보다 앞이라서다. 개정 4: 8-1절 Y22의 이벤트 기록 각자 하나씩은 다른 eventId일 때만 참이고 같은 eventId 둘은 기록 하나다. 테스트 둘로 갈랐다. 개정 5: 4절의 고칠 파일 셋은 반영 뒤 해시로 갱신하고 원래 값을 읽을 범위 칸에 남긴다. 계약 본문 2절과 8절은 고치지 않았다 |
+| 마지막 성공 단계 | 8절 9단계 완료(2026-09-13). INTERNAL-01과 앱 서비스 공개 메서드 셋과 Mock PG 어댑터와 이벤트 넷과 T30이 서고 테스트 337건이 통과하며 검증 표와 회고 표가 나왔다. 이 Task의 모델 몫은 끝났고 남은 것은 사용자 완료 판단과 개정 후보 다섯의 확정이다. 그 전 기록. 1단계 완료(2026-09-12). 계약과 결정 6건 승인. 그 전 기록. 1단계 초안(2026-09-12 05:21). 계약 작성과 fill 통과 |
+| 실제 사용 시간 (1단계) | 28분. 2026-09-12 04:53부터 05:21까지. 상태 확인 표, 기준선 282건 실측, 문서 읽기, 계약 작성, fill 통과. 승인 턴 11분은 따로다 |
+| 실제 사용 시간 (2단계) | 2분. halted 1분과 applied 1분. 사이의 사용자 브랜치 작업은 세지 않았다 |
+| 실제 사용 시간 (3단계) | 건너뜀. 앞 묶음이 세웠다 |
+| 실제 사용 시간 (4단계) | 21분. 세션 중단으로 19분과 2분으로 나뉘었다 |
+| 실제 사용 시간 (5단계) | 17분 |
+| 실제 사용 시간 (6단계) | 28분. 첫 실행에서 Y22 둘이 붉었고 격리 수준을 같은 턴에 고쳤다 |
+| 실제 사용 시간 (6-2단계) | 건너뜀. 조회 API가 없다 |
+| 미해결 사항과 다음 작업 | 사용자 완료 판단과 개정 후보 다섯의 확정. PR 133은 origin/main(34568a6)을 이미 담고 있고 union 검사를 통과했다. 예약 2차 task-S9-booking-lifecycle.md가 이 PR이 main에 들어온 뒤 PAY-01과 PAY-02와 구독자를 만든다. T15, T16, T17, T20, T22, T23의 예약 몫과 T14, T18, T19는 그쪽이다. 실제 재기동으로 재개 러너를 보는 것과 I7 둘째 승인 거부의 직접 테스트와 다른 컨텍스트 잠금 조회의 조인 점검과 ActorRegistry 낡은 주석은 step9-verification.md 6절. 그 전 기록. 브랜치 사정(2026-09-12)은 2단계 행에서 풀렸다 |
+| 최종 산출물과 버전 | backend/ 아래 프로덕션 52파일(새 49, 고침 3)과 테스트 7파일 55건. harness/out/task-S9-payment-R1/ 아래 step4, step5, step6과 step9-verification.md와 eval-target-files.md. 브랜치 feat/task-s9-payment, 기준 커밋 d56f04d |
+| 실제 사용 시간 | 측정된 개발 시간 합 66분. 4단계 21분, 5단계 17분, 6단계 28분. 1단계 28분과 2단계 2분은 승인과 브랜치라 개발 시간이 아니다. 세션 중단 사이 시간은 세지 않았다. 9단계 문서는 아래 행 |
+| 실제 사용 시간 (9단계) | 24분. 2026-09-13 19:12부터 19:36까지. 검증 표와 회고 표, 평가 대상 목록, 이 절, fill과 g1과 union, 기록 행 |
 | 최종 완료 판단 | 대기 |
