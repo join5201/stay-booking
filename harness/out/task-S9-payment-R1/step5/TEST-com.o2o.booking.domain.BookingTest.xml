@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.booking.domain.BookingTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-09-13T09:18:04.953Z" hostname="BOOK-QD5U7FFOBT" time="0.005">
+  <properties/>
+  <testcase name="K3_상태와_스냅샷을_바꾸는_공개_메서드가_없다()" classname="com.o2o.booking.domain.BookingTest" time="0.001"/>
+  <testcase name="K3_다른_기간의_스냅샷은_거절한다()" classname="com.o2o.booking.domain.BookingTest" time="0.002"/>
+  <testcase name="K3_예약이_든_스냅샷의_days도_바깥에서_바꿀_수_없다()" classname="com.o2o.booking.domain.BookingTest" time="0.0"/>
+  <testcase name="K3_생성하면_HELD이고_만료가_생성_시각_더하기_TTL이다()" classname="com.o2o.booking.domain.BookingTest" time="0.0"/>
+  <testcase name="K3_인원_0과_TTL_0은_거절한다()" classname="com.o2o.booking.domain.BookingTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

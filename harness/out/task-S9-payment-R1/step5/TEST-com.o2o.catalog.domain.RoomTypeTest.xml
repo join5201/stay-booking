@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.catalog.domain.RoomTypeTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-09-13T09:18:06.758Z" hostname="BOOK-QD5U7FFOBT" time="0.003">
+  <properties/>
+  <testcase name="상한인_100도_생성한다()" classname="com.o2o.catalog.domain.RoomTypeTest" time="0.0"/>
+  <testcase name="maxOccupancy가_1이면_생성한다()" classname="com.o2o.catalog.domain.RoomTypeTest" time="0.0"/>
+  <testcase name="maxOccupancy가_음수면_거절한다()" classname="com.o2o.catalog.domain.RoomTypeTest" time="0.0"/>
+  <testcase name="maxOccupancy가_0이면_거절한다()" classname="com.o2o.catalog.domain.RoomTypeTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
