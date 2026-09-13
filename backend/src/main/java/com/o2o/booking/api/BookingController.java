@@ -37,17 +37,18 @@ import jakarta.validation.Valid;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * 예약 API 다섯. 설계 근거: 11 예약과 결제 절의 BOOK-01, BOOK-02, BOOK-03, PAY-01, PAY-02와 공통
- * 헤더 표. 2차 계약 2절 PAY-01 표.
+ * 예약 API 여섯. 설계 근거: 11 예약과 결제 절의 BOOK-01, BOOK-02, BOOK-03, BOOK-04, PAY-01, PAY-02와
+ * 공통 헤더 표. 2차 계약 2절 PAY-01 표와 BOOK-04 표.
  *
- * BOOK-01과 PAY-01은 멱등 실행기로 감싼다. 이 컨트롤러가 앱 서비스를 부르고 응답 JSON을 만드는
- * 람다를 실행기에 넘기며, 실행기는 그 JSON을 멱등 기록에 저장했다가 재전송에 되돌린다. 재전송
- * 응답은 최초 시점의 스냅샷이다(11 멱등 처리 절 끝. 화면의 현재 상태는 GET으로 갱신한다). PAY-01의
- * 범위는 경로에 예약 ID가 들어가므로 다른 예약에 같은 키를 써도 다른 범위다(계약 2절 표 4행).
+ * BOOK-01과 PAY-01과 BOOK-04는 멱등 실행기로 감싼다. 이 컨트롤러가 앱 서비스를 부르고 응답 JSON을
+ * 만드는 람다를 실행기에 넘기며, 실행기는 그 JSON을 멱등 기록에 저장했다가 재전송에 되돌린다.
+ * 재전송 응답은 최초 시점의 스냅샷이다(11 멱등 처리 절 끝. 화면의 현재 상태는 GET으로 갱신한다).
+ * PAY-01과 BOOK-04의 범위는 경로에 예약 ID가 들어가므로 다른 예약에 같은 키를 써도 다른 범위다
+ * (계약 2절 표 4행).
  *
- * 조회 셋(BOOK-02, BOOK-03, PAY-02)은 예약의 payment를 결제의 attemptsOf로 채운다. 목록은
- * 항목마다 한 번이다(2차 계약 6절 Booking 응답의 payment 채움 행). BOOK-01의 새 예약은 시도가
- * 있을 수 없어 빈 요약이다.
+ * 조회 셋(BOOK-02, BOOK-03, PAY-02)과 BOOK-04의 응답은 예약의 payment를 결제의 attemptsOf로 채운다.
+ * 목록은 항목마다 한 번이다(2차 계약 6절 Booking 응답의 payment 채움 행). BOOK-01의 새 예약은
+ * 시도가 있을 수 없어 빈 요약이다. BOOK-04는 취소 트랜잭션 안에서 읽어 방금 남긴 환불이 보인다.
  *
  * 검사 순서는 계약 2절 표다. 행위자, 멱등키 형식, body 형식, 멱등 기록, 그다음 앱 서비스.
  * 단 body 형식은 프레임워크가 인자를 해석하며 먼저 보므로 행위자 없음과 body 오류가 겹치면
@@ -61,6 +62,7 @@ public class BookingController {
 
     static final String BOOKINGS_PATH = "/api/v1/bookings";
     static final String PAYMENT_ATTEMPTS = "/payment-attempts";
+    static final String CANCELLATIONS = "/cancellations";
 
     private final BookingApplicationService bookingApplicationService;
     private final BookingPaymentService bookingPaymentService;
@@ -140,6 +142,35 @@ public class BookingController {
         PaymentSummaryView summary = bookingPaymentService.paymentAttempts(UserId.of(actor.id()),
                 BookingId.of(bookingId));
         return PaymentAttemptListResponse.from(bookingId, summary);
+    }
+
+    /**
+     * BOOK-04 예약 취소. 200 Booking. 재전송이면 Idempotency-Replayed: true. 취소 상태와 환불과 재고
+     * 반환이 한 트랜잭션이라 200이면 셋이 다 남았다(11 BOOK-04 처리 규칙). body 없음은 빈 객체와
+     * 같다(계약 2절 BOOK-04 문단). Location은 없다(11 BOOK-04 응답)
+     */
+    @PostMapping(BOOKINGS_PATH + "/{bookingId}" + CANCELLATIONS)
+    public ResponseEntity<String> cancel(
+            @RequestHeader(value = "X-Dev-Actor-Id", required = false) String actorId,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @PathVariable String bookingId,
+            @Valid @RequestBody(required = false) CancelBookingRequest request) {
+        CancelBookingRequest body = request == null ? CancelBookingRequest.empty() : request;
+        Actor actor = actorResolver.require(actorId, ActorRole.GUEST);
+        IdempotencyKey key = IdempotencyKey.of(idempotencyKey);
+        String path = BOOKINGS_PATH + "/" + bookingId + CANCELLATIONS;
+        IdempotencyScope scope = new IdempotencyScope(actor.id(), "POST", path, key);
+
+        IdempotentResult result = idempotentRequestExecutor.execute(scope, body.fingerprint(),
+                () -> {
+                    Booking booking = bookingApplicationService.cancelBooking(
+                            body.toCommand(UserId.of(actor.id()), BookingId.of(bookingId)));
+                    BookingResponse response = BookingResponse.from(booking,
+                            bookingPaymentService.paymentSummaryOf(booking.id()), Instant.now(clock));
+                    return new StoredResponse(HttpStatus.OK.value(), null,
+                            jsonMapper.writeValueAsString(response));
+                });
+        return toResponse(result);
     }
 
     /** 멱등 실행기의 결과를 HTTP로. 최초와 재전송이 같은 본문이고 재전송만 표시 헤더가 붙는다 */
