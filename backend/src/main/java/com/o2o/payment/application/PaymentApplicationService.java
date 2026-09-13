@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,9 +43,17 @@ import com.o2o.shared.Money;
  *
  * 결제는 예약을 모른다(06-1 R6). bookingId는 문자열이고 예약 리포지토리를 읽지 않는다(11 결제
  * 접수와 환불 절 첫 줄). 시각을 Clock에서 받는 이유는 앞 묶음과 같다. 테스트가 고정 Clock을 끼운다.
+ *
+ * 격리 수준이 READ COMMITTED인 이유(2026-09-13, Y22에서 드러남). 잠금 뒤에 읽은 값이 최신이어야
+ * 규칙 2와 3이 선다(계약 7절 D-2. 잠금이 규칙 2보다 앞). MySQL의 기본 REPEATABLE READ에서는
+ * 트랜잭션의 첫 일관 읽기가 스냅샷을 고정하는데, 루트만 잠그는 조회(for update of payment)가 조인한
+ * 시도 표를 잠금 없이 읽으면서 잠금을 얻기도 전에 스냅샷이 고정된다. 그러면 잠금이 풀린 뒤 읽는
+ * 시도와 이벤트 기록이 앞 트랜잭션의 커밋을 못 보고 같은 이벤트 둘이 둘 다 PROCESSED가 된다.
+ * READ COMMITTED는 읽기마다 새 스냅샷이라 잠금 뒤 읽기가 커밋된 최신을 본다. 잠금 순서는 그대로
+ * 루트 하나다(08-3 결정 3). 시도 표를 먼저 잠그면 루트를 쥔 채 시도를 고치는 쪽과 교착한다.
  */
 @Service
-@Transactional
+@Transactional(isolation = Isolation.READ_COMMITTED)
 public class PaymentApplicationService {
 
     private final PaymentRepository paymentRepository;
@@ -159,7 +168,7 @@ public class PaymentApplicationService {
      * 결과는 INTERNAL-01과 같은 처리 길로 넣는다. eventId는 auto_ 뒤에 attemptId라 두 번째
      * 전달은 규칙 2나 3이 DUPLICATE로 막는다(T26). DEFER 시도는 아무것도 하지 않는다.
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
     public Optional<MockEventResult> deliverAutoResult(PaymentAttemptId attemptId) {
         Objects.requireNonNull(attemptId, "attemptId는 null일 수 없다");
         Payment payment = paymentRepository.findByAttemptIdForUpdate(attemptId)
