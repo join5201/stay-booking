@@ -1,7 +1,7 @@
 # 작업 계약 task-S9-booking-lifecycle (예약과 선점 묶음. 2차: 결제 중계와 확정과 만료와 취소)
 
 최초 작성: 2026-09-13
-최종 갱신: 2026-09-13 (초안. 결제 계약 승인(2026-09-12) 뒤에 미리 쓴 판이라 결제 코드의 실제 이름은 결제 PR이 main에 들어간 뒤 2단계에서 대조한다)
+최종 갱신: 2026-09-13 (계약 승인. 결정 5건 추천대로. 6절 확정 칸 아홉, 7절 결정 칸 다섯, 10절. join5201, 2026-09-13. 결제 코드의 실제 이름은 결제 PR이 main에 들어간 뒤 2단계에서 대조한다)
 양식: harness/prompts/task-contract.md v6
 
 이 계약은 다섯 번째 구현 묶음이다. task-S9-catalog, task-S9-inventory-rate, task-S9-booking 1차(PR 127), task-S9-promotion-search(PR 98)가 main에 있고 task-S9-payment(브랜치 feat/task-s9-payment, 계약 승인 2026-09-12)가 그 위에 얹힐 예정이다. 1차 계약 7절 D-5 나에 따라 2차는 새 계약이고 이 파일이 그것이다. 사용자가 2026-09-13에 결제 계약 승인(2026-09-12)만 보고 초안을 미리 쓰라고 했으므로 결제 쪽 접점은 승인된 결제 계약의 이름(openAttempt, refund, attemptsOf, PaymentApproved, PaymentFailed)으로 적는다. 결제 PR이 main에 들어가면 2단계에서 실제 코드의 이름과 대조하고 다르면 10절 개정 칸에 적는다.
@@ -225,9 +225,9 @@ T1 TTL 만료의 건별 처리. 스케줄러가 잠금 없이 due 목록(status 
 
 | 정책 ID 또는 쟁점 | 적용할 값 또는 판단 | 상태와 사용자 확인 |
 |---|---|---|
-| P01 Hold TTL | 채택. 10분은 1차 값 그대로(o2o.booking.hold-ttl, 기본값 PT10M). 스케줄러 주기는 로컬 기본 1초이고 설정값이다(7절 D-3). 08-3 결정 11의 11-4가 적은 T1 30초는 가설이고 도메인 결정이 아니라 적혀 있어 11 P01의 1초를 기본값으로 둔다 | 계약 승인으로 확정 |
+| P01 Hold TTL | 채택. 10분은 1차 값 그대로(o2o.booking.hold-ttl, 기본값 PT10M). 스케줄러 주기는 로컬 기본 1초이고 설정값이다(7절 D-3). 08-3 결정 11의 11-4가 적은 T1 30초는 가설이고 도메인 결정이 아니라 적혀 있어 11 P01의 1초를 기본값으로 둔다 | 확정. 계약 승인. join5201, 2026-09-13 |
 | P03 통화와 달력 | 채택. 청구액은 스냅샷 총액을 shared Money로 넘긴다. Money 상한 1,000,000,000은 결제 계약 P03 행이 적은 shared의 한계이고 이 묶음도 고치지 않는다. 취소 날짜 판정은 서울 오늘이다 | 확정. 앞 묶음 |
-| P05 취소 | 채택. 본인의 CONFIRMED 예약을 서울 오늘이 checkIn보다 앞일 때 전체 취소한다. 체크인 당일은 불가(409 CANCELLATION_NOT_ALLOWED). 수수료 0, 전액 환불. reason은 선택이고 빈 문자열 기본 | 계약 승인으로 확정 |
+| P05 취소 | 채택. 본인의 CONFIRMED 예약을 서울 오늘이 checkIn보다 앞일 때 전체 취소한다. 체크인 당일은 불가(409 CANCELLATION_NOT_ALLOWED). 수수료 0, 전액 환불. reason은 선택이고 빈 문자열 기본 | 확정. 계약 승인. join5201, 2026-09-13 |
 | P07 로컬 행위자 | 채택. 셋 다 GUEST. 남의 예약은 404 RESOURCE_NOT_FOUND(T02) | 확정. 앞 묶음 |
 | P08 원자성 | 채택. 확정과 만료와 취소가 각각 Booking과 재고 N행을 한 트랜잭션에 묶는다(06-4 0절 이탈 선언). 취소는 환불까지 같은 트랜잭션(11-2) | 확정. 08-3 수용 |
 | P02, P04, P06, P09, P10, P11 | 이번 작업과 무관. P04와 P09는 프로모션 묶음이 닫았고 이 묶음은 그 계산기를 부르기만 한다 | 확인 대기 |
@@ -239,13 +239,13 @@ T1 TTL 만료의 건별 처리. 스케줄러가 잠금 없이 due 목록(status 
 | 08-3 결정 10 잠금 보유 중 PG 호출 | 채택. 취소는 refund를 재고 잠금보다 먼저 둔다. Booking 잠금을 쥔 채 Mock 환불을 부르는 것은 v1 감수 | 확정. 08-3 수용 |
 | 08-3 결정 11의 11-6 종착 멱등 반환 | 채택. BOOK-01의 같은 키 재전송은 예약이 EXPIRED여도 최초 HELD 응답을 재전송한다(T29). 1차 실행기가 이미 그렇게 동작하고 이 묶음은 그것을 테스트로 닫는다 | 확정. 08-3 수용 |
 | 08-3 결정 1, 2, 4, 9와 11의 11-3과 11-5 | 결제 몫이거나 v1 밖. 결정 1의 정산 표식은 7절 D-1 | 확정. 08-3 수용 |
-| 11 명세와 08-3의 충돌 하나. INTERNAL-01 규칙 7의 200 시점과 T23 | 결제 계약이 08-3 결정 6을 따르기로 했으므로 결제 몫은 커밋되고 예약 정책은 별도 트랜잭션이다. 그래서 정책 실패 뒤 같은 이벤트 재전달은 DUPLICATE이고 예약 정책을 다시 돌리지 않는다. T23의 재전달 시 정상 완료는 재전달이 아니라 7절 D-1의 치유로 닫힌다. 부분 결과 롤백은 REQUIRES_NEW의 롤백이 그대로 만족한다 | 계약 승인으로 확정. 7절 D-1 |
-| 11 명세와 06-4 v4의 충돌 둘. 취소 환불의 일관성 | v4 2-2 카드는 결과적이고 11 BOOK-04와 08-3 11-2는 동기다. 08-3을 따른다. 위 결정 7 행 | 계약 승인으로 확정 |
-| 11 명세와 06-4의 차이 셋. confirm의 EXPIRED 거부 | 06-4 1-2 confirm 행은 EXPIRED를 거부(승인 지연 환불 정책의 영역)라 적고 11 규칙 5는 EXPIRED면 지연 승인 환불이라 적는다. 둘은 같은 말이다. confirm은 EXPIRED에서 InvalidStateTransition을 던지고 P1은 confirm을 부르기 전에 상태로 분기해 환불 경로로 간다 | 계약 승인으로 확정 |
-| 이벤트 페이로드 | 결제 계약 6절의 PaymentApproved(paymentId, bookingId, paymentAttemptId, pgTransactionId, amount, currency, attemptCount, occurredAt)와 PaymentFailed(위에 failureCode)를 그대로 받는다. 이 묶음의 셋은 06-4 v5 2-4대로 bookingId와 사유(만료만)이고 occurredAt을 더한다 | 계약 승인으로 확정 |
-| Booking 응답의 payment 채움 | 예약 조회마다 결제의 attemptsOf를 한 번 부른다. BOOK-02 목록은 항목마다 한 번이라 최대 100번이다. 결제 패키지에 일괄 메서드를 더하지 않는다. v1 감수 | 계약 승인으로 확정 |
-| 오류 코드 매핑 | 결제 예외 넷을 예약 앱 서비스가 booking 예외로 감싸고 핸들러가 11의 코드로 바꾼다. AttemptInProgress는 PaymentInProgressException으로 감싸 PAYMENT_IN_PROGRESS, AttemptLimitExceeded는 PaymentAttemptsExhaustedException으로 감싸 PAYMENT_ATTEMPTS_EXHAUSTED, AlreadyApproved는 InvalidStateTransition으로 감싸 BOOKING_STATE_CONFLICT, NoApprovedAttempt와 AmountMismatch는 감싸지 않고 INTERNAL_ERROR(불변 위반). 예약 예외는 BookingExpired가 BOOKING_EXPIRED, InvalidStateTransition이 BOOKING_STATE_CONFLICT, CancellationNotAllowed가 CANCELLATION_NOT_ALLOWED. 핸들러는 booking 예외만 알고 payment 예외 클래스를 import하지 않는다 | 계약 승인으로 확정 |
-| version | 전이마다 1씩 오른다. HELD 0, CONFIRMED 1, CANCELED 2, EXPIRED 1. 11 BOOK-04 예시가 취소 뒤 2다 | 계약 승인으로 확정 |
+| 11 명세와 08-3의 충돌 하나. INTERNAL-01 규칙 7의 200 시점과 T23 | 결제 계약이 08-3 결정 6을 따르기로 했으므로 결제 몫은 커밋되고 예약 정책은 별도 트랜잭션이다. 그래서 정책 실패 뒤 같은 이벤트 재전달은 DUPLICATE이고 예약 정책을 다시 돌리지 않는다. T23의 재전달 시 정상 완료는 재전달이 아니라 7절 D-1의 치유로 닫힌다. 부분 결과 롤백은 REQUIRES_NEW의 롤백이 그대로 만족한다 | 확정. 계약 승인. join5201, 2026-09-13. 7절 D-1 |
+| 11 명세와 06-4 v4의 충돌 둘. 취소 환불의 일관성 | v4 2-2 카드는 결과적이고 11 BOOK-04와 08-3 11-2는 동기다. 08-3을 따른다. 위 결정 7 행 | 확정. 계약 승인. join5201, 2026-09-13 |
+| 11 명세와 06-4의 차이 셋. confirm의 EXPIRED 거부 | 06-4 1-2 confirm 행은 EXPIRED를 거부(승인 지연 환불 정책의 영역)라 적고 11 규칙 5는 EXPIRED면 지연 승인 환불이라 적는다. 둘은 같은 말이다. confirm은 EXPIRED에서 InvalidStateTransition을 던지고 P1은 confirm을 부르기 전에 상태로 분기해 환불 경로로 간다 | 확정. 계약 승인. join5201, 2026-09-13 |
+| 이벤트 페이로드 | 결제 계약 6절의 PaymentApproved(paymentId, bookingId, paymentAttemptId, pgTransactionId, amount, currency, attemptCount, occurredAt)와 PaymentFailed(위에 failureCode)를 그대로 받는다. 이 묶음의 셋은 06-4 v5 2-4대로 bookingId와 사유(만료만)이고 occurredAt을 더한다 | 확정. 계약 승인. join5201, 2026-09-13 |
+| Booking 응답의 payment 채움 | 예약 조회마다 결제의 attemptsOf를 한 번 부른다. BOOK-02 목록은 항목마다 한 번이라 최대 100번이다. 결제 패키지에 일괄 메서드를 더하지 않는다. v1 감수 | 확정. 계약 승인. join5201, 2026-09-13 |
+| 오류 코드 매핑 | 결제 예외 넷을 예약 앱 서비스가 booking 예외로 감싸고 핸들러가 11의 코드로 바꾼다. AttemptInProgress는 PaymentInProgressException으로 감싸 PAYMENT_IN_PROGRESS, AttemptLimitExceeded는 PaymentAttemptsExhaustedException으로 감싸 PAYMENT_ATTEMPTS_EXHAUSTED, AlreadyApproved는 InvalidStateTransition으로 감싸 BOOKING_STATE_CONFLICT, NoApprovedAttempt와 AmountMismatch는 감싸지 않고 INTERNAL_ERROR(불변 위반). 예약 예외는 BookingExpired가 BOOKING_EXPIRED, InvalidStateTransition이 BOOKING_STATE_CONFLICT, CancellationNotAllowed가 CANCELLATION_NOT_ALLOWED. 핸들러는 booking 예외만 알고 payment 예외 클래스를 import하지 않는다 | 확정. 계약 승인. join5201, 2026-09-13 |
+| version | 전이마다 1씩 오른다. HELD 0, CONFIRMED 1, CANCELED 2, EXPIRED 1. 11 BOOK-04 예시가 취소 뒤 2다 | 확정. 계약 승인. join5201, 2026-09-13 |
 | 진행 방식 | 승인 뒤 한 턴에 한 단계만 하고 멈춘다. 커밋은 이유 하나씩 가른다(층 하나, 테스트 파일 하나, 결과 사본, 기록 행이 각각 따로) | 확정. join5201, 2026-09-12 |
 
 확인 대기인 정책 여섯은 이번 코드가 의존하지 않는다. 미결 정책에 의존하는 구현을 확정하지 않는다(N4). 08-3 결정 11건은 2026-09-07 전부 수용됐으므로 확정값으로 쓴다.
@@ -263,7 +263,7 @@ T1 TTL 만료의 건별 처리. 스케줄러가 잠금 없이 due 목록(status 
 
 추천은 나다. 11 명세의 검증 30개 어디에도 T2가 없고 T23의 재전달 완료는 08-3 결정 6 아래에서는 어느 안이든 재전달로 닫히지 않는다. 가의 열 둘은 오늘 독자가 T2뿐이라 BN5에 가깝고, 결제 계약 승인이 T2를 MVP 밖으로 적은 것과도 맞다. 나의 유실 환불은 Mock PG에서 돈이 오가지 않는 v1의 감수 범위다.
 
-결정: (사용자 기입)
+결정: 나. join5201, 2026-09-13. T2 순찰과 정산 표식은 넣지 않는다. 유실된 확정은 T1의 확정 우선이 닫고 유실된 지연 승인 환불은 로그로 남긴다.
 
 ### D-2. PAY-01이 만료 시각 지난 HELD를 먼저 만료시키는 트랜잭션
 
@@ -277,7 +277,7 @@ T1 TTL 만료의 건별 처리. 스케줄러가 잠금 없이 due 목록(status 
 
 추천은 가다. 실행기를 그대로 두고 11 문장을 정상 경로에서 만족한다. 좁은 창의 처리는 11이 GET에 잠시 HELD가 보여도 승인 가능성을 보장하지 않는다고 적은 것과 같은 결이다.
 
-결정: (사용자 기입)
+결정: 가. join5201, 2026-09-13. 잠금 전 REQUIRES_NEW 선만료. 잠금 뒤의 좁은 창은 409만 내고 만료 저장은 T1에 맡긴다.
 
 ### D-3. TTL 스케줄러의 주기와 켜고 끄기
 
@@ -290,7 +290,7 @@ T1 TTL 만료의 건별 처리. 스케줄러가 잠금 없이 due 목록(status 
 
 추천은 가다. 테스트가 결정적이고 키 셋은 이 계약이 정의하므로 N6에 걸리지 않는다. 키와 API(@Scheduled의 fixedDelayString, @ConditionalOnProperty)는 4단계에서 빌드가 쓰는 jar에서 확인하고 못 찾으면 멈춘다.
 
-결정: (사용자 기입)
+결정: 가. join5201, 2026-09-13. 설정 키 셋과 테스트 설정의 enabled=false 한 줄. 4-4단계에서 붙인다.
 
 ### D-4. 요금만 합산하는 1차 어댑터의 자리
 
@@ -303,7 +303,7 @@ T1 TTL 만료의 건별 처리. 스케줄러가 잠금 없이 due 목록(status 
 
 추천은 가다. 1차 D-4가 교체를 약속했고 두 어댑터를 유지할 이유가 없다.
 
-결정: (사용자 기입)
+결정: 가. join5201, 2026-09-13. 새 어댑터가 유일한 PriceQuotePort 빈. 옛 파일은 tmp/_moved/backend/로 옮긴다.
 
 ### D-5. 결제 값 객체를 shared로 올리나
 
@@ -316,7 +316,7 @@ layers.md 3-2는 두 번째 컨텍스트가 쓰기 시작하면 shared로 올린
 
 추천은 가다. 재배치는 보류이고 결제를 고치지 않는 것이 병렬의 날 뒤에도 안전하다.
 
-결정: (사용자 기입)
+결정: 가. join5201, 2026-09-13. 올리지 않는다. layers.md 3-2 문장의 예외 사유는 하네스 세션 몫으로 이슈에 남긴다.
 
 ## 8. 세로 진행 단계와 각 단계의 완료 조건
 
@@ -390,11 +390,11 @@ T23이 예약 몫까지 닫히는 뜻. 11의 문장(재전달 시 정상 완료)
 
 | 항목 | 기록 |
 |---|---|
-| 작업 계약 승인 | 대기. 초안 2026-09-13 |
+| 작업 계약 승인 | 승인. join5201, 2026-09-13. 결정 5건은 추천대로 D-1 나, D-2부터 D-5 가 |
 | 개정 | 없음. 2단계의 접점 대조에서 결제 코드의 이름이 다르면 여기 적는다 |
-| 마지막 성공 단계 | 1단계 초안(2026-09-13). 결제 계약 승인(2026-09-12) 뒤 사용자 지시로 미리 썼다 |
-| 실제 사용 시간 (1단계) | 초안 작성 시간은 progress.md의 행 |
-| 미해결 사항과 다음 작업 | 사용자 승인과 결정 5건. 그 뒤 결제 PR이 main에 들어가면 2단계 |
+| 마지막 성공 단계 | 1단계 승인(2026-09-13). 초안은 결제 계약 승인(2026-09-12) 뒤 사용자 지시로 결제 PR 병합 전에 미리 썼다 |
+| 실제 사용 시간 (1단계) | 약 48분. 초안 약 45분(문맥 압축 뒤 추정)과 승인 기록 3분 |
+| 미해결 사항과 다음 작업 | 결제 PR이 main에 들어가면 2단계(이슈, origin/main 병합, 접점 대조, 생성 후 기입 3건 채움). 결제 세션은 2026-09-13 18:02에 4단계까지 끝냈고 아직 main에 없다 |
 | 최종 산출물과 버전 | 작업 후 기록 |
 | 실제 사용 시간 | 미측정. 단계마다 기입 |
 | 최종 완료 판단 | 대기 |
