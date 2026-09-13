@@ -33,8 +33,11 @@ public interface PaymentJpaRepository extends JpaRepository<Payment, String> {
     Optional<Payment> findOneByBookingIdForUpdate(@Param("bookingId") String bookingId);
 
     // 시도 ID로 루트를 찾아 잠근다. 시도가 루트를 통해서만 접근되므로(06-2 6절 CRC) 시도 표를
-    // 직접 잠그지 않고 루트 행을 잠근다. MySQL은 조인한 시도 행도 함께 잠그지만 직렬화의 기준은
-    // 루트 한 행이다(08-3 결정 3)
+    // 직접 잠그지 않고 루트 행을 잠근다. 직렬화의 기준은 루트 한 행이다(08-3 결정 3).
+    // 실제 SQL은 for update of p1_0이라 루트 행만 잠그고 조인한 시도 행은 일반 읽기다(2026-09-13
+    // SQL 로그로 확인). 그래서 잠금 뒤 읽기가 앞 커밋을 보려면 트랜잭션이 READ COMMITTED여야
+    // 한다(PaymentApplicationService 주석과 설정 파일의 풀 기본값). 시도 행을 먼저 잠그는 안은
+    // 루트를 쥔 채 시도를 고치는 쪽과 교착한다
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Payment p join p.attempts a where a.id = :attemptId")
     Optional<Payment> findOneByAttemptIdForUpdate(@Param("attemptId") String attemptId);
