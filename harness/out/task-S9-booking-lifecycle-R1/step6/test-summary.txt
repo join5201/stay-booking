@@ -1,0 +1,35 @@
+# task-S9-booking-lifecycle 6단계 결과 요약 (실행 2026-09-13 22:28)
+
+명령: JAVA_HOME 21; ./backend/gradlew.bat -p backend test --rerun (워크트리 o2o-dev, 브랜치 feat/task-s9-booking-lifecycle, 코드 커밋 5872340, 0153a07, 7dcd26c, 테스트 커밋 c00bd0f, 03ba667)
+결과: exit 0, BUILD SUCCESSFUL in 1m 44s
+
+junit XML 합계 (backend/build/test-results/test):
+{"files":46,"tests":408,"failures":0,"errors":0,"skipped":0}
+5단계 394건에서 14건 늘었다(booking/api/BookingPaymentApiTest). 기존 394건은 그대로 통과다.
+
+접속 문자열: jdbc:mysql://127.0.0.1:3307/o2o_catalog_test (테스트 설정 기본값). 스케줄러는 테스트에서 꺼져 있다.
+
+새 테스트 14건과 8-1절 대응:
+| 항목 | 건수 | 확인한 것 |
+|---|---|---|
+| L14 | 3 | 202와 Location과 11개 필드, mockMode 생략과 body 없음은 APPROVE, 같은 키 재전송(최초 응답, Idempotency-Replayed, 시도 수 그대로), 같은 키 다른 body 409, 다른 예약에 같은 키는 새 요청, 처리 중 409 REQUEST_IN_PROGRESS(Booking 행을 잠근 채. 1차 K17 방식) |
+| L15 | 6 | 400 둘(멱등키, 형식 밖 값과 미정의 필드), 401, 403, 404 같은 본문, 만료 시각 지난 HELD의 409 BOOKING_EXPIRED와 그 뒤 GET의 EXPIRED와 held 반환, 이미 EXPIRED의 409, CONFIRMED의 BOOKING_STATE_CONFLICT, DEFER 뒤 PAYMENT_IN_PROGRESS, DECLINE 셋 뒤 넷째는 BOOKING_EXPIRED가 먼저, 실패 셋을 심은 HELD의 PAYMENT_ATTEMPTS_EXHAUSTED |
+| L16 | 1 | APPROVE 뒤 GET 상세가 CONFIRMED, confirmedAt, version 1, payment.attemptCount 1, approvedAttemptId, attempts[0] APPROVED, refund null, held 0 sold 1 |
+| L17 | 2 | DECLINE 하나는 HELD와 FAILED와 MOCK_DECLINED, 셋이면 EXPIRED PAYMENT_FAILED와 held 0. DEFER는 REQUESTED로 남고 INTERNAL-01 승인 뒤 CONFIRMED |
+| L18 | 2 | 200과 3개 필드, attemptNumber 오름차순, 시도 없으면 0과 빈 배열, 401과 403과 404 |
+
+방식: 1차 BookingApiTest와 같다. 진짜 포트에 JDK HttpClient. 서버가 실제 시계라 날짜는 서울 오늘에서 센다. 실제 시계로 만들 수 없는 상태 둘은 DB에 직접 놓았다(T6). 만료 시각 지난 HELD는 expires_at을 created_at으로 당겼고, 한도 도달은 결제 집합체에 실패 시도 셋을 심었다(HTTP만으로는 셋째 실패가 만료시켜 넷째가 BOOKING_EXPIRED가 먼저다).
+
+코드 변경(booking/api만):
+- 새 파일 넷: RequestPaymentRequest(mockMode 하나. 선택. 지문은 해석된 값), BodyFingerprint(요청 본문 sha256. BOOK-04도 쓸 자리), PaymentAttemptResponse(11개 필드), PaymentAttemptListResponse(3개 필드)
+- 고친 파일 넷: BookingController(PAY-01과 PAY-02, 응답 조립 toResponse, BOOK-02와 BOOK-03의 payment 채움), BookingResponse(전이 다섯 필드와 payment를 실제 값으로. RefundResponse 7개 필드), BookingExceptionHandler(409 넷. BOOKING_EXPIRED, BOOKING_STATE_CONFLICT, PAYMENT_IN_PROGRESS, PAYMENT_ATTEMPTS_EXHAUSTED), package-info(설명)
+- 고친 테스트 하나: 1차 BookingQueryApiTest K24. status=CONFIRMED 0건 전제를 필터 검사로 바꿨다. 2차 API 테스트가 같은 손님의 CONFIRMED를 같은 DB에 남겨 전체 실행에서 그 전제가 깨졌다(단독 실행은 통과, 전체 실행 첫 판 1건 실패). 검사 의도는 같다
+
+단계 순서 이탈 하나: 계약 8절은 Booking 응답의 payment 채움을 6-2에 두지만 8-1 L16과 L17이 GET 상세의 confirmedAt과 expirationReason과 payment를 읽으므로 이 단계에서 앞당겼다(커밋 5872340). 6-2에는 L21(목록과 상세가 같은 요약, 시도 없는 예약의 빈 요약)만 남는다. 4-3의 잠금 조회 앞당김과 같은 성격이고 progress 행에 적었다.
+
+실제 서버(같은 폴더 http-calls.txt와 bootrun-excerpt.txt): bootRun --args='--o2o.booking.hold-ttl=PT2M'으로 띄우고 curl로 쳤다. 예약 다섯. A는 APPROVE(202, 재전송, 다른 body 409, GET CONFIRMED와 payment, PAY-02, CONFIRMED에 새 키 409 BOOKING_STATE_CONFLICT), B는 DECLINE 셋(T16 HELD와 FAILED, T17 EXPIRED PAYMENT_FAILED, 넷째 409 BOOKING_EXPIRED, PAY-02 셋 오름차순), C는 DEFER 뒤 INTERNAL-01(T15 409 PAYMENT_IN_PROGRESS, 200 PROCESSED, GET CONFIRMED), D는 오류 경로(400 둘, 401, 403, 404 둘, PAY-02의 404와 403, body 없음 202), E는 결제 없이 두어 스케줄러가 만료(expiresAt 13:20:10.723Z, 스캔 로그 13:20:11.154Z, expiredAt 13:20:11.111Z, TTL_EXPIRED, 그 뒤 PAY-01 409 BOOKING_EXPIRED, INV-04 held 0). 마지막 BOOK-02 목록의 항목마다 payment가 채워진다. 서버 ERROR 0건. 확인 뒤 서버를 내리고 테스트를 돌렸다(같은 DB).
+
+관찰:
+1. INV-04의 to는 제외 경계라 from=D1&to=D2로 부른 재고 범위 응답에 첫 날짜만 보인다. 기록의 절 제목이 날짜마다라고 적었지만 본문은 한 날짜다. 둘째 날짜도 같은 수량이었음은 API 테스트(L16, L17의 날짜별 검사)가 본다.
+2. 전체 실행 두 번째 판(22:02부터 22:11)이 8분 22초 걸렸다. DevProfileBoundaryTest(verify 프로파일의 새 컨텍스트)의 스키마 create-drop이 6분 51초 기다렸다(No JTA 로그 22:04:14, EntityManagerFactory 초기화 22:11:05). 첫 판(1분 36초)과 셋째 판(1분 44초)에서는 재현되지 않았다. 다른 캐시 컨텍스트의 연결이 쥔 메타데이터 잠금을 DDL이 기다린 것으로 보이나 확인하지 않았다. 테스트 결과는 셋 다 실패 0이다. 이 묶음 밖이라 안 해 본 것 칸에만 적는다.
+3. 계약 8절 6단계 완료 기준(경로가 명세 그대로, L14부터 L18, 실제 서버 호출 기록)을 충족한다. 6-2단계(BOOK-04, L19부터 L23)와 9단계는 이번 지시 밖이라 멈춘다.
