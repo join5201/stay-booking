@@ -3,9 +3,7 @@ package com.o2o.payment.application;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,17 +12,14 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.o2o.payment.CommittedPaymentEvents;
 import com.o2o.payment.domain.MockMode;
 import com.o2o.payment.domain.Payment;
 import com.o2o.payment.domain.PaymentApproved;
 import com.o2o.payment.domain.PaymentAttempt;
-import com.o2o.payment.domain.PaymentFailed;
-import com.o2o.payment.domain.PaymentRefunded;
 import com.o2o.payment.domain.PaymentRepository;
-import com.o2o.payment.domain.PaymentRequested;
 import com.o2o.payment.infrastructure.MockAutoResultResumeRunner;
 import com.o2o.shared.Money;
 
@@ -39,9 +34,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * 문장, 08-3 결정 6.
  *
  * PaymentEventTest가 발행을 센다면 여기는 커밋 뒤 도착을 센다. 그래서 테스트 트랜잭션으로
- * 감싸지 않고 실제 MySQL에 커밋한다(T3). 도착을 보는 도구는 테스트 전용 구독자다. 운영
- * 구독자(자동 결과 어댑터)와 같은 방식(@TransactionalEventListener)으로 걸어 같은 조건에서
- * 받는다. 예약 2차의 구독자가 이 자리에 선다.
+ * 감싸지 않고 실제 MySQL에 커밋한다(T3). 도착을 보는 도구는 테스트 전용 구독자
+ * CommittedPaymentEvents다. 예약 2차의 구독자가 이 자리에 선다.
  *
  * 예약 ID를 건마다 새로 만들어 격리한다. 시각은 고정한다.
  */
@@ -50,47 +44,6 @@ class PaymentAutoResultTest {
 
     private static final Instant FIXED_NOW = Instant.parse("2026-10-01T03:00:00Z");
     private static final Money CHARGE = Money.krw(180_000);
-
-    /** 커밋된 사실만 받는 테스트 전용 구독자. 예약 2차의 자리를 흉내 낸다 */
-    static class CommittedEventRecorder {
-
-        final List<PaymentRequested> requested = new CopyOnWriteArrayList<>();
-        final List<PaymentApproved> approved = new CopyOnWriteArrayList<>();
-        final List<PaymentFailed> failed = new CopyOnWriteArrayList<>();
-        final List<PaymentRefunded> refunded = new CopyOnWriteArrayList<>();
-
-        @TransactionalEventListener
-        public void onRequested(PaymentRequested event) {
-            requested.add(event);
-        }
-
-        @TransactionalEventListener
-        public void onApproved(PaymentApproved event) {
-            approved.add(event);
-        }
-
-        @TransactionalEventListener
-        public void onFailed(PaymentFailed event) {
-            failed.add(event);
-        }
-
-        @TransactionalEventListener
-        public void onRefunded(PaymentRefunded event) {
-            refunded.add(event);
-        }
-
-        long requestedOf(String attemptId) {
-            return requested.stream().filter(e -> e.paymentAttemptId().value().equals(attemptId)).count();
-        }
-
-        long approvedOf(String attemptId) {
-            return approved.stream().filter(e -> e.paymentAttemptId().value().equals(attemptId)).count();
-        }
-
-        long failedOf(String attemptId) {
-            return failed.stream().filter(e -> e.paymentAttemptId().value().equals(attemptId)).count();
-        }
-    }
 
     @TestConfiguration
     static class AutoResultTestConfiguration {
@@ -102,8 +55,8 @@ class PaymentAutoResultTest {
         }
 
         @Bean
-        CommittedEventRecorder committedEventRecorder() {
-            return new CommittedEventRecorder();
+        CommittedPaymentEvents committedPaymentEvents() {
+            return new CommittedPaymentEvents();
         }
     }
 
@@ -117,7 +70,7 @@ class PaymentAutoResultTest {
     private MockAutoResultResumeRunner resumeRunner;
 
     @Autowired
-    private CommittedEventRecorder recorder;
+    private CommittedPaymentEvents recorder;
 
     @Autowired
     private PlatformTransactionManager transactionManager;
