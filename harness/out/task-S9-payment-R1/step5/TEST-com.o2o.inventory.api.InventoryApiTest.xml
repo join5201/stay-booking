@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.inventory.api.InventoryApiTest" tests="24" skipped="0" failures="0" errors="0" timestamp="2026-09-13T09:18:06.761Z" hostname="BOOK-QD5U7FFOBT" time="7.299">
+  <properties/>
+  <testcase name="V14_잠긴_요금_행도_잠금이_풀린_뒤의_version과_대조한다()" classname="com.o2o.inventory.api.InventoryApiTest" time="2.116"/>
+  <testcase name="날짜_형식이_틀리면_400_INVALID_DATE_RANGE다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.069"/>
+  <testcase name="V9_과거_날짜는_등록도_수정도_400이다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.103"/>
+  <testcase name="V7_없는_객실_타입도_같은_404다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.018"/>
+  <testcase name="V5_일괄_등록은_한_날짜라도_겹치면_전부_실패한다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.099"/>
+  <testcase name="INV_01_총_수량_0도_등록된다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.063"/>
+  <testcase name="V6_지난_version으로_수정하면_409이고_최근_변경이_남는다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.097"/>
+  <testcase name="V7_남의_객실_타입에_등록하면_404다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.052"/>
+  <testcase name="INV_03_판매분_아래로_수정하면_409_INVENTORY_BELOW_COMMITTED다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.077"/>
+  <testcase name="RATE_01_통화가_KRW가_아니면_400이다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.041"/>
+  <testcase name="RATE_01_같은_날짜를_두_번_등록하면_409다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.077"/>
+  <testcase name="INV_03_수정하면_200이고_version이_오른다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.108"/>
+  <testcase name="V14_잠긴_재고_행은_잠금이_풀린_뒤의_version과_대조한다()" classname="com.o2o.inventory.api.InventoryApiTest" time="2.124"/>
+  <testcase name="INV_02_기간을_일괄_등록하면_201이고_끝_날짜는_빠진다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.109"/>
+  <testcase name="V9_오늘은_등록된다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.064"/>
+  <testcase name="V8_기간이_366일을_넘으면_400이고_366일은_등록된다()" classname="com.o2o.inventory.api.InventoryApiTest" time="1.464"/>
+  <testcase name="RATE_01_요금을_등록하면_201과_Location과_다섯_필드가_온다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.059"/>
+  <testcase name="V8_from이_to보다_뒤면_400이다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.046"/>
+  <testcase name="RATE_02_수정하면_200이고_통화는_그대로다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.075"/>
+  <testcase name="INV_01_재고를_등록하면_201과_Location과_일곱_필드가_온다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.066"/>
+  <testcase name="INV_01_같은_날짜를_두_번_등록하면_409다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.064"/>
+  <testcase name="V6_요금도_지난_version이면_409다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.09"/>
+  <testcase name="행위자가_없으면_401이고_GUEST면_403이다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.039"/>
+  <testcase name="INV_03_없는_날짜를_수정하면_404다()" classname="com.o2o.inventory.api.InventoryApiTest" time="0.044"/>
+  <system-out><![CDATA[2026-09-13T18:18:06.764+09:00  INFO 37088 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.inventory.api.InventoryApiTest]: InventoryApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-13T18:18:06.790+09:00  INFO 37088 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.inventory.api.InventoryApiTest
+2026-09-13T18:18:06.791+09:00  INFO 37088 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.inventory.api.InventoryApiTest]: InventoryApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-13T18:18:06.791+09:00  INFO 37088 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.inventory.api.InventoryApiTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

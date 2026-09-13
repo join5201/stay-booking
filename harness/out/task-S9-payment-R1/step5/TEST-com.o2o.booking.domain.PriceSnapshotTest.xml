@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.booking.domain.PriceSnapshotTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-09-13T09:18:04.965Z" hostname="BOOK-QD5U7FFOBT" time="0.008">
+  <properties/>
+  <testcase name="K2_날짜별_가격_행은_단가_0과_단가를_넘는_할인을_거절한다()" classname="com.o2o.booking.domain.PriceSnapshotTest" time="0.001"/>
+  <testcase name="K2_맞는_값은_통과하고_읽은_값이_그대로다()" classname="com.o2o.booking.domain.PriceSnapshotTest" time="0.001"/>
+  <testcase name="K2_I15_총액이_날짜별_최종액_합과_다르면_거절한다()" classname="com.o2o.booking.domain.PriceSnapshotTest" time="0.001"/>
+  <testcase name="K2_days는_바깥에서_바꿀_수_없다()" classname="com.o2o.booking.domain.PriceSnapshotTest" time="0.001"/>
+  <testcase name="K2_할인_없는_스냅샷은_프로모션_없이_통과한다()" classname="com.o2o.booking.domain.PriceSnapshotTest" time="0.0"/>
+  <testcase name="K2_I11_행_수가_박수와_다르면_거절한다()" classname="com.o2o.booking.domain.PriceSnapshotTest" time="0.001"/>
+  <testcase name="K2_I12_할인이_있는데_프로모션이_없으면_거절한다()" classname="com.o2o.booking.domain.PriceSnapshotTest" time="0.001"/>
+  <testcase name="K2_I10_할인_배분액_합이_할인_총액과_다르면_거절한다()" classname="com.o2o.booking.domain.PriceSnapshotTest" time="0.0"/>
+  <testcase name="K2_통화는_KRW만_쓴다()" classname="com.o2o.booking.domain.PriceSnapshotTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

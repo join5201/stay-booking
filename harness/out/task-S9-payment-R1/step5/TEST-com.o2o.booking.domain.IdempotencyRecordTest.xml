@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.booking.domain.IdempotencyRecordTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-09-13T09:18:04.958Z" hostname="BOOK-QD5U7FFOBT" time="0.007">
+  <properties/>
+  <testcase name="K6_범위의_빈_값은_거절한다()" classname="com.o2o.booking.domain.IdempotencyRecordTest" time="0.0"/>
+  <testcase name="K6_완료된_기록은_다시_완료할_수_없다()" classname="com.o2o.booking.domain.IdempotencyRecordTest" time="0.0"/>
+  <testcase name="K6_진행_중_기록은_완료가_아니고_완료하면_최초_응답을_그대로_갖는다()" classname="com.o2o.booking.domain.IdempotencyRecordTest" time="0.003"/>
+  <testcase name="K6_body_대조는_해시_문자열이_같은지다()" classname="com.o2o.booking.domain.IdempotencyRecordTest" time="0.001"/>
+  <testcase name="K6_범위는_넷이_전부_같아야_같다()" classname="com.o2o.booking.domain.IdempotencyRecordTest" time="0.0"/>
+  <testcase name="K6_키_형식은_8자_이상_128자_이하의_영숫자와_하이픈과_밑줄이다()" classname="com.o2o.booking.domain.IdempotencyRecordTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
