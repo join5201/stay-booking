@@ -14,7 +14,14 @@ public class InvalidStateTransitionException extends RuntimeException {
     private final BookingStatus to;
 
     public InvalidStateTransitionException(BookingId bookingId, BookingStatus from, BookingStatus to) {
-        super("허용되지 않는 전이다: " + bookingId.value() + " " + from + " -> " + to);
+        this(bookingId, from, to, null);
+    }
+
+    /** detail은 전이가 막힌 사정이다. 결제 중계가 HELD인데 승인 이력이 있는 좁은 창을 적을 때 쓴다 */
+    public InvalidStateTransitionException(BookingId bookingId, BookingStatus from, BookingStatus to,
+                                           String detail) {
+        super("허용되지 않는 전이다: " + bookingId.value() + " " + from + " -> " + to
+                + (detail == null ? "" : " (" + detail + ")"));
         this.from = from;
         this.to = to;
     }
