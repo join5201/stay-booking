@@ -381,7 +381,7 @@ Y9부터 Y13과 Y22는 MySQL 통합 테스트다. 메모리 저장소로 대신�
 | 계약 테스트 ID | 8-1절의 Y1부터 Y23. 검증 ID는 T21, T26, T30 전부와 INTERNAL-01 오류 넷(400 INVALID_REQUEST, 404 RESOURCE_NOT_FOUND, 409 MOCK_EVENT_CONFLICT, 409 PAYMENT_AMOUNT_MISMATCH)과 T15, T16, T17, T20, T22, T23의 결제 몫 |
 | A와 B 평가 범위 | eval-criteria-code.md의 축 전부. 오늘의 전제 결정 3에 따라 MVP 코드가 다 붙은 뒤 한 번이며 이 묶음 몫은 5절 표다 |
 | 필수 검증을 실행하지 못했을 때 | progress.md의 실패 원인 칸에 명령과 출력을 적고 결과를 halted로 남긴다. 미실행을 통과로 적지 않는다 |
-| 설정 파일 변경 | D-3 가가 승인되면 backend/src/main/resources/application.properties와 backend/src/test/resources/application.properties 각각에 spring.profiles.active=dev 한 줄과 근거 주석이 붙는다. 6단계에서 diff 요약을 보인 뒤 반영하고 이 행에 반영 사실을 적는다. 프롬프트 동결 절의 유일한 허용 변경이다 |
+| 설정 파일 변경 | D-3 가가 승인되면 backend/src/main/resources/application.properties와 backend/src/test/resources/application.properties 각각에 spring.profiles.active=dev 한 줄과 근거 주석이 붙는다. 6단계에서 diff 요약을 보인 뒤 반영하고 이 행에 반영 사실을 적는다. 프롬프트 동결 절의 유일한 허용 변경이다. 반영(2026-09-13 6단계): 두 파일 끝에 spring.profiles.active=dev 한 줄과 근거 주석 다섯 줄씩. 다른 키는 건드리지 않았다. diff 요약은 6단계 답변과 progress.md 6단계 행 |
 
 T15부터 T23이 결제 몫인 이유. 아홉 검증 대부분이 예약 상태(HELD, EXPIRED, CANCELED)와 재고 반환을 함께 본다. 이 세션은 결제 컨텍스트가 내는 예외와 이벤트와 중복 판정까지 닫고 예약 상태와 재고 몫은 예약 2차가 닫는다. T14와 T18과 T19는 예약 몫뿐이라 해당 없음이다.
 

@@ -1,0 +1,181 @@
+# 6단계 로컬 HTTP 호출 기록
+# 계약 8절 6단계의 완료 조건이다. gradlew bootRun으로 띄운 실제 서버에 curl로 쳤다.
+# 일시: 2026-09-13 09:55:01 UTC, 서버: http://127.0.0.1:8080, DB: o2o_payment_test (127.0.0.1:3307, SPRING_DATASOURCE_URL로 지정. 계약 9절), 프로파일: dev (설정 파일 기본값)
+# 대상: INTERNAL-01 POST /internal/mock-payments/events의 200 둘(PROCESSED, DUPLICATE)과 오류 넷(400, 404, 409 둘)과 401, 403. 그리고 T30의 dev 쪽.
+# 준비: 결제 접수 API(PAY-01)는 예약 2차 몫이라 이 서버에 시도를 여는 HTTP 입구가 없다. 그래서 REQUESTED이고 DEFER인 NORMAL 시도 둘을 mysql로 직접 심었다(T6).
+#   payment pay_http_185405_1(bk_http_185405_1), pay_http_185405_2(bk_http_185405_2). 금액 180000 KRW
+#   payment_attempt attempt_http_185405_1(mock_tx_http_185405_1), attempt_http_185405_2(mock_tx_http_185405_2). 1번, REQUESTED, DEFER
+# 계약 2절 검사 순서대로 형식(400), 행위자(401, 403), 존재(404), 거래 번호와 금액(409), 그다음 결과 처리다.
+
+== Y19 헤더 없음. 401 ACTOR_REQUIRED ==
+body: {"eventId":"mock_event_185405_1","paymentAttemptId":"attempt_http_185405_1","pgTransactionId":"mock_tx_http_185405_1","outcome":"APPROVED","amount":180000,"currency":"KRW"}
+HTTP/1.1 401 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 09:55:02 GMT
+
+{"code":"ACTOR_REQUIRED","message":"필요한 개발 행위자가 없거나 미등록입니다.","traceId":"trace_43e7f69a443d4551aafa71dfc4e2a5e0","details":[]}
+
+== Y19 guest_001. 403 ACCESS_DENIED ==
+body: {"eventId":"mock_event_185405_1","paymentAttemptId":"attempt_http_185405_1","pgTransactionId":"mock_tx_http_185405_1","outcome":"APPROVED","amount":180000,"currency":"KRW"}
+HTTP/1.1 403 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 09:55:02 GMT
+
+{"code":"ACCESS_DENIED","message":"이 작업에 필요한 역할이 아닙니다.","traceId":"trace_ba2aff7622254ea48ce59933af614760","details":[]}
+
+== Y18 outcome DECLINED. 400 INVALID_REQUEST (details에 outcome) ==
+body: {"eventId":"mock_event_185405_bad","paymentAttemptId":"attempt_http_185405_1","pgTransactionId":"mock_tx_http_185405_1","outcome":"DECLINED","amount":180000,"currency":"KRW"}
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 09:55:02 GMT
+Connection: close
+
+{"code":"INVALID_REQUEST","message":"요청 값이 올바르지 않습니다.","traceId":"trace_90f77e8f259d4cef89606ca71ef95b73","details":[{"field":"outcome","reason":"\"APPROVED|FAILED\"와 일치해야 합니다"}]}
+
+== Y18 FAILED에 failureCode 없음. 400 INVALID_REQUEST (details에 failureCode) ==
+body: {"eventId":"mock_event_185405_bad","paymentAttemptId":"attempt_http_185405_1","pgTransactionId":"mock_tx_http_185405_1","outcome":"FAILED","amount":180000,"currency":"KRW"}
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 09:55:02 GMT
+Connection: close
+
+{"code":"INVALID_REQUEST","message":"요청 값이 올바르지 않습니다.","traceId":"trace_06a5083ca95e4d8d93c609ede82891ec","details":[{"field":"failureCode","reason":"outcome이 FAILED면 MOCK_DECLINED가 필수이고 APPROVED면 보내지 않습니다"}]}
+
+== Y18 미정의 필드 note. 400 INVALID_REQUEST (공통 절 38행) ==
+body: {"eventId":"mock_event_185405_bad","paymentAttemptId":"attempt_http_185405_1","pgTransactionId":"mock_tx_http_185405_1","outcome":"APPROVED","amount":180000,"currency":"KRW","note":"x"}
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 09:55:02 GMT
+Connection: close
+
+{"code":"INVALID_REQUEST","message":"요청 본문을 읽을 수 없습니다.","traceId":"trace_27d43a5b41c64fe5a0c224f29dbd65b3","details":[]}
+
+== Y17 없는 시도. 404 RESOURCE_NOT_FOUND ==
+body: {"eventId":"mock_event_185405_none","paymentAttemptId":"attempt_none","pgTransactionId":"mock_tx_http_185405_1","outcome":"APPROVED","amount":180000,"currency":"KRW"}
+HTTP/1.1 404 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 09:55:02 GMT
+
+{"code":"RESOURCE_NOT_FOUND","message":"자원을 찾을 수 없습니다.","traceId":"trace_ce931c93a99541d08d00304e3d6f0b53","details":[]}
+
+== Y17 다른 pgTransactionId. 409 MOCK_EVENT_CONFLICT ==
+body: {"eventId":"mock_event_185405_tx","paymentAttemptId":"attempt_http_185405_1","pgTransactionId":"mock_tx_other","outcome":"APPROVED","amount":180000,"currency":"KRW"}
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 09:55:03 GMT
+
+{"code":"MOCK_EVENT_CONFLICT","message":"처리된 거래의 다른 결과이거나 같은 이벤트 ID의 다른 내용입니다.","traceId":"trace_41898b7cc497461cbe0fee7f626da30b","details":[]}
+
+== Y17 금액 차이. 409 PAYMENT_AMOUNT_MISMATCH ==
+body: {"eventId":"mock_event_185405_amt","paymentAttemptId":"attempt_http_185405_1","pgTransactionId":"mock_tx_http_185405_1","outcome":"APPROVED","amount":180001,"currency":"KRW"}
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 09:55:03 GMT
+
+{"code":"PAYMENT_AMOUNT_MISMATCH","message":"Mock 거래 결과의 금액 또는 통화가 일치하지 않습니다.","traceId":"trace_d6257b7c46b241a1936a2d61a2903c83","details":[]}
+
+== Y15 DEFER REQUESTED 시도에 APPROVED. 200 PROCESSED ==
+body: {"eventId":"mock_event_185405_1","paymentAttemptId":"attempt_http_185405_1","pgTransactionId":"mock_tx_http_185405_1","outcome":"APPROVED","amount":180000,"currency":"KRW"}
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 138
+Date: Sun, 13 Sep 2026 09:55:03 GMT
+
+{"eventId":"mock_event_185405_1","paymentAttemptId":"attempt_http_185405_1","result":"PROCESSED","processedAt":"2026-09-13T09:55:03.298Z"}
+
+== Y16 같은 eventId 같은 body 재전달. 200 DUPLICATE, 같은 processedAt ==
+body: {"eventId":"mock_event_185405_1","paymentAttemptId":"attempt_http_185405_1","pgTransactionId":"mock_tx_http_185405_1","outcome":"APPROVED","amount":180000,"currency":"KRW"}
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 138
+Date: Sun, 13 Sep 2026 09:55:03 GMT
+
+{"eventId":"mock_event_185405_1","paymentAttemptId":"attempt_http_185405_1","result":"DUPLICATE","processedAt":"2026-09-13T09:55:03.298Z"}
+
+== Y16 다른 eventId 같은 거래 같은 결과. 200 DUPLICATE ==
+body: {"eventId":"mock_event_185405_1b","paymentAttemptId":"attempt_http_185405_1","pgTransactionId":"mock_tx_http_185405_1","outcome":"APPROVED","amount":180000,"currency":"KRW"}
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 139
+Date: Sun, 13 Sep 2026 09:55:03 GMT
+
+{"eventId":"mock_event_185405_1b","paymentAttemptId":"attempt_http_185405_1","result":"DUPLICATE","processedAt":"2026-09-13T09:55:03.298Z"}
+
+== Y17 같은 eventId 다른 body(FAILED). 409 MOCK_EVENT_CONFLICT ==
+body: {"eventId":"mock_event_185405_1","paymentAttemptId":"attempt_http_185405_1","pgTransactionId":"mock_tx_http_185405_1","outcome":"FAILED","amount":180000,"currency":"KRW","failureCode":"MOCK_DECLINED"}
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 09:55:03 GMT
+
+{"code":"MOCK_EVENT_CONFLICT","message":"처리된 거래의 다른 결과이거나 같은 이벤트 ID의 다른 내용입니다.","traceId":"trace_a89b798285a648119685b3b09be307c7","details":[]}
+
+== Y17 APPROVED 시도에 새 eventId로 FAILED. 409 MOCK_EVENT_CONFLICT (규칙 4) ==
+body: {"eventId":"mock_event_185405_1c","paymentAttemptId":"attempt_http_185405_1","pgTransactionId":"mock_tx_http_185405_1","outcome":"FAILED","amount":180000,"currency":"KRW","failureCode":"MOCK_DECLINED"}
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 09:55:03 GMT
+
+{"code":"MOCK_EVENT_CONFLICT","message":"처리된 거래의 다른 결과이거나 같은 이벤트 ID의 다른 내용입니다.","traceId":"trace_1944c547a315458da437d9e7a1caacf4","details":[]}
+
+== Y15 둘째 시도에 FAILED와 MOCK_DECLINED. 200 PROCESSED ==
+body: {"eventId":"mock_event_185405_2","paymentAttemptId":"attempt_http_185405_2","pgTransactionId":"mock_tx_http_185405_2","outcome":"FAILED","amount":180000,"currency":"KRW","failureCode":"MOCK_DECLINED"}
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 138
+Date: Sun, 13 Sep 2026 09:55:03 GMT
+
+{"eventId":"mock_event_185405_2","paymentAttemptId":"attempt_http_185405_2","result":"PROCESSED","processedAt":"2026-09-13T09:55:03.880Z"}
+
+== Y23 dev. HOST 전용 조회 GET /api/v1/host/properties host_001. 200 ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 64
+Date: Sun, 13 Sep 2026 09:55:04 GMT
+
+{"items":[],"page":0,"size":20,"totalElements":0,"totalPages":0}
+
+== 확인. 호출 뒤 DB 상태(mysql). 시도 둘의 상태와 이벤트 기록 셋(PROCESSED 둘, DUPLICATE 하나. 같은 eventId 재전달은 기록을 더하지 않고 거절된 호출은 기록이 없다) ==
+id	status	completed_at	failure_code
+attempt_http_185405_1	APPROVED	2026-09-13 09:55:03.298788	NULL
+attempt_http_185405_2	FAILED	2026-09-13 09:55:03.880903	MOCK_DECLINED
+event_id	payment_attempt_id	result	processed_at
+mock_event_185405_1	attempt_http_185405_1	PROCESSED	2026-09-13 09:55:03.298788
+mock_event_185405_1b	attempt_http_185405_1	DUPLICATE	2026-09-13 09:55:03.298788
+mock_event_185405_2	attempt_http_185405_2	PROCESSED	2026-09-13 09:55:03.880903
+
+
+# ---- T30. 같은 서버를 dev가 아닌 프로파일(SPRING_PROFILES_ACTIVE=verify)로 다시 띄웠다. 기동 로그: The following 1 profile is active: "verify" ----
+
+== Y23 verify. HOST 전용 조회 GET /api/v1/host/properties host_001. 401 ACTOR_REQUIRED (어댑터 비활성) ==
+HTTP/1.1 401 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 09:56:09 GMT
+
+{"code":"ACTOR_REQUIRED","message":"필요한 개발 행위자가 없거나 미등록입니다.","traceId":"trace_4c88cc97d26f45b7bc7f5f0911bc05b6","details":[]}
+
+== Y23 verify. POST /internal/mock-payments/events mock_001. 404 (경로 없음. 본문은 프레임워크 기본 404) ==
+HTTP/1.1 404 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 09:56:09 GMT
+
+{"timestamp":"2026-09-13T09:56:09.872Z","status":404,"error":"Not Found","path":"/internal/mock-payments/events"}
+
+== Y23 verify. 공개 조회 GET /api/v1/properties?regionCode=SEOUL 헤더 없음. 200 (공개 API는 그대로) ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 64
+Date: Sun, 13 Sep 2026 09:56:10 GMT
+
+{"items":[],"page":0,"size":20,"totalElements":0,"totalPages":0}
