@@ -1,7 +1,7 @@
 # 작업 계약 task-S9-booking-lifecycle (예약과 선점 묶음. 2차: 결제 중계와 확정과 만료와 취소)
 
 최초 작성: 2026-09-13
-최종 갱신: 2026-09-13 (계약 승인. 결정 5건 추천대로. 6절 확정 칸 아홉, 7절 결정 칸 다섯, 10절. join5201, 2026-09-13. 결제 코드의 실제 이름은 결제 PR이 main에 들어간 뒤 2단계에서 대조한다)
+최종 갱신: 2026-09-13 (2단계. 결제 PR 133 병합 뒤 접점 대조. 개정 1 후보, 4절 결제 행 둘 기입과 본보기 어댑터 행 추가, 작업 표 기준선 337건, 10절. 그 전 계약 승인 같은 날)
 양식: harness/prompts/task-contract.md v6
 
 이 계약은 다섯 번째 구현 묶음이다. task-S9-catalog, task-S9-inventory-rate, task-S9-booking 1차(PR 127), task-S9-promotion-search(PR 98)가 main에 있고 task-S9-payment(브랜치 feat/task-s9-payment, 계약 승인 2026-09-12)가 그 위에 얹힐 예정이다. 1차 계약 7절 D-5 나에 따라 2차는 새 계약이고 이 파일이 그것이다. 사용자가 2026-09-13에 결제 계약 승인(2026-09-12)만 보고 초안을 미리 쓰라고 했으므로 결제 쪽 접점은 승인된 결제 계약의 이름(openAttempt, refund, attemptsOf, PaymentApproved, PaymentFailed)으로 적는다. 결제 PR이 main에 들어가면 2단계에서 실제 코드의 이름과 대조하고 다르면 10절 개정 칸에 적는다.
@@ -17,7 +17,7 @@
 | 목표 | 예약 상태 기계의 전이 셋(confirm, expire, cancel)과 두 세션의 접점 셋(가격 계산기, 결제 앱 서비스, 결제 이벤트 구독)을 붙여 예약 묶음을 닫는다. Booking 응답의 payment가 채워지고, 재고가 확정과 만료와 취소마다 정확히 한 번 움직이며(R4), 확정된 예약의 청구액이 요금과 프로모션 변경에 흔들리지 않고(R5), 같은 승인 콜백이 몇 번 와도 확정과 환불이 한 번이다 |
 | 대상 API ID | PAY-01, PAY-02, BOOK-04. 내부 처리 RequestPayment 중계, ConfirmBooking과 CommitInventory, ExpireBooking(TTL_EXPIRED, PAYMENT_FAILED)과 선점 반환, CancelBooking과 RefundPayment 중계와 판매분 반환, TTL 스케줄러. BOOK-01의 가격 포트 교체와 BOOK-02와 BOOK-03의 payment 채움 |
 | 선행 작업 | task-S9-payment의 PR이 main에 들어가야 한다. 이 묶음이 결제에서 쓰는 것은 앱 서비스 공개 메서드 셋(openAttempt, refund, attemptsOf)과 이벤트 둘(PaymentApproved, PaymentFailed)과 값 객체(PaymentAttemptId, MockMode, RefundReason)와 뷰다. 프로모션에서 쓰는 것은 PricingService.quote 하나다. 나머지 선행 묶음은 전부 main에 있다 |
-| 완료 기준 | 넷을 모두 만족해야 한다. 첫째, 9절 계약 테스트 ID가 전부 통과이거나 미실행 사유와 함께 기록된다. 둘째, 8절 단계가 전부 끝난다. 셋째, backend/build/test-results/test/*.xml의 실행 수가 0이 아니고 failures와 errors 합이 0이며 앞 묶음까지의 테스트(282건에 결제 묶음 수를 더한 것. 2단계에서 숫자를 적는다)가 그대로 통과한다. 넷째, 모든 단계의 실제 시간이 harness/state/progress.md에 분 단위로 기입돼 있다 |
+| 완료 기준 | 넷을 모두 만족해야 한다. 첫째, 9절 계약 테스트 ID가 전부 통과이거나 미실행 사유와 함께 기록된다. 둘째, 8절 단계가 전부 끝난다. 셋째, backend/build/test-results/test/*.xml의 실행 수가 0이 아니고 failures와 errors 합이 0이며 앞 묶음까지의 테스트 337건(결제 PR 133 병합 뒤 main. 결제 계약 9단계 재실행 기록. 2단계 기입)이 그대로 통과한다. 넷째, 모든 단계의 실제 시간이 harness/state/progress.md에 분 단위로 기입돼 있다 |
 | 변경 허용 파일과 범위 | backend/src/main/java/com/o2o/booking/ 전체와 그 테스트 backend/src/test/java/com/o2o/booking/. backend/src/main/java/com/o2o/inventory/domain/InventoryAllocationService.java(commit과 releaseHeld와 releaseSold의 N행 적용)와 그 테스트. backend/src/test/resources/application.properties에 7절 D-3의 줄 하나(승인 시). harness/out/task-S9-booking-lifecycle-R1/ 아래 실행 결과. harness/state/progress.md 행 추가. 이 계약 파일. payment, promotion, search, catalog 패키지와 inventory의 나머지와 shared의 기존 파일은 고치지 않는다 |
 | 범위 밖과 유지할 전제 | 아래 3절 |
 | 기준 버전 | 문서는 4절 입력 표의 sha256. 코드는 작업 브랜치 feat/task-s9-booking-lifecycle의 커밋 해시(결제 PR을 병합한 origin/main 위)와 5절 평가 대상 행의 파일 목록 |
@@ -176,7 +176,7 @@ T1 TTL 만료의 건별 처리. 스케줄러가 잠금 없이 due 목록(status 
 | 정책 결정 08-3 | harness/decisions/decisions-08-3.md | sha256:1b8580aa86c18fd8 | 표 11행 전부와 표 아래 문장. 특히 3, 5, 6, 7, 8, 10, 11의 11-1과 11-2와 11-4와 11-6. 9절 근거 |
 | 구현 계획 10-6 | harness/docs/10-6-o2o-harness-implementation-plan.md | sha256:eec97503b53ffff0 | 3절 기능별 API와 검증 연결 표의 결제와 확정 행과 취소와 만료 행과 접근 범위 행 |
 | 앞 묶음의 계약 하나 | harness/tasks/task-S9-booking.md | sha256:0876574192269065 | 2절 검사 순서 표(개정 반영판), 2-2절, 7절 D-1과 D-4와 D-5, 8-1 K5와 K12와 K17, 9절, 10절 개정 |
-| 앞 묶음의 계약 둘 | 생성 후 기입 | 생성 후 기입 | harness/tasks/task-S9-payment.md. 결제 PR이 main에 들어간 뒤 2단계에서 경로와 해시를 채운다. 2절 대상 표와 openAttempt와 refund 검사 순서, 6절 이벤트 페이로드 행과 값 객체 행, 7절 D-1과 D-5와 D-6, 8-1 Y21 |
+| 앞 묶음의 계약 둘 | harness/tasks/task-S9-payment.md | sha256:ec7d3afac5bb5adf | 2절 대상 표와 openAttempt와 refund 검사 순서, 6절 이벤트 페이로드 행과 값 객체 행, 7절 D-1과 D-5와 D-6, 8-1 Y21, 10절 개정 다섯(1 격리 수준 READ COMMITTED, 2 재개 러너 자리, 3 강제 실패 구독자의 BEFORE_COMMIT). 2단계에서 기입 |
 | 앞 묶음의 계약 셋 | harness/tasks/task-S9-promotion-search.md | sha256:6ebe329e1cfca4f4 | 2절 PricingService 접점, 7절 D-1과 D-2의 이월(V17, V18, V19), 10절 |
 | 오늘의 전제 | harness/out/mvp-parallel-2026-09-11/README.md | sha256:7cbeaa454ed78eec | 1절 결정 셋, 4절 병합 순서와 접점 |
 | 이 세션의 프롬프트 | harness/out/mvp-parallel-2026-09-11/prompt-B-booking.md | sha256:6aa29f27984d2c16 | 머리의 2차 범위 문장, 접점 표, 검증 표의 2차로 열 |
@@ -193,11 +193,12 @@ T1 TTL 만료의 건별 처리. 스케줄러가 잠금 없이 due 목록(status 
 | 고칠 어댑터 파일 | backend/src/main/java/com/o2o/booking/infrastructure/RateOnlyPriceQuoteAdapter.java | sha256:5af13dc13beeb1b8 | 전문. 7절 D-4가 이 파일의 자리를 정한다 |
 | 고칠 재고 파일 | backend/src/main/java/com/o2o/inventory/domain/InventoryAllocationService.java | sha256:947d5cfebc654e82 | 전문. commit과 releaseHeld와 releaseSold의 N행 적용이 붙는다 |
 | 부를 프로모션 파일 | backend/src/main/java/com/o2o/promotion/domain/PricingService.java | sha256:79d53b1a99e45185 | quote의 시그니처와 주석. 읽기만 |
-| 부를 결제 파일 | 생성 후 기입 | 생성 후 기입 | backend/src/main/java/com/o2o/payment/application/PaymentApplicationService.java와 이벤트 둘과 값 객체 셋. 결제 PR이 main에 들어간 뒤 2단계에서 채운다. 읽기만 |
+| 부를 결제 파일 | backend/src/main/java/com/o2o/payment/application/PaymentApplicationService.java | sha256:ab1b91e47881635f | openAttempt(92행), refund(123행), attemptsOf(145행)의 시그니처와 주석. 같은 패키지의 뷰 셋(PaymentAttemptView, RefundView, PaymentSummaryView)과 domain의 이벤트 둘(PaymentApproved, PaymentFailed)과 값 객체 셋(PaymentAttemptId, MockMode, RefundReason)과 예외 여섯은 이 파일의 import에서 따라간다. 읽기만. 2단계에서 기입 |
+| 본보기 결제 어댑터 | backend/src/main/java/com/o2o/payment/infrastructure/MockAutoResultAdapter.java | sha256:07e7585a7dc2b0af | 전문. AFTER_COMMIT 어댑터가 try와 catch로 REQUIRES_NEW 서비스 메서드를 부르는 형태(08-3 결정 6). 4-4단계의 구독자 어댑터 둘이 같은 모양이다. 읽기만. 2단계에서 추가 |
 | 본보기 테스트 | backend/src/test/java/com/o2o/booking/api/BookingApiTest.java | sha256:bdb1cf2a930d1328 | K17과 K19의 두 트랜잭션 경합 방식. L23이 같은 방식이다 |
 | 본보기 테스트 둘 | backend/src/test/java/com/o2o/booking/application/BookingEventTest.java | sha256:38c74fdb92ca6728 | 테스트 전용 구독자 형태. L12와 L13이 같은 방식이다 |
 
-10-6과 앞 묶음의 계약과 오늘의 전제와 프롬프트는 이 표에만 있고 5절에는 없다. 생성 후 기입인 두 행은 결제 PR이 main에 들어가기 전에는 이 브랜치에 파일이 없어서다. 2단계의 완료 조건이 그 두 행을 채우고 fill을 다시 돌리는 것이다.
+10-6과 앞 묶음의 계약과 오늘의 전제와 프롬프트는 이 표에만 있고 5절에는 없다. 생성 후 기입이던 두 행은 결제 PR 133이 main에 들어간 뒤 2단계(2026-09-13)에서 채웠고 본보기 어댑터 행을 더했다. 5절의 평가 대상 행만 9단계까지 생성 후 기입으로 남는다.
 
 ## 5. A와 B 평가 허용 입력 (HR1)
 
@@ -242,7 +243,7 @@ T1 TTL 만료의 건별 처리. 스케줄러가 잠금 없이 due 목록(status 
 | 11 명세와 08-3의 충돌 하나. INTERNAL-01 규칙 7의 200 시점과 T23 | 결제 계약이 08-3 결정 6을 따르기로 했으므로 결제 몫은 커밋되고 예약 정책은 별도 트랜잭션이다. 그래서 정책 실패 뒤 같은 이벤트 재전달은 DUPLICATE이고 예약 정책을 다시 돌리지 않는다. T23의 재전달 시 정상 완료는 재전달이 아니라 7절 D-1의 치유로 닫힌다. 부분 결과 롤백은 REQUIRES_NEW의 롤백이 그대로 만족한다 | 확정. 계약 승인. join5201, 2026-09-13. 7절 D-1 |
 | 11 명세와 06-4 v4의 충돌 둘. 취소 환불의 일관성 | v4 2-2 카드는 결과적이고 11 BOOK-04와 08-3 11-2는 동기다. 08-3을 따른다. 위 결정 7 행 | 확정. 계약 승인. join5201, 2026-09-13 |
 | 11 명세와 06-4의 차이 셋. confirm의 EXPIRED 거부 | 06-4 1-2 confirm 행은 EXPIRED를 거부(승인 지연 환불 정책의 영역)라 적고 11 규칙 5는 EXPIRED면 지연 승인 환불이라 적는다. 둘은 같은 말이다. confirm은 EXPIRED에서 InvalidStateTransition을 던지고 P1은 confirm을 부르기 전에 상태로 분기해 환불 경로로 간다 | 확정. 계약 승인. join5201, 2026-09-13 |
-| 이벤트 페이로드 | 결제 계약 6절의 PaymentApproved(paymentId, bookingId, paymentAttemptId, pgTransactionId, amount, currency, attemptCount, occurredAt)와 PaymentFailed(위에 failureCode)를 그대로 받는다. 이 묶음의 셋은 06-4 v5 2-4대로 bookingId와 사유(만료만)이고 occurredAt을 더한다 | 확정. 계약 승인. join5201, 2026-09-13 |
+| 이벤트 페이로드 | 결제 계약 6절의 PaymentApproved(paymentId, bookingId, paymentAttemptId, pgTransactionId, amount, currency, attemptCount, occurredAt)와 PaymentFailed(위에 failureCode)를 그대로 받는다. 개정 1 후보. 병합된 코드는 amount가 shared Money라 currency가 그 안에 있고 별도 필드는 없다. 이름은 전부 같다. 이 묶음의 셋은 06-4 v5 2-4대로 bookingId와 사유(만료만)이고 occurredAt을 더한다 | 확정. 계약 승인. join5201, 2026-09-13 |
 | Booking 응답의 payment 채움 | 예약 조회마다 결제의 attemptsOf를 한 번 부른다. BOOK-02 목록은 항목마다 한 번이라 최대 100번이다. 결제 패키지에 일괄 메서드를 더하지 않는다. v1 감수 | 확정. 계약 승인. join5201, 2026-09-13 |
 | 오류 코드 매핑 | 결제 예외 넷을 예약 앱 서비스가 booking 예외로 감싸고 핸들러가 11의 코드로 바꾼다. AttemptInProgress는 PaymentInProgressException으로 감싸 PAYMENT_IN_PROGRESS, AttemptLimitExceeded는 PaymentAttemptsExhaustedException으로 감싸 PAYMENT_ATTEMPTS_EXHAUSTED, AlreadyApproved는 InvalidStateTransition으로 감싸 BOOKING_STATE_CONFLICT, NoApprovedAttempt와 AmountMismatch는 감싸지 않고 INTERNAL_ERROR(불변 위반). 예약 예외는 BookingExpired가 BOOKING_EXPIRED, InvalidStateTransition이 BOOKING_STATE_CONFLICT, CancellationNotAllowed가 CANCELLATION_NOT_ALLOWED. 핸들러는 booking 예외만 알고 payment 예외 클래스를 import하지 않는다 | 확정. 계약 승인. join5201, 2026-09-13 |
 | version | 전이마다 1씩 오른다. HELD 0, CONFIRMED 1, CANCELED 2, EXPIRED 1. 11 BOOK-04 예시가 취소 뒤 2다 | 확정. 계약 승인. join5201, 2026-09-13 |
@@ -391,10 +392,10 @@ T23이 예약 몫까지 닫히는 뜻. 11의 문장(재전달 시 정상 완료)
 | 항목 | 기록 |
 |---|---|
 | 작업 계약 승인 | 승인. join5201, 2026-09-13. 결정 5건은 추천대로 D-1 나, D-2부터 D-5 가 |
-| 개정 | 없음. 2단계의 접점 대조에서 결제 코드의 이름이 다르면 여기 적는다 |
-| 마지막 성공 단계 | 1단계 승인(2026-09-13). 초안은 결제 계약 승인(2026-09-12) 뒤 사용자 지시로 결제 PR 병합 전에 미리 썼다 |
+| 개정 | 후보 1건. 2단계 접점 대조(2026-09-13, main 06e25a7). 메서드 셋(openAttempt, refund, attemptsOf), 이벤트 둘, 예외 여섯(AttemptInProgress, AttemptLimitExceeded, AlreadyApproved, AmountMismatch, NoApprovedAttempt, UnknownAttempt), 값 객체 셋, 뷰 셋의 이름이 계약과 같다. 개정 1 후보: 6절 이벤트 페이로드 행. PaymentApproved와 PaymentFailed의 amount는 shared Money이고 currency는 그 안에 있어 별도 필드가 없다. 덧붙여 결제 개정 1로 설정 파일 둘에 격리 수준 READ COMMITTED 줄이 있어 이 묶음의 트랜잭션도 그 아래에서 돈다. 잠금 뒤 재확인 설계는 그대로다. 사용자 확인 대기 |
+| 마지막 성공 단계 | 2단계(2026-09-13). 이슈 137, 브랜치에 origin/main 06e25a7 병합(결제 PR 133 포함), 접점 대조, 4절 결제 행 기입, 초안 PR은 progress.md 2단계 행. 그 전 기록. 1단계 승인(2026-09-13). 초안은 결제 계약 승인(2026-09-12) 뒤 사용자 지시로 결제 PR 병합 전에 미리 썼다 |
 | 실제 사용 시간 (1단계) | 약 48분. 초안 약 45분(문맥 압축 뒤 추정)과 승인 기록 3분 |
-| 미해결 사항과 다음 작업 | 결제 PR이 main에 들어가면 2단계(이슈, origin/main 병합, 접점 대조, 생성 후 기입 3건 채움). 결제 세션은 2026-09-13 18:02에 4단계까지 끝냈고 아직 main에 없다 |
+| 미해결 사항과 다음 작업 | 개정 1 후보의 사용자 확인. 작업 공간 결정(초안을 쓴 임시 워크트리에는 backend/.env가 없어 테스트를 돌릴 수 없다. 사용자가 그 파일을 놓거나 o2o-dev에 이 브랜치를 체크아웃한다). 그 뒤 4-1단계 가격 포트 교체 |
 | 최종 산출물과 버전 | 작업 후 기록 |
 | 실제 사용 시간 | 미측정. 단계마다 기입 |
 | 최종 완료 판단 | 대기 |
