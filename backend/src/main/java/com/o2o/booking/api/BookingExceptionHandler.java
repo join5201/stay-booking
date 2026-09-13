@@ -5,12 +5,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.o2o.booking.domain.BookingExpiredException;
 import com.o2o.booking.domain.BookingNotFoundException;
 import com.o2o.booking.domain.IdempotencyKeyReusedException;
 import com.o2o.booking.domain.InvalidBookingPeriodException;
 import com.o2o.booking.domain.InvalidIdempotencyKeyException;
 import com.o2o.booking.domain.InvalidPriceSnapshotException;
+import com.o2o.booking.domain.InvalidStateTransitionException;
 import com.o2o.booking.domain.OccupancyExceededException;
+import com.o2o.booking.domain.PaymentAttemptsExhaustedException;
+import com.o2o.booking.domain.PaymentInProgressException;
 import com.o2o.booking.domain.PriceChangedException;
 import com.o2o.booking.domain.RateNotConfiguredException;
 import com.o2o.booking.domain.RequestInProgressException;
@@ -19,10 +23,15 @@ import com.o2o.inventory.domain.InventoryShortageException;
 import com.o2o.shared.ErrorResponse;
 
 /**
- * 예약 예외를 11 에러 응답 표의 코드로 바꾼다. 설계 근거: 11 BOOK-01 에러 표, 에러 응답 표
- * (112행부터), 공통 헤더 표의 Retry-After. 재고 컨텍스트의 예외 둘(가용 부족, 미개설)이 예약
- * 경로에서만 HTTP로 나가므로 여기서 받는다. 없는 객실 타입(RoomTypeNotFound)은 카탈로그의
- * 처리기가 이미 404로 낸다. 처리기는 전역이라 컨트롤러가 어느 컨텍스트든 걸린다.
+ * 예약 예외를 11 에러 응답 표의 코드로 바꾼다. 설계 근거: 11 BOOK-01과 PAY-01 에러 표, 에러
+ * 응답 표(112행부터), 공통 헤더 표의 Retry-After, 2차 계약 6절 오류 코드 매핑 행. 재고
+ * 컨텍스트의 예외 둘(가용 부족, 미개설)이 예약 경로에서만 HTTP로 나가므로 여기서 받는다. 없는
+ * 객실 타입(RoomTypeNotFound)은 카탈로그의 처리기가 이미 404로 낸다. 처리기는 전역이라
+ * 컨트롤러가 어느 컨텍스트든 걸린다.
+ *
+ * 결제 예외는 여기 없다. 사람에게 답할 결제 예외는 예약 앱 서비스가 booking 예외로 감싸고
+ * 이 처리기는 booking 예외만 안다(같은 매핑 행). 불변 위반(금액 불일치, 미승인)은 감싸지 않아
+ * 500으로 나간다.
  */
 @RestControllerAdvice
 public class BookingExceptionHandler {
@@ -97,6 +106,38 @@ public class BookingExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ErrorResponse.of("PRICE_CHANGED",
                         "금액이 바뀌었습니다. 다시 조회한 금액으로 요청하세요."));
+    }
+
+    /**
+     * 409 BOOKING_EXPIRED. 결제 요청 시 TTL 만료 또는 이미 EXPIRED(11 PAY-01 에러 표, T15). 만료
+     * 시각을 지난 HELD는 이 응답 전에 만료와 선점 반환이 별도 트랜잭션으로 저장돼 있다(7절 D-2 가)
+     */
+    @ExceptionHandler(BookingExpiredException.class)
+    public ResponseEntity<ErrorResponse> handleExpired(BookingExpiredException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of("BOOKING_EXPIRED", "예약이 만료되었습니다."));
+    }
+
+    /** 409 BOOKING_STATE_CONFLICT. 현재 예약 상태에서 허용되지 않은 동작(11 PAY-01 에러 표, I5) */
+    @ExceptionHandler(InvalidStateTransitionException.class)
+    public ResponseEntity<ErrorResponse> handleStateConflict(InvalidStateTransitionException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of("BOOKING_STATE_CONFLICT",
+                        "현재 예약 상태에서 허용되지 않는 동작입니다."));
+    }
+
+    /** 409 PAYMENT_IN_PROGRESS. 완료되지 않은 결제 시도 존재(11 PAY-01 에러 표, I6, T15) */
+    @ExceptionHandler(PaymentInProgressException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentInProgress(PaymentInProgressException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of("PAYMENT_IN_PROGRESS", "완료되지 않은 결제 시도가 있습니다."));
+    }
+
+    /** 409 PAYMENT_ATTEMPTS_EXHAUSTED. 결제 시도 한도 도달(11 PAY-01 에러 표, I9) */
+    @ExceptionHandler(PaymentAttemptsExhaustedException.class)
+    public ResponseEntity<ErrorResponse> handleAttemptsExhausted(PaymentAttemptsExhaustedException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of("PAYMENT_ATTEMPTS_EXHAUSTED", "결제 시도 한도에 도달했습니다."));
     }
 
     /** 404 RESOURCE_NOT_FOUND. 없는 예약과 남의 예약이 같은 응답이다(T02) */

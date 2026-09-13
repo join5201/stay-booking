@@ -1,0 +1,396 @@
+# 6단계 로컬 HTTP 호출 기록
+# 계약 8절 6단계의 완료 조건이다. gradlew bootRun --args='--o2o.booking.hold-ttl=PT2M'으로 띄운 실제 서버에 curl로 쳤다. 스케줄러는 기본값(켜짐, 1초 주기)이다.
+# 일시: 2026-09-13 13:18:08 UTC, 서버: http://127.0.0.1:8080, DB: o2o_catalog_test (127.0.0.1:3307)
+# 대상: PAY-01(APPROVE, DECLINE 셋, DEFER 뒤 INTERNAL-01, 멱등 재전송, 오류 경로)과 PAY-02, 그리고 스케줄러의 TTL 만료. 준비로 CAT-01, CAT-05, INV-02, RATE-01을 쓰고 확인으로 BOOK-03과 INV-04를 쓴다
+# 날짜는 서울 오늘(2026-09-13)에서 센다. 예약 다섯(A부터 E)이 같은 객실 타입의 2026-09-23 부터 2박이고 재고 총량은 10이다.
+
+== CAT-01 POST /api/v1/properties (HOST host_001) ==
+HTTP/1.1 201 
+Location: /api/v1/properties/prop_e2343d6d49f04a30afb450c46f5acdae
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 13:18:08 GMT
+
+{"id":"prop_e2343d6d49f04a30afb450c46f5acdae","hostId":"host_001","name":"결제 흐름 스테이","regionCode":"SEOUL","address":"서울특별시 중구 예시로 6","description":"","version":0,"createdAt":"2026-09-13T13:18:08.361Z","updatedAt":"2026-09-13T13:18:08.361Z"}
+
+== CAT-05 POST /api/v1/properties/prop_e2343d6d49f04a30afb450c46f5acdae/room-types (최대 인원 2) ==
+HTTP/1.1 201 
+Location: /api/v1/room-types/room_c76037f6bbc042b89c6f72ab71628296
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 13:18:08 GMT
+
+{"id":"room_c76037f6bbc042b89c6f72ab71628296","propertyId":"prop_e2343d6d49f04a30afb450c46f5acdae","name":"스탠다드","maxOccupancy":2,"description":"","version":0,"createdAt":"2026-09-13T13:18:08.756Z","updatedAt":"2026-09-13T13:18:08.756Z"}
+
+== INV-02 POST /api/v1/room-types/room_c76037f6bbc042b89c6f72ab71628296/inventories 2026-09-23 총량 10 ==
+HTTP/1.1 201 
+Location: /api/v1/room-types/room_c76037f6bbc042b89c6f72ab71628296/inventories/2026-09-23
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 13:18:09 GMT
+
+{"roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","date":"2026-09-23","totalCount":10,"heldCount":0,"soldCount":0,"availableCount":10,"version":0}
+
+== RATE-01 POST /api/v1/room-types/room_c76037f6bbc042b89c6f72ab71628296/rates 2026-09-23 100000 ==
+HTTP/1.1 201 
+Location: /api/v1/room-types/room_c76037f6bbc042b89c6f72ab71628296/rates/2026-09-23
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 13:18:09 GMT
+
+{"roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","date":"2026-09-23","amount":100000,"currency":"KRW","version":0}
+
+== INV-02 POST /api/v1/room-types/room_c76037f6bbc042b89c6f72ab71628296/inventories 2026-09-24 총량 10 ==
+HTTP/1.1 201 
+Location: /api/v1/room-types/room_c76037f6bbc042b89c6f72ab71628296/inventories/2026-09-24
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 13:18:09 GMT
+
+{"roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","date":"2026-09-24","totalCount":10,"heldCount":0,"soldCount":0,"availableCount":10,"version":0}
+
+== RATE-01 POST /api/v1/room-types/room_c76037f6bbc042b89c6f72ab71628296/rates 2026-09-24 100000 ==
+HTTP/1.1 201 
+Location: /api/v1/room-types/room_c76037f6bbc042b89c6f72ab71628296/rates/2026-09-24
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 13:18:09 GMT
+
+{"roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","date":"2026-09-24","amount":100000,"currency":"KRW","version":0}
+
+== BOOK-01 POST /api/v1/bookings 예약 A (guest_001, 2박 인원 1 총액 200000, 키 call-1789305488-book-A) ==
+HTTP/1.1 201 
+Location: /api/v1/bookings/booking_4687943320554be0aa114ce457e237e6
+Content-Type: application/json
+Content-Length: 911
+Date: Sun, 13 Sep 2026 13:18:09 GMT
+
+{"id":"booking_4687943320554be0aa114ce457e237e6","guestId":"guest_001","propertyId":"prop_e2343d6d49f04a30afb450c46f5acdae","roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","checkIn":"2026-09-23","checkOut":"2026-09-25","guestCount":1,"status":"HELD","expiresAt":"2026-09-13T13:20:09.557Z","expirationReason":null,"priceSnapshot":{"currency":"KRW","baseTotalAmount":200000,"discountTotalAmount":0,"totalAmount":200000,"appliedPromotion":null,"days":[{"date":"2026-09-23","baseAmount":100000,"discountAmount":0,"finalAmount":100000},{"date":"2026-09-24","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":0,"approvedAttemptId":null,"attempts":[],"refund":null},"cancellationReason":null,"createdAt":"2026-09-13T13:18:09.557Z","updatedAt":"2026-09-13T13:18:09.557Z","confirmedAt":null,"canceledAt":null,"expiredAt":null,"serverNow":"2026-09-13T13:18:09.638Z","version":0}
+
+== BOOK-01 POST /api/v1/bookings 예약 B (guest_001, 2박 인원 1 총액 200000, 키 call-1789305488-book-B) ==
+HTTP/1.1 201 
+Location: /api/v1/bookings/booking_2998d512695a46828ca64aa733e6eef4
+Content-Type: application/json
+Content-Length: 911
+Date: Sun, 13 Sep 2026 13:18:09 GMT
+
+{"id":"booking_2998d512695a46828ca64aa733e6eef4","guestId":"guest_001","propertyId":"prop_e2343d6d49f04a30afb450c46f5acdae","roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","checkIn":"2026-09-23","checkOut":"2026-09-25","guestCount":1,"status":"HELD","expiresAt":"2026-09-13T13:20:09.906Z","expirationReason":null,"priceSnapshot":{"currency":"KRW","baseTotalAmount":200000,"discountTotalAmount":0,"totalAmount":200000,"appliedPromotion":null,"days":[{"date":"2026-09-23","baseAmount":100000,"discountAmount":0,"finalAmount":100000},{"date":"2026-09-24","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":0,"approvedAttemptId":null,"attempts":[],"refund":null},"cancellationReason":null,"createdAt":"2026-09-13T13:18:09.906Z","updatedAt":"2026-09-13T13:18:09.906Z","confirmedAt":null,"canceledAt":null,"expiredAt":null,"serverNow":"2026-09-13T13:18:09.931Z","version":0}
+
+== BOOK-01 POST /api/v1/bookings 예약 C (guest_001, 2박 인원 1 총액 200000, 키 call-1789305488-book-C) ==
+HTTP/1.1 201 
+Location: /api/v1/bookings/booking_cc029201044443f094ba79ad1acec4fc
+Content-Type: application/json
+Content-Length: 911
+Date: Sun, 13 Sep 2026 13:18:10 GMT
+
+{"id":"booking_cc029201044443f094ba79ad1acec4fc","guestId":"guest_001","propertyId":"prop_e2343d6d49f04a30afb450c46f5acdae","roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","checkIn":"2026-09-23","checkOut":"2026-09-25","guestCount":1,"status":"HELD","expiresAt":"2026-09-13T13:20:10.181Z","expirationReason":null,"priceSnapshot":{"currency":"KRW","baseTotalAmount":200000,"discountTotalAmount":0,"totalAmount":200000,"appliedPromotion":null,"days":[{"date":"2026-09-23","baseAmount":100000,"discountAmount":0,"finalAmount":100000},{"date":"2026-09-24","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":0,"approvedAttemptId":null,"attempts":[],"refund":null},"cancellationReason":null,"createdAt":"2026-09-13T13:18:10.181Z","updatedAt":"2026-09-13T13:18:10.181Z","confirmedAt":null,"canceledAt":null,"expiredAt":null,"serverNow":"2026-09-13T13:18:10.200Z","version":0}
+
+== BOOK-01 POST /api/v1/bookings 예약 D (guest_001, 2박 인원 1 총액 200000, 키 call-1789305488-book-D) ==
+HTTP/1.1 201 
+Location: /api/v1/bookings/booking_a0ac3fc35d9c47e2a2a07632a3aa0131
+Content-Type: application/json
+Content-Length: 911
+Date: Sun, 13 Sep 2026 13:18:10 GMT
+
+{"id":"booking_a0ac3fc35d9c47e2a2a07632a3aa0131","guestId":"guest_001","propertyId":"prop_e2343d6d49f04a30afb450c46f5acdae","roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","checkIn":"2026-09-23","checkOut":"2026-09-25","guestCount":1,"status":"HELD","expiresAt":"2026-09-13T13:20:10.461Z","expirationReason":null,"priceSnapshot":{"currency":"KRW","baseTotalAmount":200000,"discountTotalAmount":0,"totalAmount":200000,"appliedPromotion":null,"days":[{"date":"2026-09-23","baseAmount":100000,"discountAmount":0,"finalAmount":100000},{"date":"2026-09-24","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":0,"approvedAttemptId":null,"attempts":[],"refund":null},"cancellationReason":null,"createdAt":"2026-09-13T13:18:10.461Z","updatedAt":"2026-09-13T13:18:10.461Z","confirmedAt":null,"canceledAt":null,"expiredAt":null,"serverNow":"2026-09-13T13:18:10.490Z","version":0}
+
+== BOOK-01 POST /api/v1/bookings 예약 E (guest_001, 2박 인원 1 총액 200000, 키 call-1789305488-book-E) ==
+HTTP/1.1 201 
+Location: /api/v1/bookings/booking_abe10f64cce84892b8c04976a4ca0b5a
+Content-Type: application/json
+Content-Length: 911
+Date: Sun, 13 Sep 2026 13:18:10 GMT
+
+{"id":"booking_abe10f64cce84892b8c04976a4ca0b5a","guestId":"guest_001","propertyId":"prop_e2343d6d49f04a30afb450c46f5acdae","roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","checkIn":"2026-09-23","checkOut":"2026-09-25","guestCount":1,"status":"HELD","expiresAt":"2026-09-13T13:20:10.723Z","expirationReason":null,"priceSnapshot":{"currency":"KRW","baseTotalAmount":200000,"discountTotalAmount":0,"totalAmount":200000,"appliedPromotion":null,"days":[{"date":"2026-09-23","baseAmount":100000,"discountAmount":0,"finalAmount":100000},{"date":"2026-09-24","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":0,"approvedAttemptId":null,"attempts":[],"refund":null},"cancellationReason":null,"createdAt":"2026-09-13T13:18:10.723Z","updatedAt":"2026-09-13T13:18:10.723Z","confirmedAt":null,"canceledAt":null,"expiredAt":null,"serverNow":"2026-09-13T13:18:10.743Z","version":0}
+
+== PAY-01 POST /api/v1/bookings/booking_4687943320554be0aa114ce457e237e6/payment-attempts 예약 A. body {} (mockMode 생략은 APPROVE). 202 REQUESTED와 Location ==
+HTTP/1.1 202 
+Location: /api/v1/bookings/booking_4687943320554be0aa114ce457e237e6/payment-attempts
+Content-Type: application/json
+Content-Length: 337
+Date: Sun, 13 Sep 2026 13:18:11 GMT
+
+{"id":"attempt_de91f307a35d41b688e01ac7f50d1a42","bookingId":"booking_4687943320554be0aa114ce457e237e6","attemptNumber":1,"status":"REQUESTED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_09b720a7510b4b038ad82c8af06a4e8a","mockMode":"APPROVE","requestedAt":"2026-09-13T13:18:11.023Z","completedAt":null,"failureCode":null}
+
+== T14 같은 키 같은 body 재전송. 202 같은 body, Idempotency-Replayed: true ==
+HTTP/1.1 202 
+Location: /api/v1/bookings/booking_4687943320554be0aa114ce457e237e6/payment-attempts
+Idempotency-Replayed: true
+Content-Type: application/json
+Content-Length: 337
+Date: Sun, 13 Sep 2026 13:18:11 GMT
+
+{"id":"attempt_de91f307a35d41b688e01ac7f50d1a42","bookingId":"booking_4687943320554be0aa114ce457e237e6","attemptNumber":1,"status":"REQUESTED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_09b720a7510b4b038ad82c8af06a4e8a","mockMode":"APPROVE","requestedAt":"2026-09-13T13:18:11.023Z","completedAt":null,"failureCode":null}
+
+== T11 같은 키 다른 body(DEFER). 409 IDEMPOTENCY_KEY_REUSED ==
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 13:18:11 GMT
+
+{"code":"IDEMPOTENCY_KEY_REUSED","message":"같은 멱등키로 다른 요청을 보낼 수 없습니다.","traceId":"trace_90ce743a1c7942faa453a4162e9c91c0","details":[]}
+
+== BOOK-03 GET /api/v1/bookings/booking_4687943320554be0aa114ce457e237e6 예약 A. CONFIRMED, confirmedAt, version 1, payment.attemptCount 1, approvedAttemptId, attempts[0] APPROVED, refund null ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 1334
+Date: Sun, 13 Sep 2026 13:18:11 GMT
+
+{"id":"booking_4687943320554be0aa114ce457e237e6","guestId":"guest_001","propertyId":"prop_e2343d6d49f04a30afb450c46f5acdae","roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","checkIn":"2026-09-23","checkOut":"2026-09-25","guestCount":1,"status":"CONFIRMED","expiresAt":"2026-09-13T13:20:09.557Z","expirationReason":null,"priceSnapshot":{"currency":"KRW","baseTotalAmount":200000,"discountTotalAmount":0,"totalAmount":200000,"appliedPromotion":null,"days":[{"date":"2026-09-23","baseAmount":100000,"discountAmount":0,"finalAmount":100000},{"date":"2026-09-24","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":1,"approvedAttemptId":"attempt_de91f307a35d41b688e01ac7f50d1a42","attempts":[{"id":"attempt_de91f307a35d41b688e01ac7f50d1a42","bookingId":"booking_4687943320554be0aa114ce457e237e6","attemptNumber":1,"status":"APPROVED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_09b720a7510b4b038ad82c8af06a4e8a","mockMode":"APPROVE","requestedAt":"2026-09-13T13:18:11.023Z","completedAt":"2026-09-13T13:18:11.096Z","failureCode":null}],"refund":null},"cancellationReason":null,"createdAt":"2026-09-13T13:18:09.557Z","updatedAt":"2026-09-13T13:18:11.127Z","confirmedAt":"2026-09-13T13:18:11.127Z","canceledAt":null,"expiredAt":null,"serverNow":"2026-09-13T13:18:11.593Z","version":1}
+
+== PAY-02 GET /api/v1/bookings/booking_4687943320554be0aa114ce457e237e6/payment-attempts 예약 A. 200, attemptCount 1 ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 442
+Date: Sun, 13 Sep 2026 13:18:11 GMT
+
+{"bookingId":"booking_4687943320554be0aa114ce457e237e6","attemptCount":1,"items":[{"id":"attempt_de91f307a35d41b688e01ac7f50d1a42","bookingId":"booking_4687943320554be0aa114ce457e237e6","attemptNumber":1,"status":"APPROVED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_09b720a7510b4b038ad82c8af06a4e8a","mockMode":"APPROVE","requestedAt":"2026-09-13T13:18:11.023Z","completedAt":"2026-09-13T13:18:11.096Z","failureCode":null}]}
+
+== 새 키로 CONFIRMED에 결제 요청. 409 BOOKING_STATE_CONFLICT ==
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 13:18:11 GMT
+
+{"code":"BOOKING_STATE_CONFLICT","message":"현재 예약 상태에서 허용되지 않는 동작입니다.","traceId":"trace_77bba6a33225483ea2a19ee26fbbc602","details":[]}
+
+== PAY-01 예약 B DECLINE 1/3. 202 REQUESTED attemptNumber 1 ==
+HTTP/1.1 202 
+Location: /api/v1/bookings/booking_2998d512695a46828ca64aa733e6eef4/payment-attempts
+Content-Type: application/json
+Content-Length: 337
+Date: Sun, 13 Sep 2026 13:18:12 GMT
+
+{"id":"attempt_128e1670f17e4a739c809664b9478281","bookingId":"booking_2998d512695a46828ca64aa733e6eef4","attemptNumber":1,"status":"REQUESTED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_7b8bb89ba8824d10b2a106b0e179c0ee","mockMode":"DECLINE","requestedAt":"2026-09-13T13:18:12.111Z","completedAt":null,"failureCode":null}
+
+== T16 BOOK-03 GET 예약 B. 실패 하나 뒤 HELD, attempts[0] FAILED failureCode MOCK_DECLINED, version 0 ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 1278
+Date: Sun, 13 Sep 2026 13:18:12 GMT
+
+{"id":"booking_2998d512695a46828ca64aa733e6eef4","guestId":"guest_001","propertyId":"prop_e2343d6d49f04a30afb450c46f5acdae","roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","checkIn":"2026-09-23","checkOut":"2026-09-25","guestCount":1,"status":"HELD","expiresAt":"2026-09-13T13:20:09.906Z","expirationReason":null,"priceSnapshot":{"currency":"KRW","baseTotalAmount":200000,"discountTotalAmount":0,"totalAmount":200000,"appliedPromotion":null,"days":[{"date":"2026-09-23","baseAmount":100000,"discountAmount":0,"finalAmount":100000},{"date":"2026-09-24","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":1,"approvedAttemptId":null,"attempts":[{"id":"attempt_128e1670f17e4a739c809664b9478281","bookingId":"booking_2998d512695a46828ca64aa733e6eef4","attemptNumber":1,"status":"FAILED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_7b8bb89ba8824d10b2a106b0e179c0ee","mockMode":"DECLINE","requestedAt":"2026-09-13T13:18:12.111Z","completedAt":"2026-09-13T13:18:12.161Z","failureCode":"MOCK_DECLINED"}],"refund":null},"cancellationReason":null,"createdAt":"2026-09-13T13:18:09.906Z","updatedAt":"2026-09-13T13:18:09.906Z","confirmedAt":null,"canceledAt":null,"expiredAt":null,"serverNow":"2026-09-13T13:18:12.306Z","version":0}
+
+== PAY-01 예약 B DECLINE 2/3. 202 REQUESTED attemptNumber 2 ==
+HTTP/1.1 202 
+Location: /api/v1/bookings/booking_2998d512695a46828ca64aa733e6eef4/payment-attempts
+Content-Type: application/json
+Content-Length: 337
+Date: Sun, 13 Sep 2026 13:18:12 GMT
+
+{"id":"attempt_d680368a3a524a51809693058ef760b6","bookingId":"booking_2998d512695a46828ca64aa733e6eef4","attemptNumber":2,"status":"REQUESTED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_ff1ebaa9fed14c298d13938f32b68c8b","mockMode":"DECLINE","requestedAt":"2026-09-13T13:18:12.479Z","completedAt":null,"failureCode":null}
+
+== PAY-01 예약 B DECLINE 3/3. 202 REQUESTED attemptNumber 3 ==
+HTTP/1.1 202 
+Location: /api/v1/bookings/booking_2998d512695a46828ca64aa733e6eef4/payment-attempts
+Content-Type: application/json
+Content-Length: 337
+Date: Sun, 13 Sep 2026 13:18:12 GMT
+
+{"id":"attempt_d765a09fe349495e83a8f3588457c914","bookingId":"booking_2998d512695a46828ca64aa733e6eef4","attemptNumber":3,"status":"REQUESTED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_a656dd35633c468cb32d320e64cb0bb7","mockMode":"DECLINE","requestedAt":"2026-09-13T13:18:12.737Z","completedAt":null,"failureCode":null}
+
+== T17 BOOK-03 GET 예약 B. 셋째 실패 뒤 EXPIRED, expirationReason PAYMENT_FAILED, expiredAt, version 1, attemptCount 3 ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 2051
+Date: Sun, 13 Sep 2026 13:18:12 GMT
+
+{"id":"booking_2998d512695a46828ca64aa733e6eef4","guestId":"guest_001","propertyId":"prop_e2343d6d49f04a30afb450c46f5acdae","roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","checkIn":"2026-09-23","checkOut":"2026-09-25","guestCount":1,"status":"EXPIRED","expiresAt":"2026-09-13T13:20:09.906Z","expirationReason":"PAYMENT_FAILED","priceSnapshot":{"currency":"KRW","baseTotalAmount":200000,"discountTotalAmount":0,"totalAmount":200000,"appliedPromotion":null,"days":[{"date":"2026-09-23","baseAmount":100000,"discountAmount":0,"finalAmount":100000},{"date":"2026-09-24","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":3,"approvedAttemptId":null,"attempts":[{"id":"attempt_128e1670f17e4a739c809664b9478281","bookingId":"booking_2998d512695a46828ca64aa733e6eef4","attemptNumber":1,"status":"FAILED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_7b8bb89ba8824d10b2a106b0e179c0ee","mockMode":"DECLINE","requestedAt":"2026-09-13T13:18:12.111Z","completedAt":"2026-09-13T13:18:12.161Z","failureCode":"MOCK_DECLINED"},{"id":"attempt_d680368a3a524a51809693058ef760b6","bookingId":"booking_2998d512695a46828ca64aa733e6eef4","attemptNumber":2,"status":"FAILED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_ff1ebaa9fed14c298d13938f32b68c8b","mockMode":"DECLINE","requestedAt":"2026-09-13T13:18:12.479Z","completedAt":"2026-09-13T13:18:12.543Z","failureCode":"MOCK_DECLINED"},{"id":"attempt_d765a09fe349495e83a8f3588457c914","bookingId":"booking_2998d512695a46828ca64aa733e6eef4","attemptNumber":3,"status":"FAILED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_a656dd35633c468cb32d320e64cb0bb7","mockMode":"DECLINE","requestedAt":"2026-09-13T13:18:12.737Z","completedAt":"2026-09-13T13:18:12.784Z","failureCode":"MOCK_DECLINED"}],"refund":null},"cancellationReason":null,"createdAt":"2026-09-13T13:18:09.906Z","updatedAt":"2026-09-13T13:18:12.809Z","confirmedAt":null,"canceledAt":null,"expiredAt":"2026-09-13T13:18:12.809Z","serverNow":"2026-09-13T13:18:12.974Z","version":1}
+
+== PAY-01 예약 B 넷째 시도. 셋째 실패가 만료시켰으므로 409 BOOKING_EXPIRED가 한도보다 먼저다 ==
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 13:18:13 GMT
+
+{"code":"BOOKING_EXPIRED","message":"예약이 만료되었습니다.","traceId":"trace_daf1ed44775d4e28974062d85a3e173a","details":[]}
+
+== PAY-02 GET 예약 B. attemptCount 3, items가 attemptNumber 오름차순, 전부 FAILED ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 1187
+Date: Sun, 13 Sep 2026 13:18:13 GMT
+
+{"bookingId":"booking_2998d512695a46828ca64aa733e6eef4","attemptCount":3,"items":[{"id":"attempt_128e1670f17e4a739c809664b9478281","bookingId":"booking_2998d512695a46828ca64aa733e6eef4","attemptNumber":1,"status":"FAILED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_7b8bb89ba8824d10b2a106b0e179c0ee","mockMode":"DECLINE","requestedAt":"2026-09-13T13:18:12.111Z","completedAt":"2026-09-13T13:18:12.161Z","failureCode":"MOCK_DECLINED"},{"id":"attempt_d680368a3a524a51809693058ef760b6","bookingId":"booking_2998d512695a46828ca64aa733e6eef4","attemptNumber":2,"status":"FAILED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_ff1ebaa9fed14c298d13938f32b68c8b","mockMode":"DECLINE","requestedAt":"2026-09-13T13:18:12.479Z","completedAt":"2026-09-13T13:18:12.543Z","failureCode":"MOCK_DECLINED"},{"id":"attempt_d765a09fe349495e83a8f3588457c914","bookingId":"booking_2998d512695a46828ca64aa733e6eef4","attemptNumber":3,"status":"FAILED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_a656dd35633c468cb32d320e64cb0bb7","mockMode":"DECLINE","requestedAt":"2026-09-13T13:18:12.737Z","completedAt":"2026-09-13T13:18:12.784Z","failureCode":"MOCK_DECLINED"}]}
+
+== PAY-01 예약 C DEFER. 202 REQUESTED ==
+HTTP/1.1 202 
+Location: /api/v1/bookings/booking_cc029201044443f094ba79ad1acec4fc/payment-attempts
+Content-Type: application/json
+Content-Length: 335
+Date: Sun, 13 Sep 2026 13:18:13 GMT
+
+{"id":"attempt_935e543632b14a66927a103124e49c86","bookingId":"booking_cc029201044443f094ba79ad1acec4fc","attemptNumber":1,"status":"REQUESTED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_e2d3be4fd72744a09621df1175ce62f1","mockMode":"DEFER","requestedAt":"2026-09-13T13:18:13.447Z","completedAt":null,"failureCode":null}
+
+== T15 새 키로 결제 요청. DEFER 시도가 진행 중이라 409 PAYMENT_IN_PROGRESS ==
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 13:18:13 GMT
+
+{"code":"PAYMENT_IN_PROGRESS","message":"완료되지 않은 결제 시도가 있습니다.","traceId":"trace_2424e9022222485d8c548603b9af812a","details":[]}
+
+== BOOK-03 GET 예약 C. HELD, attempts[0] REQUESTED, completedAt null ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 1246
+Date: Sun, 13 Sep 2026 13:18:14 GMT
+
+{"id":"booking_cc029201044443f094ba79ad1acec4fc","guestId":"guest_001","propertyId":"prop_e2343d6d49f04a30afb450c46f5acdae","roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","checkIn":"2026-09-23","checkOut":"2026-09-25","guestCount":1,"status":"HELD","expiresAt":"2026-09-13T13:20:10.181Z","expirationReason":null,"priceSnapshot":{"currency":"KRW","baseTotalAmount":200000,"discountTotalAmount":0,"totalAmount":200000,"appliedPromotion":null,"days":[{"date":"2026-09-23","baseAmount":100000,"discountAmount":0,"finalAmount":100000},{"date":"2026-09-24","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":1,"approvedAttemptId":null,"attempts":[{"id":"attempt_935e543632b14a66927a103124e49c86","bookingId":"booking_cc029201044443f094ba79ad1acec4fc","attemptNumber":1,"status":"REQUESTED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_e2d3be4fd72744a09621df1175ce62f1","mockMode":"DEFER","requestedAt":"2026-09-13T13:18:13.447Z","completedAt":null,"failureCode":null}],"refund":null},"cancellationReason":null,"createdAt":"2026-09-13T13:18:10.181Z","updatedAt":"2026-09-13T13:18:10.181Z","confirmedAt":null,"canceledAt":null,"expiredAt":null,"serverNow":"2026-09-13T13:18:14.022Z","version":0}
+
+== INTERNAL-01 POST /internal/mock-payments/events (mock_001) 시도 attempt_935e543632b14a66927a103124e49c86 승인. 200 PROCESSED ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 159
+Date: Sun, 13 Sep 2026 13:18:14 GMT
+
+{"eventId":"mock_event_1789305488","paymentAttemptId":"attempt_935e543632b14a66927a103124e49c86","result":"PROCESSED","processedAt":"2026-09-13T13:18:14.158Z"}
+
+== BOOK-03 GET 예약 C. INTERNAL-01 뒤 CONFIRMED, approvedAttemptId attempt_935e543632b14a66927a103124e49c86, attempts[0] APPROVED mockMode DEFER ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 1332
+Date: Sun, 13 Sep 2026 13:18:14 GMT
+
+{"id":"booking_cc029201044443f094ba79ad1acec4fc","guestId":"guest_001","propertyId":"prop_e2343d6d49f04a30afb450c46f5acdae","roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","checkIn":"2026-09-23","checkOut":"2026-09-25","guestCount":1,"status":"CONFIRMED","expiresAt":"2026-09-13T13:20:10.181Z","expirationReason":null,"priceSnapshot":{"currency":"KRW","baseTotalAmount":200000,"discountTotalAmount":0,"totalAmount":200000,"appliedPromotion":null,"days":[{"date":"2026-09-23","baseAmount":100000,"discountAmount":0,"finalAmount":100000},{"date":"2026-09-24","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":1,"approvedAttemptId":"attempt_935e543632b14a66927a103124e49c86","attempts":[{"id":"attempt_935e543632b14a66927a103124e49c86","bookingId":"booking_cc029201044443f094ba79ad1acec4fc","attemptNumber":1,"status":"APPROVED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_e2d3be4fd72744a09621df1175ce62f1","mockMode":"DEFER","requestedAt":"2026-09-13T13:18:13.447Z","completedAt":"2026-09-13T13:18:14.158Z","failureCode":null}],"refund":null},"cancellationReason":null,"createdAt":"2026-09-13T13:18:10.181Z","updatedAt":"2026-09-13T13:18:14.202Z","confirmedAt":"2026-09-13T13:18:14.202Z","canceledAt":null,"expiredAt":null,"serverNow":"2026-09-13T13:18:14.312Z","version":1}
+
+== 멱등키 없음. 400 IDEMPOTENCY_KEY_REQUIRED ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 13:18:14 GMT
+Connection: close
+
+{"code":"IDEMPOTENCY_KEY_REQUIRED","message":"Idempotency-Key 헤더가 없거나 형식이 올바르지 않습니다.","traceId":"trace_4903425f606642a0b83a33651839525c","details":[]}
+
+== mockMode 값 밖(CASH). 400 INVALID_REQUEST ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 13:18:14 GMT
+Connection: close
+
+{"code":"INVALID_REQUEST","message":"요청 값이 올바르지 않습니다.","traceId":"trace_0790c0c69a7c4b24a46daa513e79c04b","details":[{"field":"mockMode","reason":"\"APPROVE|DECLINE|DEFER\"와 일치해야 합니다"}]}
+
+== 미정의 필드(amount). 400 INVALID_REQUEST ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 13:18:14 GMT
+Connection: close
+
+{"code":"INVALID_REQUEST","message":"요청 본문을 읽을 수 없습니다.","traceId":"trace_2a67dc453c9241ad954ffd4bb1e92b93","details":[]}
+
+== 행위자 없음. 401 ACTOR_REQUIRED ==
+HTTP/1.1 401 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 13:18:14 GMT
+
+{"code":"ACTOR_REQUIRED","message":"필요한 개발 행위자가 없거나 미등록입니다.","traceId":"trace_dfd80744e054466690cf348f7c17c1be","details":[]}
+
+== HOST가 결제 요청. 403 ACCESS_DENIED ==
+HTTP/1.1 403 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 13:18:14 GMT
+
+{"code":"ACCESS_DENIED","message":"이 작업에 필요한 역할이 아닙니다.","traceId":"trace_bfc4ee103a0940a0ae304e74f83d9b26","details":[]}
+
+== T02 남의 예약(guest_002). 404 RESOURCE_NOT_FOUND ==
+HTTP/1.1 404 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 13:18:14 GMT
+
+{"code":"RESOURCE_NOT_FOUND","message":"자원을 찾을 수 없습니다.","traceId":"trace_6623203740854dccb2be40a03a35d8c3","details":[]}
+
+== 없는 예약. 404 RESOURCE_NOT_FOUND. 남의 예약과 같은 본문 ==
+HTTP/1.1 404 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 13:18:15 GMT
+
+{"code":"RESOURCE_NOT_FOUND","message":"자원을 찾을 수 없습니다.","traceId":"trace_d8bcbd3a421647b280d68fe447750555","details":[]}
+
+== PAY-02 GET 예약 D. 거절만 있었으므로 attemptCount 0과 빈 items ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 84
+Date: Sun, 13 Sep 2026 13:18:15 GMT
+
+{"bookingId":"booking_a0ac3fc35d9c47e2a2a07632a3aa0131","attemptCount":0,"items":[]}
+
+== PAY-02 남의 예약(guest_002). 404 ==
+HTTP/1.1 404 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 13:18:15 GMT
+
+{"code":"RESOURCE_NOT_FOUND","message":"자원을 찾을 수 없습니다.","traceId":"trace_a6f3a2ce8cb44fec9695c941dd3d0603","details":[]}
+
+== PAY-02 HOST. 403 ==
+HTTP/1.1 403 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 13:18:15 GMT
+
+{"code":"ACCESS_DENIED","message":"이 작업에 필요한 역할이 아닙니다.","traceId":"trace_9cda83883dab404bb81d3c7a2dd7935c","details":[]}
+
+== PAY-01 예약 D 몸체 없음(Content-Type 없이). body 없음은 빈 객체와 같아 202 APPROVE ==
+HTTP/1.1 202 
+Location: /api/v1/bookings/booking_a0ac3fc35d9c47e2a2a07632a3aa0131/payment-attempts
+Content-Type: application/json
+Content-Length: 337
+Date: Sun, 13 Sep 2026 13:18:15 GMT
+
+{"id":"attempt_ed50af070b6f45849bc43e3c7d518b84","bookingId":"booking_a0ac3fc35d9c47e2a2a07632a3aa0131","attemptNumber":1,"status":"REQUESTED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_74022d1c9fc84658bedb4d8bea632a46","mockMode":"APPROVE","requestedAt":"2026-09-13T13:18:15.490Z","completedAt":null,"failureCode":null}
+
+== INV-04 GET 재고 범위 (HOST). A와 C와 D는 sold, B는 반환, E는 아직 held. 날짜마다 heldCount 1 soldCount 3 ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 270
+Date: Sun, 13 Sep 2026 13:18:15 GMT
+
+{"roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","from":"2026-09-23","to":"2026-09-24","items":[{"roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","date":"2026-09-23","totalCount":10,"heldCount":1,"soldCount":3,"availableCount":6,"version":0}],"missingDates":[]}
+
+== BOOK-03 GET 예약 E. 결제 요청 없이 둔다. HELD이고 expiresAt이 생성 2분 뒤 ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 911
+Date: Sun, 13 Sep 2026 13:18:15 GMT
+
+{"id":"booking_abe10f64cce84892b8c04976a4ca0b5a","guestId":"guest_001","propertyId":"prop_e2343d6d49f04a30afb450c46f5acdae","roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","checkIn":"2026-09-23","checkOut":"2026-09-25","guestCount":1,"status":"HELD","expiresAt":"2026-09-13T13:20:10.723Z","expirationReason":null,"priceSnapshot":{"currency":"KRW","baseTotalAmount":200000,"discountTotalAmount":0,"totalAmount":200000,"appliedPromotion":null,"days":[{"date":"2026-09-23","baseAmount":100000,"discountAmount":0,"finalAmount":100000},{"date":"2026-09-24","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":0,"approvedAttemptId":null,"attempts":[],"refund":null},"cancellationReason":null,"createdAt":"2026-09-13T13:18:10.723Z","updatedAt":"2026-09-13T13:18:10.723Z","confirmedAt":null,"canceledAt":null,"expiredAt":null,"serverNow":"2026-09-13T13:18:15.827Z","version":0}
+WAITING_FOR_TTL 13:18:15
+
+== P01 BOOK-03 GET 예약 E. 스케줄러가 만료시켰다. EXPIRED, expirationReason TTL_EXPIRED, expiredAt이 expiresAt 직후, version 1 (13:20:15 UTC) ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 945
+Date: Sun, 13 Sep 2026 13:20:15 GMT
+
+{"id":"booking_abe10f64cce84892b8c04976a4ca0b5a","guestId":"guest_001","propertyId":"prop_e2343d6d49f04a30afb450c46f5acdae","roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","checkIn":"2026-09-23","checkOut":"2026-09-25","guestCount":1,"status":"EXPIRED","expiresAt":"2026-09-13T13:20:10.723Z","expirationReason":"TTL_EXPIRED","priceSnapshot":{"currency":"KRW","baseTotalAmount":200000,"discountTotalAmount":0,"totalAmount":200000,"appliedPromotion":null,"days":[{"date":"2026-09-23","baseAmount":100000,"discountAmount":0,"finalAmount":100000},{"date":"2026-09-24","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":0,"approvedAttemptId":null,"attempts":[],"refund":null},"cancellationReason":null,"createdAt":"2026-09-13T13:18:10.723Z","updatedAt":"2026-09-13T13:20:11.111Z","confirmedAt":null,"canceledAt":null,"expiredAt":"2026-09-13T13:20:11.111Z","serverNow":"2026-09-13T13:20:15.692Z","version":1}
+
+== PAY-01 예약 E. 이미 EXPIRED. 409 BOOKING_EXPIRED ==
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Sun, 13 Sep 2026 13:20:15 GMT
+
+{"code":"BOOKING_EXPIRED","message":"예약이 만료되었습니다.","traceId":"trace_02b0a14a2b434175978b3acc1a3db3e4","details":[]}
+
+== INV-04 GET 재고 범위. E의 선점이 돌아와 날짜마다 heldCount 0 soldCount 3 availableCount 7 ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 270
+Date: Sun, 13 Sep 2026 13:20:15 GMT
+
+{"roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","from":"2026-09-23","to":"2026-09-24","items":[{"roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","date":"2026-09-23","totalCount":10,"heldCount":0,"soldCount":3,"availableCount":7,"version":0}],"missingDates":[]}
+
+== BOOK-02 GET /api/v1/bookings?size=100 목록. 항목마다 payment가 채워진다(A와 C는 attemptCount 1, B는 3) ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 7065
+Date: Sun, 13 Sep 2026 13:20:16 GMT
+
+{"items":[{"id":"booking_abe10f64cce84892b8c04976a4ca0b5a","guestId":"guest_001","propertyId":"prop_e2343d6d49f04a30afb450c46f5acdae","roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","checkIn":"2026-09-23","checkOut":"2026-09-25","guestCount":1,"status":"EXPIRED","expiresAt":"2026-09-13T13:20:10.723Z","expirationReason":"TTL_EXPIRED","priceSnapshot":{"currency":"KRW","baseTotalAmount":200000,"discountTotalAmount":0,"totalAmount":200000,"appliedPromotion":null,"days":[{"date":"2026-09-23","baseAmount":100000,"discountAmount":0,"finalAmount":100000},{"date":"2026-09-24","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":0,"approvedAttemptId":null,"attempts":[],"refund":null},"cancellationReason":null,"createdAt":"2026-09-13T13:18:10.723Z","updatedAt":"2026-09-13T13:20:11.111Z","confirmedAt":null,"canceledAt":null,"expiredAt":"2026-09-13T13:20:11.111Z","serverNow":"2026-09-13T13:20:16.031Z","version":1},{"id":"booking_a0ac3fc35d9c47e2a2a07632a3aa0131","guestId":"guest_001","propertyId":"prop_e2343d6d49f04a30afb450c46f5acdae","roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","checkIn":"2026-09-23","checkOut":"2026-09-25","guestCount":1,"status":"CONFIRMED","expiresAt":"2026-09-13T13:20:10.461Z","expirationReason":null,"priceSnapshot":{"currency":"KRW","baseTotalAmount":200000,"discountTotalAmount":0,"totalAmount":200000,"appliedPromotion":null,"days":[{"date":"2026-09-23","baseAmount":100000,"discountAmount":0,"finalAmount":100000},{"date":"2026-09-24","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":1,"approvedAttemptId":"attempt_ed50af070b6f45849bc43e3c7d518b84","attempts":[{"id":"attempt_ed50af070b6f45849bc43e3c7d518b84","bookingId":"booking_a0ac3fc35d9c47e2a2a07632a3aa0131","attemptNumber":1,"status":"APPROVED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_74022d1c9fc84658bedb4d8bea632a46","mockMode":"APPROVE","requestedAt":"2026-09-13T13:18:15.490Z","completedAt":"2026-09-13T13:18:15.555Z","failureCode":null}],"refund":null},"cancellationReason":null,"createdAt":"2026-09-13T13:18:10.461Z","updatedAt":"2026-09-13T13:18:15.585Z","confirmedAt":"2026-09-13T13:18:15.585Z","canceledAt":null,"expiredAt":null,"serverNow":"2026-09-13T13:20:16.031Z","version":1},{"id":"booking_cc029201044443f094ba79ad1acec4fc","guestId":"guest_001","propertyId":"prop_e2343d6d49f04a30afb450c46f5acdae","roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","checkIn":"2026-09-23","checkOut":"2026-09-25","guestCount":1,"status":"CONFIRMED","expiresAt":"2026-09-13T13:20:10.181Z","expirationReason":null,"priceSnapshot":{"currency":"KRW","baseTotalAmount":200000,"discountTotalAmount":0,"totalAmount":200000,"appliedPromotion":null,"days":[{"date":"2026-09-23","baseAmount":100000,"discountAmount":0,"finalAmount":100000},{"date":"2026-09-24","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":1,"approvedAttemptId":"attempt_935e543632b14a66927a103124e49c86","attempts":[{"id":"attempt_935e543632b14a66927a103124e49c86","bookingId":"booking_cc029201044443f094ba79ad1acec4fc","attemptNumber":1,"status":"APPROVED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_e2d3be4fd72744a09621df1175ce62f1","mockMode":"DEFER","requestedAt":"2026-09-13T13:18:13.447Z","completedAt":"2026-09-13T13:18:14.158Z","failureCode":null}],"refund":null},"cancellationReason":null,"createdAt":"2026-09-13T13:18:10.181Z","updatedAt":"2026-09-13T13:18:14.202Z","confirmedAt":"2026-09-13T13:18:14.202Z","canceledAt":null,"expiredAt":null,"serverNow":"2026-09-13T13:20:16.031Z","version":1},{"id":"booking_2998d512695a46828ca64aa733e6eef4","guestId":"guest_001","propertyId":"prop_e2343d6d49f04a30afb450c46f5acdae","roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","checkIn":"2026-09-23","checkOut":"2026-09-25","guestCount":1,"status":"EXPIRED","expiresAt":"2026-09-13T13:20:09.906Z","expirationReason":"PAYMENT_FAILED","priceSnapshot":{"currency":"KRW","baseTotalAmount":200000,"discountTotalAmount":0,"totalAmount":200000,"appliedPromotion":null,"days":[{"date":"2026-09-23","baseAmount":100000,"discountAmount":0,"finalAmount":100000},{"date":"2026-09-24","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":3,"approvedAttemptId":null,"attempts":[{"id":"attempt_128e1670f17e4a739c809664b9478281","bookingId":"booking_2998d512695a46828ca64aa733e6eef4","attemptNumber":1,"status":"FAILED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_7b8bb89ba8824d10b2a106b0e179c0ee","mockMode":"DECLINE","requestedAt":"2026-09-13T13:18:12.111Z","completedAt":"2026-09-13T13:18:12.161Z","failureCode":"MOCK_DECLINED"},{"id":"attempt_d680368a3a524a51809693058ef760b6","bookingId":"booking_2998d512695a46828ca64aa733e6eef4","attemptNumber":2,"status":"FAILED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_ff1ebaa9fed14c298d13938f32b68c8b","mockMode":"DECLINE","requestedAt":"2026-09-13T13:18:12.479Z","completedAt":"2026-09-13T13:18:12.543Z","failureCode":"MOCK_DECLINED"},{"id":"attempt_d765a09fe349495e83a8f3588457c914","bookingId":"booking_2998d512695a46828ca64aa733e6eef4","attemptNumber":3,"status":"FAILED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_a656dd35633c468cb32d320e64cb0bb7","mockMode":"DECLINE","requestedAt":"2026-09-13T13:18:12.737Z","completedAt":"2026-09-13T13:18:12.784Z","failureCode":"MOCK_DECLINED"}],"refund":null},"cancellationReason":null,"createdAt":"2026-09-13T13:18:09.906Z","updatedAt":"2026-09-13T13:18:12.809Z","confirmedAt":null,"canceledAt":null,"expiredAt":"2026-09-13T13:18:12.809Z","serverNow":"2026-09-13T13:20:16.031Z","version":1},{"id":"booking_4687943320554be0aa114ce457e237e6","guestId":"guest_001","propertyId":"prop_e2343d6d49f04a30afb450c46f5acdae","roomTypeId":"room_c76037f6bbc042b89c6f72ab71628296","checkIn":"2026-09-23","checkOut":"2026-09-25","guestCount":1,"status":"CONFIRMED","expiresAt":"2026-09-13T13:20:09.557Z","expirationReason":null,"priceSnapshot":{"currency":"KRW","baseTotalAmount":200000,"discountTotalAmount":0,"totalAmount":200000,"appliedPromotion":null,"days":[{"date":"2026-09-23","baseAmount":100000,"discountAmount":0,"finalAmount":100000},{"date":"2026-09-24","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":1,"approvedAttemptId":"attempt_de91f307a35d41b688e01ac7f50d1a42","attempts":[{"id":"attempt_de91f307a35d41b688e01ac7f50d1a42","bookingId":"booking_4687943320554be0aa114ce457e237e6","attemptNumber":1,"status":"APPROVED","amount":200000,"currency":"KRW","pgTransactionId":"mock_tx_09b720a7510b4b038ad82c8af06a4e8a","mockMode":"APPROVE","requestedAt":"2026-09-13T13:18:11.023Z","completedAt":"2026-09-13T13:18:11.096Z","failureCode":null}],"refund":null},"cancellationReason":null,"createdAt":"2026-09-13T13:18:09.557Z","updatedAt":"2026-09-13T13:18:11.127Z","confirmedAt":"2026-09-13T13:18:11.127Z","canceledAt":null,"expiredAt":null,"serverNow":"2026-09-13T13:20:16.031Z","version":1}],"page":0,"size":100,"totalElements":5,"totalPages":1}

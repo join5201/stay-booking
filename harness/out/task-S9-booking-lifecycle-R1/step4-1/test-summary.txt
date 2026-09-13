@@ -1,0 +1,13 @@
+# task-S9-booking-lifecycle 4-1단계 결과 요약 (실행 2026-09-13 20:32)
+
+명령: JAVA_HOME 21; ./backend/gradlew.bat -p backend test (워크트리 o2o-dev, 브랜치 feat/task-s9-booking-lifecycle, 코드 커밋 6b9c4e6)
+결과: exit 0, BUILD SUCCESSFUL
+
+junit XML 합계 (backend/build/test-results/test):
+{"files":36,"tests":337,"failures":0,"errors":0,"skipped":0}
+
+접속 문자열: jdbc:mysql://127.0.0.1:3307/o2o_catalog_test (테스트 설정 기본값)
+
+이번 단계의 테스트는 아직 없다. 4-1단계는 가격 포트의 어댑터 교체 뒤 기존 337건(결제 병합 뒤 기준선)이 그대로 통과하는 것과 컨텍스트 기동(PricingService 빈 주입, PriceQuotePort 구현이 하나)을 본다.
+BookingApiTest의 BOOK-01 경로는 새 어댑터를 지나 할인 0 스냅샷을 받는다(프로모션 없는 지역). 할인이 있는 스냅샷과 T12와 T13의 프로모션 절반은 5단계 L5가 본다.
+새 파일: booking/infrastructure/PricingPriceQuoteAdapter.java. 옮긴 파일: RateOnlyPriceQuoteAdapter.java를 tmp/_moved/backend/src/main/java/com/o2o/booking/infrastructure/로(계약 7절 D-4 가).
