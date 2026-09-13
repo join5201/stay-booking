@@ -1,0 +1,13 @@
+# task-S9-booking-lifecycle 4-3단계 결과 요약 (실행 2026-09-13 21:02)
+
+명령: JAVA_HOME 21; ./backend/gradlew.bat -p backend test (워크트리 o2o-dev, 브랜치 feat/task-s9-booking-lifecycle, 코드 커밋 84a2d77, a388eab, 2a06060, ac7b225)
+결과: exit 0, BUILD SUCCESSFUL
+
+junit XML 합계 (backend/build/test-results/test):
+{"files":36,"tests":337,"failures":0,"errors":0,"skipped":0}
+
+접속 문자열: jdbc:mysql://127.0.0.1:3307/o2o_catalog_test (테스트 설정 기본값)
+
+이번 단계의 새 테스트는 아직 없다. 앱 서비스의 동작(L6부터 L11)은 5단계가 본다. 4-3단계는 컴파일과 빈 배선(새 빈 다섯이 컨텍스트에 올라 기존 통합 테스트가 그대로 뜬다)과 기존 337건 통과를 본다.
+새 파일: booking/application의 BookingLifecycle, BookingExpirationService, ExpireDueBookings, PaymentOutcomeService, BookingPaymentService, RequestPaymentCommand, CancelBookingCommand. booking/domain의 BookingExpiredException, CancellationNotAllowedException, PaymentInProgressException, PaymentAttemptsExhaustedException. inventory/domain의 InventoryCommitted, InventoryReleased(개정 2). 고친 파일: booking/application/BookingApplicationService.java(cancelBooking과 주입 둘), booking/domain/InvalidStateTransitionException.java(detail 생성자), booking/domain/BookingRepository.java와 booking/infrastructure/BookingJpaRepository.java와 JpaBookingRepository.java(findByIdForUpdate, findDueIds).
+단계 순서에서 어긋난 것 하나: Booking 잠금 조회와 due 조회는 계약 8절이 4-4단계(인프라)에 적었으나 앱 서비스가 그 인터페이스 없이는 컴파일되지 않아 4-3에서 먼저 넣었다(커밋 a388eab). 4-4단계에 남는 인프라는 구독자 어댑터 둘과 스케줄러와 테스트 설정 한 줄이다.
