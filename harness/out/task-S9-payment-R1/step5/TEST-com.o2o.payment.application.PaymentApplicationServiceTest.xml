@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.payment.application.PaymentApplicationServiceTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-09-13T09:18:18.968Z" hostname="BOOK-QD5U7FFOBT" time="4.176">
+  <properties/>
+  <testcase name="Y7_refund는_attemptId를_멱등키로_Mock_환불을_부르고_두_번째는_같은_환불을_돌려준다()" classname="com.o2o.payment.application.PaymentApplicationServiceTest" time="0.129"/>
+  <testcase name="Y14_attemptsOf는_오름차순_목록과_attemptCount와_approvedAttemptId와_환불_뷰를_준다()" classname="com.o2o.payment.application.PaymentApplicationServiceTest" time="0.139"/>
+  <testcase name="Y9_같은_bookingId의_둘째_Payment는_유니크가_거부한다()" classname="com.o2o.payment.application.PaymentApplicationServiceTest" time="0.041"/>
+  <testcase name="Y14_Payment가_없는_예약은_0과_빈_목록과_null이다()" classname="com.o2o.payment.application.PaymentApplicationServiceTest" time="0.009"/>
+  <testcase name="openAttempt는_bookingId와_amount를_검사한다()" classname="com.o2o.payment.application.PaymentApplicationServiceTest" time="0.037"/>
+  <testcase name="Y9_같은_pgTransactionId의_둘째_시도는_유니크가_거부한다()" classname="com.o2o.payment.application.PaymentApplicationServiceTest" time="0.026"/>
+  <testcase name="Y10_잠긴_Payment_행의_openAttempt는_잠금이_풀린_뒤_I9로_거절된다()" classname="com.o2o.payment.application.PaymentApplicationServiceTest" time="2.071"/>
+  <system-out><![CDATA[2026-09-13T18:18:18.986+09:00  INFO 37088 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.payment.application.PaymentApplicationServiceTest
+2026-09-13T18:18:18.996+09:00  INFO 37088 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.payment.application.PaymentApplicationServiceTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.1)
+
+2026-09-13T18:18:19.017+09:00  INFO 37088 --- [    Test worker] c.o.p.a.PaymentApplicationServiceTest    : Starting PaymentApplicationServiceTest using Java 21.0.11 with PID 37088 (started by user in C:\Dev\potenup\99_projects\o2o-dev\backend)
+2026-09-13T18:18:19.017+09:00  INFO 37088 --- [    Test worker] c.o.p.a.PaymentApplicationServiceTest    : No active profile set, falling back to 1 default profile: "default"
+2026-09-13T18:18:19.234+09:00  INFO 37088 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-09-13T18:18:19.301+09:00  INFO 37088 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 61 ms. Found 9 JPA repository interfaces.
+2026-09-13T18:18:19.356+09:00  INFO 37088 --- [    Test worker] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-09-13T18:18:19.385+09:00  INFO 37088 --- [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-09-13T18:18:19.393+09:00  INFO 37088 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-7 - Starting...
+2026-09-13T18:18:19.419+09:00  INFO 37088 --- [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-7 - Added connection com.mysql.cj.jdbc.ConnectionImpl@5d3fd216
+2026-09-13T18:18:19.420+09:00  INFO 37088 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-7 - Start completed.
+2026-09-13T18:18:19.424+09:00  INFO 37088 --- [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://127.0.0.1:3307/o2o_payment_test]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 9.7.2
+	Default catalog/schema: o2o_payment_test/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-09-13T18:18:19.683+09:00  INFO 37088 --- [    Test worker] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-09-13T18:18:20.461+09:00  INFO 37088 --- [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-13T18:18:20.615+09:00  WARN 37088 --- [    Test worker] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-09-13T18:18:20.672+09:00  INFO 37088 --- [    Test worker] c.o.p.a.PaymentApplicationServiceTest    : Started PaymentApplicationServiceTest in 1.674 seconds (process running for 49.153)
+2026-09-13T18:18:20.972+09:00  WARN 37088 --- [    Test worker] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 1062, SQLState: 23000
+2026-09-13T18:18:20.972+09:00  WARN 37088 --- [    Test worker] org.hibernate.orm.jdbc.error             : Duplicate entry 'bk_test_62090f4c56274d03' for key 'payment.uk_payment_booking'
+2026-09-13T18:18:21.067+09:00  WARN 37088 --- [    Test worker] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 1062, SQLState: 23000
+2026-09-13T18:18:21.067+09:00  WARN 37088 --- [    Test worker] org.hibernate.orm.jdbc.error             : Duplicate entry 'mock_tx_dup_53942c96' for key 'payment_attempt.uk_payment_attempt_pg_transaction'
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

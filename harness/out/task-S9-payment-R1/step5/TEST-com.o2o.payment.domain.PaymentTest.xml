@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.payment.domain.PaymentTest" tests="21" skipped="0" failures="0" errors="0" timestamp="2026-09-13T09:18:27.018Z" hostname="BOOK-QD5U7FFOBT" time="0.021">
+  <properties/>
+  <testcase name="Y7_두_번째_refund는_상태와_refundedAt을_바꾸지_않는다()" classname="com.o2o.payment.domain.PaymentTest" time="0.001"/>
+  <testcase name="Y1_첫_openAttempt는_Payment를_만들고_1번_REQUESTED_시도를_더한다()" classname="com.o2o.payment.domain.PaymentTest" time="0.0"/>
+  <testcase name="Y5_recordApproval은_REQUESTED를_APPROVED로_바꾸고_completedAt을_적는다()" classname="com.o2o.payment.domain.PaymentTest" time="0.001"/>
+  <testcase name="Y1_첫_시도가_FAILED가_된_뒤에는_2번이_열린다()" classname="com.o2o.payment.domain.PaymentTest" time="0.001"/>
+  <testcase name="Y1_REQUESTED가_있는_동안_둘째_openAttempt는_AttemptInProgress다()" classname="com.o2o.payment.domain.PaymentTest" time="0.0"/>
+  <testcase name="Y5_FAILED에_승인이_오면_역행이라_예외다()" classname="com.o2o.payment.domain.PaymentTest" time="0.001"/>
+  <testcase name="시도_목록은_attemptNumber_오름차순이고_거래_번호는_한_번만_붙는다()" classname="com.o2o.payment.domain.PaymentTest" time="0.001"/>
+  <testcase name="Y4_청구액이_0_이하면_Payment를_만들지_않는다()" classname="com.o2o.payment.domain.PaymentTest" time="0.0"/>
+  <testcase name="Y6_REFUNDED_뒤_같은_승인이_다시_와도_전이_없음이다()" classname="com.o2o.payment.domain.PaymentTest" time="0.001"/>
+  <testcase name="Y2_셋째_시도는_열리고_넷째는_AttemptLimitExceeded다()" classname="com.o2o.payment.domain.PaymentTest" time="0.001"/>
+  <testcase name="Y4_둘째_시도의_amount가_청구액과_다르면_AmountMismatch이고_같으면_열린다()" classname="com.o2o.payment.domain.PaymentTest" time="0.003"/>
+  <testcase name="Y6_금액이나_통화가_다르면_AmountMismatch이고_없는_시도는_UnknownAttempt다()" classname="com.o2o.payment.domain.PaymentTest" time="0.002"/>
+  <testcase name="Y3_APPROVED_시도가_있으면_openAttempt는_AlreadyApproved다()" classname="com.o2o.payment.domain.PaymentTest" time="0.001"/>
+  <testcase name="Y5_APPROVED에_실패가_오면_역행이라_예외다()" classname="com.o2o.payment.domain.PaymentTest" time="0.002"/>
+  <testcase name="Y7_REQUESTED와_FAILED에_refund는_NoApprovedAttempt다()" classname="com.o2o.payment.domain.PaymentTest" time="0.001"/>
+  <testcase name="Y3_REFUNDED_뒤에도_openAttempt는_AlreadyApproved다()" classname="com.o2o.payment.domain.PaymentTest" time="0.001"/>
+  <testcase name="Y5_recordFailure는_REQUESTED를_FAILED로_바꾸고_MOCK_DECLINED를_적는다()" classname="com.o2o.payment.domain.PaymentTest" time="0.0"/>
+  <testcase name="Y6_같은_거래_같은_결과의_두_번째_기록은_전이_없음이고_시도가_그대로다()" classname="com.o2o.payment.domain.PaymentTest" time="0.0"/>
+  <testcase name="Y7_refund는_APPROVED를_REFUNDED로_바꾸고_reason과_refundedAt을_적는다()" classname="com.o2o.payment.domain.PaymentTest" time="0.0"/>
+  <testcase name="Y5_REFUNDED에_실패가_오면_역행이라_예외다()" classname="com.o2o.payment.domain.PaymentTest" time="0.001"/>
+  <testcase name="Y6_다른_pgTransactionId는_PgTransactionMismatch다()" classname="com.o2o.payment.domain.PaymentTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

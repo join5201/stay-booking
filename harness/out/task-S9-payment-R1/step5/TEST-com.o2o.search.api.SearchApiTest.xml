@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.search.api.SearchApiTest" tests="21" skipped="0" failures="0" errors="0" timestamp="2026-09-13T09:18:33.102Z" hostname="BOOK-QD5U7FFOBT" time="2.348">
+  <properties/>
+  <testcase name="SEARCH_01_31박은_400_INVALID_DATE_RANGE이고_30박은_200이다()" classname="com.o2o.search.api.SearchApiTest" time="0.03"/>
+  <testcase name="SEARCH_02_인원_초과는_200과_reasons_OCCUPANCY_EXCEEDED이다()" classname="com.o2o.search.api.SearchApiTest" time="0.093"/>
+  <testcase name="SEARCH_02_가용_수_0인_날이_있으면_200과_available_false와_INVENTORY_UNAVAILABLE이다()" classname="com.o2o.search.api.SearchApiTest" time="0.121"/>
+  <testcase name="SEARCH_01_guestCount_0과_size_101은_400_INVALID_REQUEST이다()" classname="com.o2o.search.api.SearchApiTest" time="0.011"/>
+  <testcase name="SEARCH_03_견적은_200과_일곱_칸이고_날짜별_finalAmount_합이_totalAmount다()" classname="com.o2o.search.api.SearchApiTest" time="0.15"/>
+  <testcase name="SEARCH_01_네_조건을_다_만족하는_객실만_들고_그런_객실이_없는_숙소는_빠진다()" classname="com.o2o.search.api.SearchApiTest" time="0.572"/>
+  <testcase name="SEARCH_02_재고와_요금이_없는_날은_missing에_들고_days에_null이다()" classname="com.o2o.search.api.SearchApiTest" time="0.104"/>
+  <testcase name="SEARCH_02_없는_객실은_404_RESOURCE_NOT_FOUND이다()" classname="com.o2o.search.api.SearchApiTest" time="0.015"/>
+  <testcase name="SEARCH_03_프로모션이_없으면_할인_0과_appliedPromotion_null이다()" classname="com.o2o.search.api.SearchApiTest" time="0.086"/>
+  <testcase name="SEARCH_01_regionCode_32자는_200이고_33자는_400_INVALID_REQUEST이다()" classname="com.o2o.search.api.SearchApiTest" time="0.096"/>
+  <testcase name="SEARCH_01_결과가_없으면_200과_빈_items다()" classname="com.o2o.search.api.SearchApiTest" time="0.017"/>
+  <testcase name="SEARCH_01_lowestTotalAmount는_객실_중_최소이고_프로모션_할인이_반영된다()" classname="com.o2o.search.api.SearchApiTest" time="0.26"/>
+  <testcase name="SEARCH_03_인원_초과는_409_OCCUPANCY_EXCEEDED이다()" classname="com.o2o.search.api.SearchApiTest" time="0.058"/>
+  <testcase name="SEARCH_03_요금이_없는_날이_있으면_409_RATE_NOT_CONFIGURED이다()" classname="com.o2o.search.api.SearchApiTest" time="0.071"/>
+  <testcase name="SEARCH_03_과거_체크인은_400_INVALID_DATE_RANGE이다()" classname="com.o2o.search.api.SearchApiTest" time="0.047"/>
+  <testcase name="SEARCH_01_쪽은_size대로_자르고_totalPages를_센다()" classname="com.o2o.search.api.SearchApiTest" time="0.259"/>
+  <testcase name="SEARCH_02_checkOut이_checkIn_이하이면_400_INVALID_DATE_RANGE이다()" classname="com.o2o.search.api.SearchApiTest" time="0.03"/>
+  <testcase name="SEARCH_02_전_날짜_가용이면_200과_available_true와_열_칸이다()" classname="com.o2o.search.api.SearchApiTest" time="0.108"/>
+  <testcase name="SEARCH_03_재고가_없어도_요금만_있으면_200이다()" classname="com.o2o.search.api.SearchApiTest" time="0.068"/>
+  <testcase name="SEARCH_03_없는_객실은_404_RESOURCE_NOT_FOUND이다()" classname="com.o2o.search.api.SearchApiTest" time="0.016"/>
+  <testcase name="SEARCH_02_날짜_형식_오류는_400_INVALID_DATE_RANGE이다()" classname="com.o2o.search.api.SearchApiTest" time="0.033"/>
+  <system-out><![CDATA[2026-09-13T18:18:33.102+09:00  INFO 37088 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.search.api.SearchApiTest]: SearchApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-13T18:18:33.123+09:00  INFO 37088 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.search.api.SearchApiTest
+2026-09-13T18:18:33.125+09:00  INFO 37088 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.search.api.SearchApiTest]: SearchApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-13T18:18:33.125+09:00  INFO 37088 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.search.api.SearchApiTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

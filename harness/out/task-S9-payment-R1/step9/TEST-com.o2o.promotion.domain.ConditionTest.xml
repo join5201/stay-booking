@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.promotion.domain.ConditionTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-09-13T10:55:39.625Z" hostname="BOOK-QD5U7FFOBT" time="0.003">
+  <properties/>
+  <testcase name="캠페인_기간은_시작_포함_끝_제외다()" classname="com.o2o.promotion.domain.ConditionTest" time="0.0"/>
+  <testcase name="숙박_기간이_있으면_전체_숙박_구간이_그_안에_들어야_한다()" classname="com.o2o.promotion.domain.ConditionTest" time="0.0"/>
+  <testcase name="지역과_박수와_캠페인_기간을_모두_만족할_때만_참이다()" classname="com.o2o.promotion.domain.ConditionTest" time="0.0"/>
+  <testcase name="지역_코드가_101개면_거절하고_100개는_통과한다()" classname="com.o2o.promotion.domain.ConditionTest" time="0.0"/>
+  <testcase name="숙박_기간_두_날짜가_둘_다_없으면_제한_없음으로_통과한다()" classname="com.o2o.promotion.domain.ConditionTest" time="0.0"/>
+  <testcase name="캠페인_시작일이_종료일과_같거나_앞서면_통과한다()" classname="com.o2o.promotion.domain.ConditionTest" time="0.001"/>
+  <testcase name="캠페인_시작일이_종료일보다_늦으면_거절한다()" classname="com.o2o.promotion.domain.ConditionTest" time="0.0"/>
+  <testcase name="최소_박수는_같으면_통과하고_하나_모자라면_거짓이다()" classname="com.o2o.promotion.domain.ConditionTest" time="0.0"/>
+  <testcase name="빈_지역_목록은_전체_지역으로_통과한다()" classname="com.o2o.promotion.domain.ConditionTest" time="0.0"/>
+  <testcase name="숙박_기간_두_날짜가_둘_다_오면_통과한다()" classname="com.o2o.promotion.domain.ConditionTest" time="0.0"/>
+  <testcase name="지역_코드가_중복되면_거절한다()" classname="com.o2o.promotion.domain.ConditionTest" time="0.001"/>
+  <testcase name="합칠_때_생략한_필드는_유지하고_숙박_기간은_해제할_수_있다()" classname="com.o2o.promotion.domain.ConditionTest" time="0.0"/>
+  <testcase name="숙박_기간_두_날짜_중_하나만_오면_거절한다()" classname="com.o2o.promotion.domain.ConditionTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.promotion.domain.PromotionTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-09-13T10:55:39.634Z" hostname="BOOK-QD5U7FFOBT" time="0.003">
+  <properties/>
+  <testcase name="숙박_기간을_바꾸고_해제할_수_있다()" classname="com.o2o.promotion.domain.PromotionTest" time="0.0"/>
+  <testcase name="캠페인_시작일과_종료일이_같으면_등록을_거절한다()" classname="com.o2o.promotion.domain.PromotionTest" time="0.0"/>
+  <testcase name="enabled가_거짓이면_조건이_맞아도_적용_불가다()" classname="com.o2o.promotion.domain.PromotionTest" time="0.0"/>
+  <testcase name="합친_최종_상태에서_할인율이_범위_밖이면_거절한다()" classname="com.o2o.promotion.domain.PromotionTest" time="0.0"/>
+  <testcase name="할인율_1과_99는_통과한다()" classname="com.o2o.promotion.domain.PromotionTest" time="0.0"/>
+  <testcase name="합친_최종_상태에서_캠페인_순서가_어긋나면_거절하고_값을_유지한다()" classname="com.o2o.promotion.domain.PromotionTest" time="0.001"/>
+  <testcase name="맞는_버전으로_수정하면_버전이_오르고_생략한_필드는_유지된다()" classname="com.o2o.promotion.domain.PromotionTest" time="0.0"/>
+  <testcase name="등록하면_버전_0과_생성_시각을_갖는다()" classname="com.o2o.promotion.domain.PromotionTest" time="0.0"/>
+  <testcase name="할인율_0과_100은_거절한다()" classname="com.o2o.promotion.domain.PromotionTest" time="0.0"/>
+  <testcase name="지난_버전으로_수정하면_거절하고_값을_유지한다()" classname="com.o2o.promotion.domain.PromotionTest" time="0.001"/>
+  <testcase name="숙박_기간_시작일과_종료일이_같으면_등록을_거절한다()" classname="com.o2o.promotion.domain.PromotionTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
