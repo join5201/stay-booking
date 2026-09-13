@@ -1,7 +1,7 @@
 # task-S9-payment 평가 대상 코드 목록
 
 최초 작성: 2026-09-13
-최종 갱신: 2026-09-13
+최종 갱신: 2026-09-13 (개정 1 보강 커밋 둘을 1절에 더하고 2-6절 설정 파일 설명을 갱신. 기준 커밋 9134a52. 그 전 같은 날 초안)
 
 계약 5절 평가 대상 코드 행이 가리키는 파일이다. 계약 표 한 칸에 예순 줄을 넣을 수 없어 목록을 여기 둔다. 오늘의 전제 결정 3에 따라 평가는 MVP 코드가 다 붙은 뒤 한 번이고 이 문서는 그 라운드에 이 묶음 몫으로 넘길 목록이다.
 
@@ -10,10 +10,10 @@
 | 항목 | 값 |
 |---|---|
 | 브랜치 | feat/task-s9-payment |
-| 기준 커밋 | d56f04d. 마지막 코드 커밋. 뒤 커밋은 기록과 문서다 |
+| 기준 커밋 | 9134a52. 마지막 backend 커밋(2026-09-13 개정 1 보강). 그 전 초안의 기준은 d56f04d였다. 뒤 커밋은 기록과 문서다 |
 | 앞 묶음과 갈라진 지점 | 34568a6 (origin/main. 2026-09-12 병합 커밋 3d3dd0e로 브랜치에 들어왔다) |
 
-이 Task의 backend 커밋은 아홉이다.
+이 Task의 backend 커밋은 열하나다. 아홉은 4단계부터 6단계이고 둘은 9단계 개정 1 보강(사용자 지시 그대로 반영, 2026-09-13)이다.
 
 | 해시 | 무엇 | 단계 |
 |---|---|---|
@@ -26,6 +26,8 @@
 | e0cc55f | T30 개발 프로파일. ActorResolver의 dev 판정과 설정 파일 둘의 spring.profiles.active=dev | 6 |
 | 33b1262 | 앱 서비스 트랜잭션을 READ COMMITTED로 | 6 |
 | d56f04d | INTERNAL-01과 T30 테스트 Y15부터 Y23. 커밋 뒤 구독자를 공용 CommittedPaymentEvents로 | 6 |
+| 6e220b5 | 풀 기본 격리 수준을 READ COMMITTED로. 설정 파일 둘에 한 줄과 주석, PaymentApplicationService 주석 한 문단 | 9 개정 1 |
+| 9134a52 | PaymentJpaRepository 잠금 조회 주석을 실제 SQL(for update of 루트)에 맞춤. 코드 변경 없음 | 9 개정 1 |
 
 ## 2. 프로덕션 코드 52개
 
@@ -53,7 +55,7 @@ ActorResolver.java. require에 dev 프로파일 판정 한 줄과 Environment �
 
 ### 2-6. 설정 파일 고친 것 2개
 
-경로는 backend/src/ 아래다. main/resources/application.properties와 test/resources/application.properties. 각각 끝에 spring.profiles.active=dev 한 줄과 근거 주석 다섯 줄이다. 다른 키는 건드리지 않았다. 근거는 계약 9절 설정 파일 변경 행.
+경로는 backend/src/ 아래다. main/resources/application.properties와 test/resources/application.properties. 각각 끝에 spring.profiles.active=dev 한 줄과 근거 주석 다섯 줄(6단계, D-3), 그 아래 spring.datasource.hikari.transaction-isolation=TRANSACTION_READ_COMMITTED 한 줄과 근거 주석(9단계 개정 1 보강. main 여섯 줄, test 두 줄)이다. 다른 키는 건드리지 않았다. 근거는 계약 9절 설정 파일 변경 행과 6절 격리 수준 행.
 
 ## 3. 테스트 코드 7개
 
