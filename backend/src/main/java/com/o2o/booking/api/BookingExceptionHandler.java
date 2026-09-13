@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.o2o.booking.domain.BookingExpiredException;
 import com.o2o.booking.domain.BookingNotFoundException;
+import com.o2o.booking.domain.CancellationNotAllowedException;
 import com.o2o.booking.domain.IdempotencyKeyReusedException;
 import com.o2o.booking.domain.InvalidBookingPeriodException;
 import com.o2o.booking.domain.InvalidIdempotencyKeyException;
@@ -23,8 +24,8 @@ import com.o2o.inventory.domain.InventoryShortageException;
 import com.o2o.shared.ErrorResponse;
 
 /**
- * 예약 예외를 11 에러 응답 표의 코드로 바꾼다. 설계 근거: 11 BOOK-01과 PAY-01 에러 표, 에러
- * 응답 표(112행부터), 공통 헤더 표의 Retry-After, 2차 계약 6절 오류 코드 매핑 행. 재고
+ * 예약 예외를 11 에러 응답 표의 코드로 바꾼다. 설계 근거: 11 BOOK-01과 PAY-01과 BOOK-04 에러 표,
+ * 에러 응답 표(112행부터), 공통 헤더 표의 Retry-After, 2차 계약 6절 오류 코드 매핑 행. 재고
  * 컨텍스트의 예외 둘(가용 부족, 미개설)이 예약 경로에서만 HTTP로 나가므로 여기서 받는다. 없는
  * 객실 타입(RoomTypeNotFound)은 카탈로그의 처리기가 이미 404로 낸다. 처리기는 전역이라
  * 컨트롤러가 어느 컨텍스트든 걸린다.
@@ -138,6 +139,14 @@ public class BookingExceptionHandler {
     public ResponseEntity<ErrorResponse> handleAttemptsExhausted(PaymentAttemptsExhaustedException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ErrorResponse.of("PAYMENT_ATTEMPTS_EXHAUSTED", "결제 시도 한도에 도달했습니다."));
+    }
+
+    /** 409 CANCELLATION_NOT_ALLOWED. 서울 오늘이 checkIn 이상(11 BOOK-04 에러 표, P05, T25) */
+    @ExceptionHandler(CancellationNotAllowedException.class)
+    public ResponseEntity<ErrorResponse> handleCancellationNotAllowed(CancellationNotAllowedException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of("CANCELLATION_NOT_ALLOWED",
+                        "취소 가능 기간이 지났습니다. 체크인 전날까지 취소할 수 있습니다."));
     }
 
     /** 404 RESOURCE_NOT_FOUND. 없는 예약과 남의 예약이 같은 응답이다(T02) */
