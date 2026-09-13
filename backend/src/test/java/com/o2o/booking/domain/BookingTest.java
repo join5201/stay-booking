@@ -83,16 +83,20 @@ class BookingTest {
 
     @Test
     void K3_상태와_스냅샷을_바꾸는_공개_메서드가_없다() {
-        // I4와 1차의 I5. 전이 셋은 2차 계약이 붙인다. 지금 공개 메서드는 생성과 읽기뿐이다.
-        // 이 테스트가 없으면 2차 전에 누가 setter를 붙여도 아무 테스트도 붉어지지 않는다
+        // I4와 I5. 1차는 인자 있는 공개 인스턴스 메서드가 없었다. 2차가 전이 넷(confirm, expireByTtl,
+        // expireByPaymentFailure, cancel)과 만료 판정 조회 isDue를 더했고 그 다섯이 전부다.
+        // 스냅샷과 expiresAt을 바꾸는 메서드는 여전히 없다. 이 테스트가 없으면 누가 setter를
+        // 붙여도 아무 테스트도 붉어지지 않는다. 전이 넷의 동작은 L1부터 L3이 본다
         List<String> mutators = Arrays.stream(Booking.class.getDeclaredMethods())
                 .filter((method) -> Modifier.isPublic(method.getModifiers()))
                 .filter((method) -> !Modifier.isStatic(method.getModifiers()))
                 .filter((method) -> method.getParameterCount() > 0)
                 .map(Method::getName)
+                .sorted()
                 .toList();
 
-        assertEquals(List.of(), mutators);
+        assertEquals(List.of("cancel", "confirm", "expireByPaymentFailure", "expireByTtl", "isDue"),
+                mutators);
         assertEquals(List.of("request"), Arrays.stream(Booking.class.getDeclaredMethods())
                 .filter((method) -> Modifier.isPublic(method.getModifiers()))
                 .filter((method) -> Modifier.isStatic(method.getModifiers()))
