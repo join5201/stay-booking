@@ -1,0 +1,13 @@
+# task-S9-booking-lifecycle 4-2단계 결과 요약 (실행 2026-09-13 20:41)
+
+명령: JAVA_HOME 21; ./backend/gradlew.bat -p backend test (워크트리 o2o-dev, 브랜치 feat/task-s9-booking-lifecycle, 코드 커밋 8b8df23과 fce4c6c)
+결과: exit 0, BUILD SUCCESSFUL
+
+junit XML 합계 (backend/build/test-results/test):
+{"files":36,"tests":337,"failures":0,"errors":0,"skipped":0}
+
+접속 문자열: jdbc:mysql://127.0.0.1:3307/o2o_catalog_test (테스트 설정 기본값)
+
+첫 실행은 1건 실패였다. 1차 K3 가드(Booking에 인자 있는 공개 인스턴스 메서드 없음)가 전이 넷과 isDue를 잡았다. 가드의 주석이 2차 계약이 전이를 붙인다고 적고 있어 같은 커밋에서 그 다섯으로 좁혔다. 재실행 337건 실패 0.
+이번 단계의 새 테스트는 아직 없다. 전이 넷의 동작(L1부터 L3)과 N행 적용(L4)은 5단계가 본다. 4-2단계는 컴파일과 엔티티 매핑(컬럼 다섯 추가, create-drop 스키마 생성)과 기존 337건 통과를 본다.
+새 파일: booking/domain의 ExpirationReason, InvalidStateTransitionException, ExpirationNotDueException, FailedAttemptsBelowLimitException, BookingConfirmed, BookingExpired, BookingCanceled. 고친 파일: booking/domain/Booking.java, inventory/domain/InventoryAllocationService.java, 테스트 booking/domain/BookingTest.java(K3).

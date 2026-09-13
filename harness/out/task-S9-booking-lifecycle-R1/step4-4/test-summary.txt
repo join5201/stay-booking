@@ -1,0 +1,16 @@
+# task-S9-booking-lifecycle 4-4단계 결과 요약 (실행 2026-09-13 21:10)
+
+명령: JAVA_HOME 21; ./backend/gradlew.bat -p backend test (워크트리 o2o-dev, 브랜치 feat/task-s9-booking-lifecycle, 코드 커밋 82623de, 26ac525, c4c38dd)
+결과: exit 0, BUILD SUCCESSFUL
+
+junit XML 합계 (backend/build/test-results/test):
+{"files":36,"tests":337,"failures":0,"errors":0,"skipped":0}
+
+접속 문자열: jdbc:mysql://127.0.0.1:3307/o2o_catalog_test (테스트 설정 기본값)
+
+기동 확인 (계약 8절 4-4 완료 기준의 기동이 산다): ./backend/gradlew.bat -p backend bootRun을 dev 프로파일로 띄우고 ScheduledAnnotationBeanPostProcessor 로그를 TRACE로 올려 스케줄러 등록을 봤다. 로그 발췌는 같은 폴더의 bootrun-excerpt.txt. 1 @Scheduled methods processed on bean 'bookingExpireScheduler'가 찍히고 Started BackendApplication까지 ERROR 0건. GET /api/v1/bookings(guest_001) 200. 확인 뒤 서버는 내렸다(테스트와 같은 DB).
+
+이번 단계의 새 테스트는 아직 없다. 구독자와 스케줄러의 동작(L7, L8, L9, L12, L13)은 5단계가 본다. 4-4단계는 컴파일과 빈 배선과 기존 337건 통과와 기동을 본다.
+새 파일: booking/infrastructure의 PaymentApprovedAdapter, PaymentFailedAdapter(AFTER_COMMIT 구독자. try와 catch로 PaymentOutcomeService의 REQUIRES_NEW 메서드 호출), BookingExpireScheduler(fixedDelayString PT1S 기본), BookingExpireSchedulerConfiguration(@EnableScheduling과 @ConditionalOnProperty o2o.booking.expire-scheduler.enabled 기본 true). 고친 파일: booking/infrastructure/package-info.java(패키지 설명), backend/src/test/resources/application.properties(o2o.booking.expire-scheduler.enabled=false 한 줄. D-3 가 승인).
+관찰 하나: 결제 테스트 셋(MockPaymentEventApiTest 13건, PaymentAutoResultTest 3건, PaymentApplicationServiceTest 2건)이 Booking 행 없는 bookingId로 승인이나 실패를 내므로 새 구독자가 불변 위반 예외(결제 결과의 예약이 없다)를 잡아 ERROR 로그 18건을 남긴다. 계약 2절 P1 표의 예약 없음 행(예외로 던지고 어댑터가 로그)대로이고 테스트 결과는 바뀌지 않는다. 로그 잡음이라 5단계나 9단계에서 다룰 후보로 적어 둔다.
+확인한 API (빌드가 쓰는 jar. 2026-09-13): org.springframework.scheduling.annotation.Scheduled(fixedDelayString)와 EnableScheduling은 spring-context-7.0.9.jar, org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name, havingValue, matchIfMissing)는 spring-boot-autoconfigure-4.1.1.jar, 기간 표기 해석은 ScheduledAnnotationBeanPostProcessor.toDuration(String, TimeUnit).

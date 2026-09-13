@@ -24,7 +24,12 @@ import com.o2o.shared.RoomTypeId;
  * 예약 앱 서비스가 그 트랜잭션을 연다(06-2 4절 생성 경계). 스프링을 모르는 순수 클래스라
  * 빈 등록은 예약 컨텍스트의 설정 클래스가 한다. 06-1 R4의 하류 쪽이 조립하는 것이다.
  *
- * commit과 release의 N행 적용은 2차가 같은 자리에 더한다. 1차 호출자는 예약 생성뿐이다.
+ * commit과 releaseHeld와 releaseSold의 N행 적용은 2차가 더했다(task-S9-booking-lifecycle 2절 재고
+ * N행 적용 행). 호출자는 확정(P1, T1의 확정 우선)과 만료(T1, P3, 지연 승인, 선만료)와 취소다.
+ * 셋 다 잠금 조회 하나로 N행을 날짜 오름차순으로 잠근 뒤 전 행에 적용하고, 한 행이라도
+ * 거절되면(InsufficientHold, InsufficientSold) 예외가 호출자의 트랜잭션을 깨고 나가 앞 날짜의
+ * 변경도 남지 않는다(I1, I1a, A1). 잠금 순서에서 재고 N행은 마지막이다. 호출자가 Booking과
+ * Payment를 먼저 잠근 뒤 부른다(08-3 결정 3).
  */
 public class InventoryAllocationService {
 
@@ -63,6 +68,47 @@ public class InventoryAllocationService {
     public List<DailyInventory> hold(RoomTypeId roomTypeId, LocalDate checkIn, LocalDate checkOut,
                                      int n, Instant now) {
         return hold(lock(roomTypeId, checkIn, checkOut), n, now);
+    }
+
+    /**
+     * CommitInventory. 확정 이동(A3). N행을 잠그고 전 행에 commit(n)을 적용한다. 선점이 n보다
+     * 적은 행이 하나라도 있으면 InsufficientHold가 나가고 전체가 롤백된다. 설계 근거: 06-4 1-2
+     * commit 행, 11 상태 전이 표 둘째 행(선점 재고를 판매 재고로 이동).
+     */
+    public List<DailyInventory> commit(RoomTypeId roomTypeId, LocalDate checkIn, LocalDate checkOut,
+                                       int n, Instant now) {
+        List<DailyInventory> locked = lock(roomTypeId, checkIn, checkOut);
+        for (DailyInventory inventory : locked) {
+            inventory.commit(n, now);
+        }
+        return inventoryRepository.saveAll(locked);
+    }
+
+    /**
+     * ReleaseInventory의 선점 몫. 종료 반환(A2). N행을 잠그고 전 행에 releaseHeld(n)을 적용한다.
+     * 설계 근거: 06-4 1-2 releaseHeld 행, 11 상태 전이 표의 만료 행 둘(선점 재고 반환).
+     * 한 번만 불리는 것은 호출자가 전이 발생 반환값으로 지킨다(R4).
+     */
+    public List<DailyInventory> releaseHeld(RoomTypeId roomTypeId, LocalDate checkIn,
+                                            LocalDate checkOut, int n, Instant now) {
+        List<DailyInventory> locked = lock(roomTypeId, checkIn, checkOut);
+        for (DailyInventory inventory : locked) {
+            inventory.releaseHeld(n, now);
+        }
+        return inventoryRepository.saveAll(locked);
+    }
+
+    /**
+     * ReleaseInventory의 판매분 몫. N행을 잠그고 전 행에 releaseSold(n)을 적용한다. 설계 근거:
+     * 06-4 1-2 releaseSold 행, 11 상태 전이 표의 취소 행(판매 재고 반환), 11 BOOK-04 규칙.
+     */
+    public List<DailyInventory> releaseSold(RoomTypeId roomTypeId, LocalDate checkIn,
+                                            LocalDate checkOut, int n, Instant now) {
+        List<DailyInventory> locked = lock(roomTypeId, checkIn, checkOut);
+        for (DailyInventory inventory : locked) {
+            inventory.releaseSold(n, now);
+        }
+        return inventoryRepository.saveAll(locked);
     }
 
     private static List<LocalDate> missingDates(LocalDate from, LocalDate toExclusive,

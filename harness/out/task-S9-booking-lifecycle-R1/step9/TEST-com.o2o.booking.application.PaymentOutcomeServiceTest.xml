@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.booking.application.PaymentOutcomeServiceTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-09-13T13:56:48.652Z" hostname="BOOK-QD5U7FFOBT" time="1.639">
+  <properties/>
+  <testcase name="L8_실패_한_번과_두_번은_HELD와_held가_그대로다()" classname="com.o2o.booking.application.PaymentOutcomeServiceTest" time="0.15"/>
+  <testcase name="L7_승인_시각이_expiresAt_1초_전이면_확정이다()" classname="com.o2o.booking.application.PaymentOutcomeServiceTest" time="0.114"/>
+  <testcase name="L8_셋째_실패가_만료_시각_이상이면_TTL_EXPIRED가_우선한다()" classname="com.o2o.booking.application.PaymentOutcomeServiceTest" time="0.184"/>
+  <testcase name="L7_승인_시각이_정확히_expiresAt이면_TTL_EXPIRED로_만료되고_held가_줄고_환불_1건이다()" classname="com.o2o.booking.application.PaymentOutcomeServiceTest" time="0.156"/>
+  <testcase name="L7_HELD이고_만료_전_승인이면_CONFIRMED이고_날짜마다_held_1_감소_sold_1_증가와_BookingConfirmed_1건이다()" classname="com.o2o.booking.application.PaymentOutcomeServiceTest" time="0.192"/>
+  <testcase name="L7_CONFIRMED와_CANCELED에_온_승인은_로그_후_무시이고_아무것도_바뀌지_않는다()" classname="com.o2o.booking.application.PaymentOutcomeServiceTest" time="0.166"/>
+  <testcase name="L8_이미_EXPIRED거나_CONFIRMED면_실패_처리가_아무것도_바꾸지_않는다()" classname="com.o2o.booking.application.PaymentOutcomeServiceTest" time="0.219"/>
+  <testcase name="L7_없는_예약의_승인은_불변_위반_예외다()" classname="com.o2o.booking.application.PaymentOutcomeServiceTest" time="0.074"/>
+  <testcase name="L8_셋째_실패가_만료_전이면_PAYMENT_FAILED로_만료되고_held_감소가_한_번이다()" classname="com.o2o.booking.application.PaymentOutcomeServiceTest" time="0.236"/>
+  <testcase name="L7_이미_EXPIRED인_예약의_승인은_환불_1건이고_재고_변화가_없다()" classname="com.o2o.booking.application.PaymentOutcomeServiceTest" time="0.138"/>
+  <system-out><![CDATA[2026-09-13T22:56:48.654+09:00  INFO 45900 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.application.PaymentOutcomeServiceTest]: PaymentOutcomeServiceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-13T22:56:48.655+09:00  INFO 45900 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.application.PaymentOutcomeServiceTest
+2026-09-13T22:56:48.655+09:00  INFO 45900 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.application.PaymentOutcomeServiceTest]: PaymentOutcomeServiceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-13T22:56:48.656+09:00  INFO 45900 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.application.PaymentOutcomeServiceTest
+2026-09-13T22:56:49.232+09:00  INFO 45900 --- [    Test worker] c.o.b.application.PaymentOutcomeService  : 지연 승인. 만료 시각을 지나 환불하고 만료시킨다. booking=booking_d5504e4b199d457cb0205cbadf6a2265 attempt=attempt_f05d5d6ee7304c9f8fb737c044503115
+2026-09-13T22:56:49.574+09:00  INFO 45900 --- [    Test worker] c.o.b.application.PaymentOutcomeService  : 승인 처리 무시. 종착 상태다. booking=booking_a93ba17646af4beaa26bd8ca8b42bb83 status=CONFIRMED
+2026-09-13T22:56:49.608+09:00  INFO 45900 --- [    Test worker] c.o.b.application.PaymentOutcomeService  : 승인 처리 무시. 종착 상태다. booking=booking_a93ba17646af4beaa26bd8ca8b42bb83 status=CANCELED
+2026-09-13T22:56:49.700+09:00  INFO 45900 --- [    Test worker] c.o.b.application.PaymentOutcomeService  : 실패 처리 무해. 이미 만료다. booking=booking_9cc76db3714f4bfd8fe7f68f9b206960
+2026-09-13T22:56:49.830+09:00  INFO 45900 --- [    Test worker] c.o.b.application.PaymentOutcomeService  : 실패 처리 무시. 종착 상태다. booking=booking_0ee16761221d41038b3cbdf6201a5ebc status=CONFIRMED
+2026-09-13T22:56:50.269+09:00  INFO 45900 --- [    Test worker] c.o.b.application.PaymentOutcomeService  : 지연 승인. 이미 만료된 예약이라 환불만 한다. booking=booking_7154bfef4fb143cdb194ffe9805fe560 attempt=attempt_b3997eb358d04b28b6c23b0d4e25b90e
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

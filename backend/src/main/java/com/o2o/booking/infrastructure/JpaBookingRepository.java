@@ -1,5 +1,7 @@
 package com.o2o.booking.infrastructure;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -40,6 +42,17 @@ public class JpaBookingRepository implements BookingRepository {
     @Override
     public Optional<Booking> findById(BookingId bookingId) {
         return jpaRepository.findById(bookingId.value());
+    }
+
+    @Override
+    public Optional<Booking> findByIdForUpdate(BookingId bookingId) {
+        return jpaRepository.findByIdForUpdate(bookingId.value());
+    }
+
+    @Override
+    public List<BookingId> findDueIds(Instant now, int limit) {
+        return jpaRepository.findDueIds(BookingStatus.HELD, now, PageRequest.of(0, limit))
+                .stream().map(BookingId::of).toList();
     }
 
     @Override

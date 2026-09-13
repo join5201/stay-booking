@@ -192,11 +192,12 @@ class BookingQueryApiTest {
         assertTrue(ids(held.get("items")).contains(id));
         held.get("items").forEach((item) -> assertEquals("HELD", item.get("status").asString()));
 
-        // 1차는 전이가 없어 CONFIRMED가 하나도 없다. 필터가 실제로 거른다는 짝이다
-        JsonNode confirmed = JSON.readTree(get(BOOKINGS + "?status=CONFIRMED", GUEST).body());
-        assertEquals(0, confirmed.get("items").size());
-        assertEquals(0, confirmed.get("totalElements").asInt());
-        assertEquals(0, confirmed.get("totalPages").asInt());
+        // 필터가 실제로 거른다는 짝. 1차는 CONFIRMED가 0건인 것으로 봤지만 2차의 결제 API 테스트가
+        // 같은 손님의 CONFIRMED를 같은 DB에 남기므로 이 HELD가 그 목록에 없고 항목이 전부 CONFIRMED인
+        // 것으로 본다(2026-09-13, task-S9-booking-lifecycle 6단계)
+        JsonNode confirmed = JSON.readTree(get(BOOKINGS + "?status=CONFIRMED&size=100", GUEST).body());
+        assertFalse(ids(confirmed.get("items")).contains(id));
+        confirmed.get("items").forEach((item) -> assertEquals("CONFIRMED", item.get("status").asString()));
 
         assertError(get(BOOKINGS + "?status=BOGUS", GUEST), 400, "INVALID_REQUEST");
     }
