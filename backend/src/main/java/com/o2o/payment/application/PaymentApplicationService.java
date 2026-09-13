@@ -51,6 +51,11 @@ import com.o2o.shared.Money;
  * 시도와 이벤트 기록이 앞 트랜잭션의 커밋을 못 보고 같은 이벤트 둘이 둘 다 PROCESSED가 된다.
  * READ COMMITTED는 읽기마다 새 스냅샷이라 잠금 뒤 읽기가 커밋된 최신을 본다. 잠금 순서는 그대로
  * 루트 하나다(08-3 결정 3). 시도 표를 먼저 잠그면 루트를 쥔 채 시도를 고치는 쪽과 교착한다.
+ *
+ * 여기의 지정은 새 트랜잭션에만 걸린다. 바깥 트랜잭션이 REQUIRED로 이 서비스를 감싸면(예약 2차의
+ * 중계) 스프링이 이 지정을 무시하므로, 풀 기본값도 READ COMMITTED다(설정 파일의
+ * spring.datasource.hikari.transaction-isolation. 계약 9단계 개정 1 보강, 2026-09-13). 여기 남긴
+ * 지정은 뜻을 적는 용도다.
  */
 @Service
 @Transactional(isolation = Isolation.READ_COMMITTED)
