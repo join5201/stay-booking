@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.o2o.booking.application.BookingApplicationService;
+import com.o2o.booking.application.BookingPaymentService;
 import com.o2o.booking.application.IdempotentRequestExecutor;
 import com.o2o.booking.application.IdempotentResult;
 import com.o2o.booking.application.StoredResponse;
@@ -25,6 +26,7 @@ import com.o2o.booking.domain.BookingStatus;
 import com.o2o.booking.domain.IdempotencyKey;
 import com.o2o.booking.domain.IdempotencyScope;
 import com.o2o.booking.domain.UserId;
+import com.o2o.payment.application.PaymentSummaryView;
 import com.o2o.shared.Actor;
 import com.o2o.shared.ActorResolver;
 import com.o2o.shared.ActorRole;
@@ -40,6 +42,9 @@ import tools.jackson.databind.json.JsonMapper;
  * 실행기에 넘기며, 실행기는 그 JSON을 멱등 기록에 저장했다가 재전송에 되돌린다. 재전송 응답은
  * 최초 시점의 스냅샷이다(11 멱등 처리 절 끝. 화면의 현재 상태는 GET으로 갱신한다).
  *
+ * 조회(BOOK-02, BOOK-03)는 예약의 payment를 결제의 attemptsOf로 채운다. 목록은 항목마다 한 번이다
+ * (2차 계약 6절 Booking 응답의 payment 채움 행). BOOK-01의 새 예약은 시도가 있을 수 없어 빈 요약이다.
+ *
  * 검사 순서는 계약 2절 표다. 행위자, 멱등키 형식, body 형식, 멱등 기록, 그다음 앱 서비스.
  * 단 body 형식은 프레임워크가 인자를 해석하며 먼저 보므로 행위자 없음과 body 오류가 겹치면
  * 400이 401보다 먼저 나간다. 재고와 카탈로그의 컨트롤러도 같다.
@@ -53,15 +58,18 @@ public class BookingController {
     static final String BOOKINGS_PATH = "/api/v1/bookings";
 
     private final BookingApplicationService bookingApplicationService;
+    private final BookingPaymentService bookingPaymentService;
     private final IdempotentRequestExecutor idempotentRequestExecutor;
     private final ActorResolver actorResolver;
     private final JsonMapper jsonMapper;
     private final Clock clock;
 
     public BookingController(BookingApplicationService bookingApplicationService,
+                             BookingPaymentService bookingPaymentService,
                              IdempotentRequestExecutor idempotentRequestExecutor,
                              ActorResolver actorResolver, JsonMapper jsonMapper, Clock clock) {
         this.bookingApplicationService = bookingApplicationService;
+        this.bookingPaymentService = bookingPaymentService;
         this.idempotentRequestExecutor = idempotentRequestExecutor;
         this.actorResolver = actorResolver;
         this.jsonMapper = jsonMapper;
@@ -82,7 +90,8 @@ public class BookingController {
                 () -> {
                     Booking booking = bookingApplicationService.requestBooking(
                             request.toCommand(UserId.of(actor.id()), key));
-                    BookingResponse body = BookingResponse.from(booking, Instant.now(clock));
+                    BookingResponse body = BookingResponse.from(booking, PaymentSummaryView.empty(),
+                            Instant.now(clock));
                     return new StoredResponse(HttpStatus.CREATED.value(),
                             BOOKINGS_PATH + "/" + booking.id().value(),
                             jsonMapper.writeValueAsString(body));
@@ -114,7 +123,8 @@ public class BookingController {
         return PageResponse.from(
                 bookingApplicationService.findBookings(UserId.of(actor.id()), filter,
                         PageQuery.of(page, size)),
-                (booking) -> BookingResponse.from(booking, serverNow));
+                (booking) -> BookingResponse.from(booking,
+                        bookingPaymentService.paymentSummaryOf(booking.id()), serverNow));
     }
 
     /** BOOK-03 예약 상세. 소유자만 200이고 남의 예약은 404 */
@@ -125,6 +135,7 @@ public class BookingController {
         Actor actor = actorResolver.require(actorId, ActorRole.GUEST);
         Booking booking = bookingApplicationService.getBooking(UserId.of(actor.id()),
                 BookingId.of(bookingId));
-        return BookingResponse.from(booking, Instant.now(clock));
+        return BookingResponse.from(booking, bookingPaymentService.paymentSummaryOf(booking.id()),
+                Instant.now(clock));
     }
 }

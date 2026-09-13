@@ -7,16 +7,18 @@ import com.o2o.booking.domain.AppliedPromotion;
 import com.o2o.booking.domain.Booking;
 import com.o2o.booking.domain.DailyPrice;
 import com.o2o.booking.domain.PriceSnapshot;
+import com.o2o.payment.application.PaymentSummaryView;
+import com.o2o.payment.application.RefundView;
 
 /**
  * 응답 모델 Booking. 설계 근거: 11 응답 모델 Booking(2557행)의 21개 필드 그대로. 필드를 더하지
  * 않는다(BN1). 이름은 API 이름(guestId, guestCount)이고 값은 도메인의 userId와 userCount다.
  *
- * 1차에서 값이 고정인 것(계약 2절). expirationReason, cancellationReason, confirmedAt,
- * canceledAt, expiredAt은 전이가 없어 null이고, payment는 결제 컨텍스트가 붙기 전이라 시도 0에
- * 빈 목록이다. 2차가 Booking의 전이 필드와 결제 세션의 attemptsOf로 채운다. 06-2 1절의 Booking
- * 필드 목록에도 그 다섯은 없다. 이 응답이 그 값을 상수로 내는 것은 모델에 없는 것을 지어내는
- * 것이 아니라 아직 일어나지 않은 전이의 부재를 그대로 적는 것이다.
+ * 1차는 전이 다섯 필드(expirationReason, cancellationReason, confirmedAt, canceledAt, expiredAt)를
+ * null로, payment를 시도 0에 빈 목록으로 고정했다. 2차가 둘을 채운다(2차 계약 2절 응답 모델 문단).
+ * 전이 다섯은 Booking의 컬럼이고 payment는 결제의 attemptsOf 결과다. 결제 뷰를 응답으로 옮기는
+ * 일은 이 층이 한다. 조회 하나에 attemptsOf 한 번이고 목록은 항목마다다(2차 계약 6절 Booking
+ * 응답의 payment 채움 행).
  */
 public record BookingResponse(
         String id,
@@ -40,7 +42,7 @@ public record BookingResponse(
         String serverNow,
         long version) {
 
-    public static BookingResponse from(Booking booking, Instant serverNow) {
+    public static BookingResponse from(Booking booking, PaymentSummaryView payment, Instant serverNow) {
         return new BookingResponse(
                 booking.id().value(),
                 booking.userId().value(),
@@ -51,17 +53,22 @@ public record BookingResponse(
                 booking.userCount(),
                 booking.status().name(),
                 ApiFormat.time(booking.expiresAt()),
-                null,
+                booking.expirationReason() == null ? null : booking.expirationReason().name(),
                 PriceSnapshotResponse.from(booking.priceSnapshot()),
-                PaymentSummaryResponse.none(),
-                null,
+                PaymentSummaryResponse.from(payment),
+                booking.cancellationReason(),
                 ApiFormat.time(booking.createdAt()),
                 ApiFormat.time(booking.updatedAt()),
-                null,
-                null,
-                null,
+                optionalTime(booking.confirmedAt()),
+                optionalTime(booking.canceledAt()),
+                optionalTime(booking.expiredAt()),
                 ApiFormat.time(serverNow),
                 booking.version());
+    }
+
+    /** 전이 전에는 null인 시각(11 응답 모델 Booking의 timestamp/null 셋) */
+    private static String optionalTime(Instant instant) {
+        return instant == null ? null : ApiFormat.time(instant);
     }
 
     /** 응답 모델 PriceSnapshot(2412행) */
@@ -104,14 +111,29 @@ public record BookingResponse(
     }
 
     /**
-     * 응답 모델 PaymentSummary(2546행). 1차는 결제 컨텍스트가 없어 시도 0과 빈 목록이다.
-     * attempts의 원소 모델 PaymentAttempt는 2차가 결제 세션의 모양으로 만든다.
+     * 응답 모델 PaymentSummary(2546행). 넷 그대로(BN1). 시도 없는 예약은 0과 null과 빈 배열과
+     * null이다. approvedAttemptId는 환불 뒤에도 유지되고 refund는 환불 전 null이다(같은 모델 표).
      */
     public record PaymentSummaryResponse(int attemptCount, String approvedAttemptId,
-                                         List<Object> attempts, Object refund) {
+                                         List<PaymentAttemptResponse> attempts, RefundResponse refund) {
 
-        static PaymentSummaryResponse none() {
-            return new PaymentSummaryResponse(0, null, List.of(), null);
+        static PaymentSummaryResponse from(PaymentSummaryView view) {
+            return new PaymentSummaryResponse(
+                    view.attemptCount(),
+                    view.approvedAttemptId(),
+                    view.attempts().stream().map(PaymentAttemptResponse::from).toList(),
+                    view.refund() == null ? null : RefundResponse.from(view.refund()));
+        }
+    }
+
+    /** 응답 모델 Refund(2529행). 7개 필드 그대로(BN1). status는 REFUNDED 하나다 */
+    public record RefundResponse(String id, String paymentAttemptId, long amount, String currency,
+                                 String status, String reason, String refundedAt) {
+
+        static RefundResponse from(RefundView view) {
+            return new RefundResponse(view.id(), view.paymentAttemptId(), view.amount(),
+                    view.currency(), view.status(), view.reason().name(),
+                    ApiFormat.time(view.refundedAt()));
         }
     }
 }
