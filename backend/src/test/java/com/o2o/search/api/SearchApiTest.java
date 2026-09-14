@@ -9,9 +9,11 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
+import com.o2o.shared.RegionRegistry;
 import com.o2o.shared.SeoulDate;
 
 import tools.jackson.databind.JsonNode;
@@ -45,6 +47,9 @@ class SearchApiTest {
 
     @LocalServerPort
     private int port;
+
+    @Autowired
+    private RegionRegistry regionRegistry;
 
     /** 서버와 같은 오늘. 서버가 서울 날짜로 판정하므로 여기도 서울 날짜다(11 명세 35행) */
     private static LocalDate today() {
@@ -82,6 +87,8 @@ class SearchApiTest {
     }
 
     private String 숙소(String region) throws Exception {
+        // 등록된 지역 코드만 숙소가 된다(CAT-01). 새로 뽑은 코드는 fixture에 먼저 넣는다
+        regionRegistry.register(region);
         HttpResponse<String> res = send("POST", "/api/v1/properties", HOST,
                 "{\"name\":\"검색 테스트 스테이\",\"regionCode\":\"" + region
                         + "\",\"address\":\"서울특별시 중구 예시로 9\",\"description\":\"\"}");

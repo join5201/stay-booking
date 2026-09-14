@@ -16,6 +16,7 @@ import com.o2o.inventory.application.InventoryApplicationService;
 import com.o2o.inventory.domain.DailyInventoryRepository;
 import com.o2o.payment.application.PaymentApplicationService;
 import com.o2o.payment.domain.PaymentRepository;
+import com.o2o.shared.RegionRegistry;
 
 /**
  * 2차 통합 테스트가 같이 쓰는 컨텍스트 조각. 시계와 구독자와 준비 도구와 훅 둘이다. 테스트
@@ -48,10 +49,12 @@ public class BookingLifecycleTestConfiguration {
                                     BookingRepository bookingRepository,
                                     DailyInventoryRepository inventoryRepository,
                                     PaymentRepository paymentRepository,
+                                    RegionRegistry regionRegistry,
                                     PlatformTransactionManager transactionManager,
                                     MutableClock clock) {
         return new BookingFixtures(catalogService, inventoryService, bookingService,
-                bookingRepository, inventoryRepository, paymentRepository, transactionManager, clock);
+                bookingRepository, inventoryRepository, paymentRepository, regionRegistry,
+                transactionManager, clock);
     }
 
     @Bean

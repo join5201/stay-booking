@@ -7,8 +7,11 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+
+import com.o2o.shared.RegionRegistry;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -44,6 +47,9 @@ class CatalogApiTest {
 
     @LocalServerPort
     private int port;
+
+    @Autowired
+    private RegionRegistry regionRegistry;
 
     private HttpResponse<String> send(String method, String path, String actorId, String body)
             throws Exception {
@@ -349,6 +355,9 @@ class CatalogApiTest {
 
     @Test
     void 지역_코드는_32자까지_받고_33자는_거절한다() throws Exception {
+        // 길이 경계를 보는 테스트라 32자 코드를 등록된 지역으로 만들어 둔다(R1 평가 B-02).
+        // 미등록 코드의 400은 CatalogUpdateAndListApiTest의 CAT-01 미등록 테스트가 본다
+        regionRegistry.register("A".repeat(32));
         String ok = propertyBody("지역 경계", "A".repeat(32), "주소", "");
         String tooLong = propertyBody("지역 경계", "A".repeat(33), "주소", "");
 
