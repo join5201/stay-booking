@@ -23,6 +23,7 @@ import com.o2o.shared.HostId;
 import com.o2o.shared.PageQuery;
 import com.o2o.shared.PageResult;
 import com.o2o.shared.PropertyId;
+import com.o2o.shared.RegionRegistry;
 import com.o2o.shared.RoomTypeId;
 
 /**
@@ -42,15 +43,18 @@ public class CatalogApplicationService {
 
     private final PropertyRepository propertyRepository;
     private final RoomTypeRepository roomTypeRepository;
+    private final RegionRegistry regionRegistry;
     private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
 
     public CatalogApplicationService(PropertyRepository propertyRepository,
                                      RoomTypeRepository roomTypeRepository,
+                                     RegionRegistry regionRegistry,
                                      ApplicationEventPublisher eventPublisher,
                                      Clock clock) {
         this.propertyRepository = propertyRepository;
         this.roomTypeRepository = roomTypeRepository;
+        this.regionRegistry = regionRegistry;
         this.eventPublisher = eventPublisher;
         this.clock = clock;
     }
@@ -60,9 +64,14 @@ public class CatalogApplicationService {
      *
      * hostId를 인자로 받고 요청 body에서 읽지 않는다. 11 인증과 접근 제어가 body의 hostId로
      * 권한을 정하지 말라고 적는다. 그 규칙을 8-1절 C6이 검사한다.
+     *
+     * 지역 코드의 등록 여부를 여기서 본다. 11 CAT-01 처리 규칙이 등록된 지역 코드를 확인하고
+     * 저장한다고 적고, 존재 확인은 컨텍스트를 넘는 선행조건이라 앱 서비스 몫이다(06-4 1-4).
+     * 형식(1자 이상 32자 이하)은 컨트롤러가 이미 봤다. R1 평가 A-02, B-02
      */
     public Property registerProperty(HostId hostId, String name, String regionCode,
                                      String address, String description) {
+        regionRegistry.require(regionCode);
         Instant now = Instant.now(clock);
         Property property = Property.register(hostId, name, Region.of(regionCode),
                 Address.of(address), description, now);
@@ -113,6 +122,9 @@ public class CatalogApplicationService {
         if (!property.hostId().equals(hostId)) {
             throw new PropertyNotFoundException(propertyId);
         }
+        if (regionCode != null) {
+            regionRegistry.require(regionCode);
+        }
         property.update(expectedVersion, name,
                 regionCode == null ? null : Region.of(regionCode),
                 address == null ? null : Address.of(address),
@@ -147,9 +159,14 @@ public class CatalogApplicationService {
 
     /**
      * CAT-04. 설계 근거: 11 숙소 CAT-04. 인증이 불필요하고 지역 코드는 선택이다.
+     * 주면 등록된 코드여야 한다. 필드표가 등록된 지역 코드라고 적는다. 미등록 코드로 빈 목록을
+     * 주면 없는 지역이 있는 것처럼 보인다. R1 평가 A-02, B-02
      */
     @Transactional(readOnly = true)
     public PageResult<Property> listProperties(String regionCode, PageQuery pageQuery) {
+        if (regionCode != null) {
+            regionRegistry.require(regionCode);
+        }
         return propertyRepository.findAll(regionCode, pageQuery);
     }
 

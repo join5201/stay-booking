@@ -112,6 +112,19 @@ public class SharedExceptionHandler {
     }
 
     /**
+     * 등록되지 않은 지역 코드. 11 CAT-01 처리 규칙과 필드표의 등록된 지역 코드. 형식은 맞지만
+     * RegionRegistry에 없는 값이다. 11 에러 응답 표에 따로 코드가 없어 INVALID_REQUEST로 내고
+     * details에 필드를 적는다. R1 평가 A-02, B-02
+     */
+    @ExceptionHandler(UnregisteredRegionException.class)
+    public ResponseEntity<ErrorResponse> handleUnregisteredRegion(UnregisteredRegionException e) {
+        List<ErrorResponse.ErrorDetail> details = List.of(
+                new ErrorResponse.ErrorDetail("regionCode", "등록되지 않은 지역 코드다"));
+        return ResponseEntity.badRequest()
+                .body(ErrorResponse.of("INVALID_REQUEST", "등록되지 않은 지역 코드입니다.", details));
+    }
+
+    /**
      * 쪽 나눔 값의 범위 위반. 11 공통 목록과 날짜 범위가 잘못된 범위를 400으로 적는다.
      * PageQuery가 던지는 것을 여기서 받는다. 8-2절 C7이 이 경로를 검사한다.
      */

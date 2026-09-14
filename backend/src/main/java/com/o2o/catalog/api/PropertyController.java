@@ -20,6 +20,7 @@ import com.o2o.shared.ActorResolver;
 import com.o2o.shared.ActorRole;
 import com.o2o.shared.PageQuery;
 import com.o2o.shared.PropertyId;
+import com.o2o.shared.RegionRegistry;
 
 import jakarta.validation.Valid;
 
@@ -90,6 +91,7 @@ public class PropertyController {
     /**
      * CAT-04 숙소 목록 조회. 인증 불필요. 지역 코드는 선택이다.
      * page와 size의 기본값과 상한은 PageQuery가 갖고 있다. 11 공통 목록과 날짜 범위.
+     * regionCode의 형식(1자 이상 32자 이하)은 여기서 보고 등록 여부는 앱 서비스가 본다.
      */
     @GetMapping
     public PageResponse<PropertyResponse> list(
@@ -97,7 +99,23 @@ public class PropertyController {
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size) {
         return PageResponse.from(
-                catalogApplicationService.listProperties(regionCode, PageQuery.of(page, size)),
+                catalogApplicationService.listProperties(regionCode(regionCode), PageQuery.of(page, size)),
                 PropertyResponse::from);
+    }
+
+    /**
+     * 11 CAT-04 쿼리표의 regionCode 제약. 공백만이거나 32자를 넘으면 400 INVALID_REQUEST.
+     * 검색 SEARCH-01의 같은 검사와 같은 모양이다. 애너테이션 대신 검사문인 이유도 같다.
+     * R1 평가 B-02
+     */
+    private static String regionCode(String regionCode) {
+        if (regionCode == null) {
+            return null;
+        }
+        if (regionCode.isBlank() || regionCode.length() > RegionRegistry.CODE_MAX_LENGTH) {
+            throw new IllegalArgumentException("regionCode는 1자 이상 " + RegionRegistry.CODE_MAX_LENGTH
+                    + "자 이하여야 한다: " + regionCode);
+        }
+        return regionCode;
     }
 }
