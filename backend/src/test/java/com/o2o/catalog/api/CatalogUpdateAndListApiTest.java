@@ -163,6 +163,98 @@ class CatalogUpdateAndListApiTest {
         assertEquals(400, send("PATCH", "/api/v1/properties/" + id, HOST, body).statusCode());
     }
 
+    // ---------- 수정의 공백과 명시적 null. C13 (R1 평가 A-03, B-03) ----------
+
+    @Test
+    void C13_수정_이름은_strip한_값으로_저장한다() throws Exception {
+        JsonNode created = registerProperty(HOST, "strip 전", "SEOUL");
+        String id = created.get("id").stringValue();
+
+        HttpResponse<String> res = send("PATCH", "/api/v1/properties/" + id, HOST, """
+                {"version":0,"name":"  strip 후  "}
+                """);
+
+        assertEquals(200, res.statusCode(), res.body());
+        assertEquals("strip 후", JSON.readTree(res.body()).get("name").stringValue());
+    }
+
+    @Test
+    void C13_수정에서_공백만_있는_문자열은_400이고_바뀌지_않는다() throws Exception {
+        // 11 CAT-02 필드표. 생략은 유지이지만 공백만 있는 값은 값이 아니다
+        JsonNode created = registerProperty(HOST, "공백 수정용", "SEOUL");
+        String id = created.get("id").stringValue();
+
+        HttpResponse<String> name = send("PATCH", "/api/v1/properties/" + id, HOST, """
+                {"version":0,"name":"   "}
+                """);
+        HttpResponse<String> region = send("PATCH", "/api/v1/properties/" + id, HOST, """
+                {"version":0,"regionCode":"  "}
+                """);
+        HttpResponse<String> address = send("PATCH", "/api/v1/properties/" + id, HOST, """
+                {"version":0,"address":" "}
+                """);
+
+        assertEquals(400, name.statusCode(), name.body());
+        assertEquals("name", JSON.readTree(name.body()).get("details").get(0).get("field").stringValue());
+        assertEquals(400, region.statusCode(), region.body());
+        assertEquals(400, address.statusCode(), address.body());
+        JsonNode after = JSON.readTree(send("GET", "/api/v1/properties/" + id, null, null).body());
+        assertEquals("공백 수정용", after.get("name").stringValue(), "거절됐는데 값이 바뀌었다");
+        assertEquals(0, after.get("version").asInt());
+    }
+
+    @Test
+    void C13_수정에서_명시적_null은_400이고_생략은_유지다() throws Exception {
+        // 11 공통 요청과 응답 규칙의 허용하지 않은 null. 생략(유지)과 null(거절)을 가른다
+        JsonNode created = registerProperty(HOST, "null 수정용", "SEOUL");
+        String id = created.get("id").stringValue();
+
+        HttpResponse<String> nullName = send("PATCH", "/api/v1/properties/" + id, HOST, """
+                {"version":0,"name":null}
+                """);
+        HttpResponse<String> nullDescription = send("PATCH", "/api/v1/properties/" + id, HOST, """
+                {"version":0,"name":"바꿈","description":null}
+                """);
+        HttpResponse<String> omitted = send("PATCH", "/api/v1/properties/" + id, HOST, """
+                {"version":0,"name":"바꿈"}
+                """);
+
+        assertEquals(400, nullName.statusCode(), nullName.body());
+        assertTrue(nullName.body().contains("INVALID_REQUEST"), nullName.body());
+        assertEquals(400, nullDescription.statusCode(), nullDescription.body());
+        assertEquals(200, omitted.statusCode(), omitted.body());
+        JsonNode json = JSON.readTree(omitted.body());
+        assertEquals("바꿈", json.get("name").stringValue());
+        assertEquals("SEOUL", json.get("regionCode").stringValue(), "생략한 필드가 유지되지 않았다");
+    }
+
+    @Test
+    void C13_객실_타입_수정도_strip하고_공백만과_명시적_null은_400이다() throws Exception {
+        // 11 CAT-07 필드표. 숙소 수정과 같은 규칙이다
+        JsonNode property = registerProperty(HOST, "객실 공백 수정용", "SEOUL");
+        String roomTypeId = JSON.readTree(send("POST",
+                "/api/v1/properties/" + property.get("id").stringValue() + "/room-types", HOST,
+                """
+                {"name":"객실","maxOccupancy":4,"description":""}
+                """).body()).get("id").stringValue();
+        String path = "/api/v1/room-types/" + roomTypeId;
+
+        HttpResponse<String> blank = send("PATCH", path, HOST, """
+                {"version":0,"name":"   "}
+                """);
+        HttpResponse<String> nullOccupancy = send("PATCH", path, HOST, """
+                {"version":0,"maxOccupancy":null}
+                """);
+        HttpResponse<String> padded = send("PATCH", path, HOST, """
+                {"version":0,"name":"  새 객실  "}
+                """);
+
+        assertEquals(400, blank.statusCode(), blank.body());
+        assertEquals(400, nullOccupancy.statusCode(), nullOccupancy.body());
+        assertEquals(200, padded.statusCode(), padded.body());
+        assertEquals("새 객실", JSON.readTree(padded.body()).get("name").stringValue());
+    }
+
     // ---------- CAT-07 ----------
 
     @Test
