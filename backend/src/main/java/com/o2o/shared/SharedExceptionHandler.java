@@ -2,6 +2,7 @@ package com.o2o.shared;
 
 import java.util.List;
 
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -63,6 +64,18 @@ public class SharedExceptionHandler {
      */
     @ExceptionHandler(VersionConflictException.class)
     public ResponseEntity<ErrorResponse> handleVersionConflict(VersionConflictException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of("VERSION_CONFLICT", "수정 버전이 일치하지 않습니다."));
+    }
+
+    /**
+     * 저장 시점의 낙관적 잠금 실패. 두 요청이 같은 version을 읽어 애그리거트의 메모리 대조를
+     * 둘 다 지난 뒤 뒤의 저장이 @Version의 where version = ? 에서 0행이 된 경우다. 스프링이
+     * JPA의 OptimisticLockException을 이 예외 계열로 번역한다. 위와 같은 409 VERSION_CONFLICT다.
+     * R1 평가 A-01, B-01
+     */
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLock(OptimisticLockingFailureException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ErrorResponse.of("VERSION_CONFLICT", "수정 버전이 일치하지 않습니다."));
     }
