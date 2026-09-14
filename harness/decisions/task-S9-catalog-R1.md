@@ -2,7 +2,7 @@
 
 양식: harness/prompts/decision-table.md v4 (2026-09-08)
 최초 작성: 2026-09-14
-최종 갱신: 2026-09-14 (반영 뒤 인계 표 기입. 수용 8건 반영, 반박 2건 무변경, 남은 치명 없음. 그 전 같은 날 결정 10건 확정. 사용자 발언은 초안대로 10건 확정해라. 반영 진행해라)
+최종 갱신: 2026-09-14 (사용자 최종 완료 판단 완료와 지역 fixture 값 열일곱 확정. 사용자 발언은 병합해라. 지역 코드 열일곱 그대로 확정해라. 그 전 같은 날 반영 뒤 인계 표 기입, 그 전 결정 10건 확정)
 
 왜 이 파일이 필요한가: 리포트를 눈으로 읽고 반영하면 자기 결정에 불리한 지적이 조용히 빠진다(HR4). 원본 행을 하나씩 옮겨 두면 g2가 ID 집합과 심각도를 원본과 대조할 수 있다.
 
@@ -17,7 +17,7 @@
 | 평가 라운드 | R1 |
 | 평가 대상 절대경로와 파일 목록 | harness/out/task-S9-catalog-R1/eval-target-files.md |
 | 평가 대상 버전 또는 해시 | sha256:c019bc515f6c68e2. 목록이 가리키는 프로덕션 52개와 테스트 6개의 기준 커밋은 1bdadfe5a78722f1e708d96bafc0f728eddfc4a1(PR 138 병합, main)이고 파일별 sha256은 A와 B 리포트의 읽은 파일 표에 있다. 평가 브랜치 eval/mvp-2026-09-14 |
-| 승인된 작업 계약 절대경로와 버전 | harness/tasks/task-S9-catalog.md sha256:b35eca9a0afe6e15. 2026-09-14 개정 4(R1 반영을 받은 판) 뒤의 해시다. 평가와 결정 시점의 판은 앞 16자리가 7d6cc521e6df67e6이고 그 판과의 차이는 개정 4 한 번뿐이다(계약 0-5절) |
+| 승인된 작업 계약 절대경로와 버전 | harness/tasks/task-S9-catalog.md sha256:a3f7aa98cb4b57cd. 2026-09-14 개정 4(R1 반영을 받은 판)와 10절 지역 fixture 값 확정 행 뒤의 해시다. 개정 4 직후 판은 b35eca9a0afe6e15, 평가와 결정 시점의 판은 7d6cc521e6df67e6이고 그 판과의 차이는 개정 4와 확정 행 하나뿐이다(계약 0-5절과 10절) |
 | A 원본 리포트 절대경로와 버전 또는 해시 | harness/reviews/task-S9-catalog-R1-A.md sha256:b14f84a47634d661 |
 | B 원본 리포트 절대경로와 버전 또는 해시 | harness/reviews/task-S9-catalog-R1-B.md sha256:aaf8326e6c52ca71 |
 | A 원본 지적 수 | 4 |
@@ -104,5 +104,5 @@ A는 치명 1, 보통 2, 확인필요 1이다. B는 치명 1, 보통 3, 확인�
 | 코드 작업의 직접 실행 근거 | harness/out/task-S9-catalog-R1/applied/junit/ 아래 JUnit XML 50개(2026-09-14 21:25 실행, DB o2o_fix_test). 명령과 숫자는 apply-report 6절 |
 | 평가 대상 소스와 테스트의 무변경 확인 | 평가 전후 대조. A와 B가 적은 58개 파일의 sha256이 서로 같고 대상 목록의 앞 16자리와 같다. verify-eval-workspace.mjs의 ws.target-drift가 2026-09-14 14:23에 PASS였고 평가 뒤 git status에 리포트 둘 말고 바뀐 파일이 없다 |
 | 검증 미완료 사항 | 사용자 확정. A의 Gradle 실행이 UP-TO-DATE였던 것은 반영 라운드의 전체 테스트 실행이 대신한다 |
-| 사용자 최종 완료 판단과 날짜 | 미완료. 반영은 2026-09-14 끝났다. 남은 사용자 몫은 PR 병합과 RegionRegistry 값 목록 결정이다 |
+| 사용자 최종 완료 판단과 날짜 | 완료. join5201, 2026-09-14. 발언은 병합해라. 지역 코드 열일곱 그대로 확정해라. PR 145 병합 지시와 함께 A-02 행이 사용자 몫으로 남긴 RegionRegistry 값 목록을 코드의 열일곱(SEOUL, BUSAN, DAEGU, INCHEON, GWANGJU, DAEJEON, ULSAN, SEJONG, GYEONGGI, GANGWON, CHUNGBUK, CHUNGNAM, JEONBUK, JEONNAM, GYEONGBUK, GYEONGNAM, JEJU) 그대로 확정했다 |
 | 실제 판단 및 확인에 사용한 시간 | 초안 작성 약 40분. 사용자 판단 시간은 미측정. 반영은 코드와 테스트 약 57분(확정 커밋 20:26부터 코드 마지막 커밋 21:22), 기록 약 15분 |
