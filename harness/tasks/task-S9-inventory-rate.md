@@ -1,7 +1,7 @@
 # 작업 계약 task-S9-inventory-rate (재고와 요금 묶음)
 
 최초 작성: 2026-09-09
-최종 갱신: 2026-09-11 (개정 1. R1 평가 반영. 5절 역추적 대상 문장, 5절 R2 허용 입력 둘, 6절 P03의 지역, 8-1의 V13과 V14, 10절 개정 칸)
+최종 갱신: 2026-09-14 (R2. 5절 평가 대상 행을 목록 6절 main 기준으로, R2 설정 파일 행 해시 갱신, 10절 R2 행. 라운드 mvp-eval-2026-09-14. 그 전 2026-09-11 개정 1. R1 평가 반영. 5절 역추적 대상 문장, 5절 R2 허용 입력 둘, 6절 P03의 지역, 8-1의 V13과 V14, 10절 개정 칸)
 양식: harness/prompts/task-contract.md v6
 
 이 계약은 두 번째 구현 묶음이다. 첫 묶음 task-S9-catalog가 2026-09-09 최종 완료됐고 그 묶음이 세운 것 위에 얹는다.
@@ -97,24 +97,24 @@ InventoryAllocationService도 같은 이유로 만들지 않는다. 06-2 6절 CR
 | 대상 03 이벤트 스토밍 | document/03-o2o-event-storming.md | sha256:3334e5a73cb8f896 | 재고와 요금 커맨드와 이벤트 행 |
 | 확정 전제 입력 팩 | harness/project-sync/o2o-review-input-pack.md | sha256:1608942c0815f911 | 1절 확정 전제와 2절 요구사항 |
 | 구현 계획 10-6 | harness/docs/10-6-o2o-harness-implementation-plan.md | sha256:eec97503b53ffff0 | 3절 실행 순서와 기능별 API와 검증 연결 표 |
-| 앞 묶음의 계약 | harness/tasks/task-S9-catalog.md | sha256:bd62431b07c6d3f9 | 3절 범위 밖, 6절 정책 적용, 8절 단계표 |
+| 앞 묶음의 계약 | harness/tasks/task-S9-catalog.md | sha256:7d6cc521e6df67e6 | 3절 범위 밖, 6절 정책 적용, 8절 단계표 (그 전 sha256:bd62431b07c6d3f9. 그 계약이 2026-09-14 라운드 mvp-eval-2026-09-14 편입으로 5절과 10절을 고쳤다. 2026-09-14 갱신) |
 | 적용할 코드 양식 | harness/prompts/dev-ptcf-prompt.v3.md | sha256:4fd959abf491efe0 | Format 절. 해시는 2026-09-11 개정 1에서 갱신. 09-10에 그 양식이 열두 칸 정렬로 고쳐졌고 내용 규칙은 같다 |
 | 실제 평가 기준 | harness/prompts/eval-criteria-code.md | sha256:c5ed835951fe09a5 | 축, 심각도, 출력 스키마 |
 
 10-6과 앞 묶음의 계약은 이 표에만 있고 5절에는 없다. harness/docs/는 하네스 설계 근거라 평가 입력이 될 수 없고(CLAUDE.md 3절), 앞 묶음의 계약은 이 묶음 코드의 근거가 아니다.
 
-## 5. A와 B 평가 허용 입력 (HR1) (2026-09-11 개정 1)
+## 5. A와 B 평가 허용 입력 (HR1) (2026-09-11 개정 1. 2026-09-14 R2 해시 갱신)
 
 | 자료 | 경로 | 버전 또는 해시 | 읽을 범위 |
 |---|---|---|---|
-| 평가 대상 코드 | harness/out/task-S9-inventory-rate-R1/eval-target-files.md | sha256:807b6239259b4107 | 파일 목록과 커밋 해시 |
+| 평가 대상 코드 | harness/out/task-S9-inventory-rate-R1/eval-target-files.md | sha256:f01d6c51b6bcc3e7 | R2는 그 파일 6절 main 기준 목록(브랜치 main, 기준 커밋 1bdadfe. 프로덕션 52개, 테스트 9파일 83건). 1절부터 5절은 R1 시점 기록이고 그때 해시는 sha256:807b6239259b4107이었다. 2026-09-14 갱신 |
 | 입력 팩 | harness/project-sync/o2o-review-input-pack.md | sha256:1608942c0815f911 | 전문 |
 | 이 작업 계약 | harness/tasks/task-S9-inventory-rate.md | 자기 해시 없음 | 전문 |
 | 실제 평가 기준 | harness/prompts/eval-criteria-code.md | sha256:c5ed835951fe09a5 | 축, 심각도, 출력 스키마 |
 | 대상이 참조하는 11 API 명세 | document/11-o2o-api-spec.md | sha256:3f2613a77b649903 | 공통 절과 재고 절과 요금 절 |
 | 대상이 참조하는 06-2 | document/06-2-o2o-aggregates.md | sha256:113c6734b5525e1d | 1절, 3-1, 5절, 6절 재고와 요금 |
 | 대상이 참조하는 06-4 | document/06-4-o2o-contracts.md | sha256:edacbe47d6d63e3f | 0절, 1-1, 1-2 재고와 요금, 1-4 |
-| R2부터. 전역 역직렬화 설정 | backend/src/main/resources/application.properties | sha256:f091e83f098bd0d1 | 7행 fail-on-unknown-properties |
+| R2부터. 전역 역직렬화 설정 | backend/src/main/resources/application.properties | sha256:a53c90a2ad96f493 | 7행 fail-on-unknown-properties. 개정 1 시점 해시는 sha256:f091e83f098bd0d1이었고 그 뒤 결제 묶음이 프로파일 줄과 격리 수준 줄을 더했다. 2026-09-14 갱신 |
 | R2부터. 앞 묶음의 미정의 필드 거절 테스트 | backend/src/test/java/com/o2o/catalog/api/CatalogApiTest.java | sha256:700d593eed9f3741 | C6 155행 |
 
 이 표에 넣지 않는 것: 01 전체, 과거 감사 문서, 이전 평가 리포트, 사용자 결정표, harness/docs/ 전체, harness/state/ 전체, 생성 대화.
@@ -272,4 +272,5 @@ T06과 T07이 부분인 이유. 둘 다 예약이 있어야 닫힌다. T06은 �
 | 미해결 사항과 다음 작업 | 승인 대기 하나. D-3이 가라서 블라인드 평가 A와 B를 사용자가 Codex에 전달해야 한다. 요청문은 harness/out/task-S9-inventory-rate-R1/eval-request-A.md와 eval-request-B.md에 있다. 이월 넷은 V2와 T04의 heldCount 몫과 T05의 잠금 몫과 T06 T07의 예약 몫이고 전부 예약 묶음이다. 하네스에 남기는 제안 하나는 커밋된 트리를 대상으로 도는 검사다. 커밋에 편집분이 빠져도 테스트가 초록인 사고가 이번에 실제로 났다 |
 | 최종 산출물과 버전 | backend/ 아래 프로덕션 43 클래스와 테스트 7 파일. harness/out/task-S9-inventory-rate-R1/ 아래 step5, step6, step6-2와 step9-verification.md와 eval-target-files.md. 브랜치 feat/task-s9-inventory-rate, 기준 커밋 280a69163a6a6422 |
 | 실제 사용 시간 | 측정된 개발 시간 합 55분. 4단계 12분, 5단계 10분, 6단계 27분, 6-2단계 6분. Docker 대기 16분을 빼면 39분이다. 1단계와 2단계는 승인과 브랜치라 개발 시간이 아니다 |
+| R2 (2026-09-14) | 라운드 mvp-eval-2026-09-14에서 R2를 돈다(쌍 2). 라운드 README 5절 D-3 가. 확인 항목 여섯을 요청문에 중립 문장으로 적고 R1 리포트와 결정표와 applied/는 평가자가 읽지 않는다. 축은 R1과 같이 전부. 리포트는 harness/reviews/task-S9-inventory-rate-R2-A.md와 -B.md, 결정표는 harness/decisions/task-S9-inventory-rate-R2.md. 10-4 재평가 최대 1회의 그 1회다. join5201, 2026-09-14. 발언은 추천대로 6건 확정하고 진행해라 |
 | 최종 완료 판단 | 대기 |
