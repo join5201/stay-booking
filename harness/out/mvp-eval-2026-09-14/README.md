@@ -1,7 +1,7 @@
 # harness/out/mvp-eval-2026-09-14/
 
 최초 작성: 2026-09-14
-최종 갱신: 2026-09-14
+최종 갱신: 2026-09-14 (결정 6건 확정과 6절 산출물. 3절 쌍 5의 shared 파일 정정. 같은 날 초안)
 용도: 백엔드 MVP 블라인드 평가 라운드의 준비 계획. 오늘의 전제 결정 3(harness/out/mvp-parallel-2026-09-11/README.md 1절)이 미룬 Codex 평가를 한 번에 돌리기 위한 범위, 쌍 구성, 결정 6건, 순서
 
 왜 이 폴더가 필요한가: 묶음 다섯의 계약이 저마다 5절에 그 라운드에서 이 묶음 몫으로 넘길 것이라 적어 두었지만 그 라운드 자체를 적은 파일은 없다. 쌍을 몇 개로 가르고 어느 폴더를 열고 어느 DB로 테스트를 돌릴지를 세션마다 말로 정하면 평가자마다 조건이 달라진다. 이 README가 그 조건을 한 곳에 고정하고, 승인 뒤 만드는 요청문 파일들이 여기를 가리킨다.
@@ -35,7 +35,7 @@
 
 main 기준 파일 수(2026-09-14, 패키지 단위). 프로덕션 backend/src/main/java/com/o2o/ 아래 287개. booking 74, catalog 36, inventory 49, payment 49, promotion 42, search 12, shared 24, BackendApplication 1. 테스트 56개 파일 419건. booking 140, catalog 53, inventory 79, payment 55, promotion 65, search 21, shared 4, 루트 2. 쌍마다의 정확한 대상 목록은 승인 뒤 3절의 방식으로 뽑는다.
 
-## 3. 평가 쌍 구성 (추천안 기준. D-1과 D-4가 바뀌면 이 표도 바뀐다)
+## 3. 평가 쌍 구성 (추천안 기준. D-1과 D-4가 바뀌면 이 표도 바뀐다. 2026-09-14 확정. 정확한 파일 수는 3-1절)
 
 | 쌍 | 리포트 파일(harness/reviews/) | 결정표(harness/decisions/) | 계약 | 대상 | 세션 |
 |---|---|---|---|---|---|
@@ -43,9 +43,23 @@ main 기준 파일 수(2026-09-14, 패키지 단위). 프로덕션 backend/src/m
 | 2 | task-S9-inventory-rate-R2-A.md, -B.md | task-S9-inventory-rate-R2.md | task-S9-inventory-rate.md | inventory 패키지 전체(예약 묶음이 더한 파일 포함)와 shared/SeoulDate, 테스트 8파일. 확인 항목은 D-3 | 같다 |
 | 3 | task-S9-promotion-search-R1-A.md, -B.md | task-S9-promotion-search-R1.md | task-S9-promotion-search.md | promotion과 search 패키지 전체, 테스트 7파일 | 같다 |
 | 4 | task-S9-booking-R1-A.md, -B.md | task-S9-booking-R1.md(계약 둘을 적는다) | task-S9-booking.md, task-S9-booking-lifecycle.md | booking 패키지 전체와 inventory의 예약 몫(InventoryAllocationService, 이벤트 넷, DailyInventory의 hold 계열), 테스트 27파일, 테스트 설정 한 줄 | 같다 |
-| 5 | task-S9-payment-R1-A.md, -B.md | task-S9-payment-R1.md | task-S9-payment.md | payment 패키지 전체와 shared/Money 고침, 설정 파일 둘, 테스트 7파일 | 같다 |
+| 5 | task-S9-payment-R1-A.md, -B.md | task-S9-payment-R1.md | task-S9-payment.md | payment 패키지 전체와 shared/ActorResolver 고침(초안은 Money라 적었으나 git 이력에 결제가 Money를 고친 커밋이 없다. 2026-09-14 정정), 설정 파일 둘, 테스트 7파일 | 같다 |
 
 세션은 쌍 다섯에 둘씩 열이다(D-1이 가면 여덟). 붙여 넣기는 사용자 몫이고 세션은 나란히 열 수 있다. 결정 3이 아낀 것은 왕복 날수이고 붙여 넣기 수가 아니다.
+
+### 3-1. 확정 뒤 실제 목록 (2026-09-14 신설)
+
+표의 대상 칸은 추천 시점의 어림이고 실제 목록은 build-target-lists.mjs가 기준 커밋 1bdadfe에서 낸 것이다. 테스트 건수는 main 전체 실행 사본(harness/out/task-S9-booking-lifecycle-R1/step9의 JUnit XML 48개, 419건)에서 읽었다.
+
+| 쌍 | 목록 파일 | 프로덕션 | 테스트 | 설정 | 다른 묶음이 고친 파일 |
+|---|---|---|---|---|---|
+| 1 숙소 | harness/out/task-S9-catalog-R1/eval-target-files.md | 52 (catalog 36, shared 15, 뼈대 1) | 6파일 55건 | 0 | catalog 6(프로모션과 검색의 읽기 메서드 둘), ActorRegistry(예약 1차), ActorResolver(결제) |
+| 2 재고 | harness/out/task-S9-inventory-rate-R1/eval-target-files.md 6절 | 52 (inventory 49, shared 3) | 9파일 83건 | 0 | inventory 4(예약 1차가 고침), 예약 묶음이 더한 8(예약 쌍과 겹친다) |
+| 3 프로모션 | harness/out/task-S9-promotion-search-R1/eval-target-files.md | 60 (promotion 42, search 12, shared 6) | 7파일 86건 | 0 | 없음 |
+| 4 예약 | harness/out/mvp-eval-2026-09-14/eval-target-files-booking.md | 87 (booking 74, inventory 12, shared 1) | 29파일 155건(지원 7) | 1 | 1차 파일 11개를 2차가 고침. inventory 12와 테스트 2는 재고 쌍과 겹친다 |
+| 5 결제 | harness/out/task-S9-payment-R1/eval-target-files.md 5절 | 50 (payment 49, shared 1) | 7파일 55건(지원 1) | 2 | 테스트 설정을 예약 2차가 고침 |
+
+겹침은 둘이다. 재고 쌍과 예약 쌍이 inventory의 예약 몫 12개 파일과 테스트 2개를 같이 보고, ClockConfiguration을 숙소 쌍과 재고 쌍이 같이 본다. 같은 파일에 두 쌍이 지적을 내면 결정표 둘에 같은 자리가 실리고 반영은 한 번이다. 겹침을 없애려면 파일을 한 쌍에만 주어야 하는데 그러면 다른 쌍이 자기 코드의 절반을 못 본다.
 
 대상 목록을 뽑는 방식. 재고와 요금 R1은 브랜치 커밋 범위(갈라진 지점부터 기준 커밋까지)의 diff로 뽑았다. 이번은 묶음 넷이 main에 섞여 들어 커밋 범위가 서로 겹치므로 패키지 단위로 뽑고, 다른 묶음이 고친 파일은 그 사실을 목록에 적는다(예약 1차 파일 11개를 2차가 고침, 결제의 테스트 설정을 2차가 고침, 재고 파일을 예약 1차와 2차가 고침). 목록 파일마다 git ls-files와 sha256으로 만든 표를 두고, 검사 스크립트가 그 표와 작업 트리를 대조한다.
 
@@ -132,6 +146,7 @@ main 기준 파일 수(2026-09-14, 패키지 단위). 프로덕션 backend/src/m
 
 | 순서 | 하는 일 |
 |---|---|
+| 0 | PR 139와 이 PR(141)을 병합한다. 그 뒤 origin/main에서 eval/mvp-2026-09-14 브랜치를 따서 o2o-dev에 체크아웃한다. 요청문과 목록과 스크립트가 그 브랜치에 있어야 평가자가 읽는다 |
 | 1 | o2o-dev가 eval 브랜치에 있고 각 쌍의 검사 스크립트가 PASS인지 본다 |
 | 2 | Codex 새 작업을 쌍마다 둘 연다. 작업 디렉터리는 o2o-dev. 요청문의 구분선 아래를 그대로 붙인다 |
 | 3 | 리포트가 harness/reviews/의 지정 파일에 저장됐는지 본다. 리포트 열 |
@@ -154,5 +169,5 @@ main 기준 파일 수(2026-09-14, 패키지 단위). 프로덕션 backend/src/m
 
 | 항목 | 기록 |
 |---|---|
-| 결정 6건 | 대기 |
-| 승인 | 대기 |
+| 결정 6건 | 추천대로 확정. D-1 나(숙소 포함), D-2 가(쌍마다 A와 B 새 작업. 열 세션), D-3 가(확인 항목 여섯을 중립 문장으로), D-4 가(예약 1차와 2차 한 쌍), D-5 가(요청문이 보조 표 요구), D-6 가(A 세션마다 DB 배정) |
+| 승인 | join5201, 2026-09-14 00:2x. 발언은 추천대로 6건 확정하고 진행해라. 결정 6건 전부를 5절의 추천으로 확정하고 6절 순서를 승인 없이 끝까지 가라는 뜻으로 읽었다. 6절 1의 eval 브랜치는 PR 139와 이 PR이 병합된 뒤에야 딸 수 있어 사용자 몫으로 남긴다(7절 0행) |
