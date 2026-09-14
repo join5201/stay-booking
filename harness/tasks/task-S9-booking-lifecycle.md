@@ -1,7 +1,7 @@
 # 작업 계약 task-S9-booking-lifecycle (예약과 선점 묶음. 2차: 결제 중계와 확정과 만료와 취소)
 
 최초 작성: 2026-09-13
-최종 갱신: 2026-09-13 (개정 여덟 확정. 개정 3부터 10. 8절 4-2와 4-3과 4-4와 5와 6과 6-2 행, 8-1절 L2와 L20과 머리 문단, 10절 넷. 발언은 일단 진행해라. 그 전 같은 날 9단계. 4절 고칠 파일 넷의 반영 뒤 해시와 꼬리 문장, 5절 평가 대상 행 기입, 10절 넷. 그 전 개정 2 수용 같은 날. 재고 이벤트 둘. 작업 표 변경 허용 파일, 1절 이벤트 행, 8-1절 L12, 10절. 그 전 개정 1 수용 같은 날)
+최종 갱신: 2026-09-14 (5절 라운드 합본 목록 행과 10절 라운드 행. 라운드 mvp-eval-2026-09-14 D-4. 그 전 2026-09-13 개정 여덟 확정. 개정 3부터 10. 8절 4-2와 4-3과 4-4와 5와 6과 6-2 행, 8-1절 L2와 L20과 머리 문단, 10절 넷. 발언은 일단 진행해라. 그 전 같은 날 9단계. 4절 고칠 파일 넷의 반영 뒤 해시와 꼬리 문장, 5절 평가 대상 행 기입, 10절 넷. 그 전 개정 2 수용 같은 날. 재고 이벤트 둘. 작업 표 변경 허용 파일, 1절 이벤트 행, 8-1절 L12, 10절. 그 전 개정 1 수용 같은 날)
 양식: harness/prompts/task-contract.md v6
 
 이 계약은 다섯 번째 구현 묶음이다. task-S9-catalog, task-S9-inventory-rate, task-S9-booking 1차(PR 127), task-S9-promotion-search(PR 98)가 main에 있고 task-S9-payment(브랜치 feat/task-s9-payment, 계약 승인 2026-09-12)가 그 위에 얹힐 예정이다. 1차 계약 7절 D-5 나에 따라 2차는 새 계약이고 이 파일이 그것이다. 사용자가 2026-09-13에 결제 계약 승인(2026-09-12)만 보고 초안을 미리 쓰라고 했으므로 결제 쪽 접점은 승인된 결제 계약의 이름(openAttempt, refund, attemptsOf, PaymentApproved, PaymentFailed)으로 적는다. 결제 PR이 main에 들어가면 2단계에서 실제 코드의 이름과 대조하고 다르면 10절 개정 칸에 적는다.
@@ -176,8 +176,8 @@ T1 TTL 만료의 건별 처리. 스케줄러가 잠금 없이 due 목록(status 
 | 정책 결정 08-3 | harness/decisions/decisions-08-3.md | sha256:1b8580aa86c18fd8 | 표 11행 전부와 표 아래 문장. 특히 3, 5, 6, 7, 8, 10, 11의 11-1과 11-2와 11-4와 11-6. 9절 근거 |
 | 구현 계획 10-6 | harness/docs/10-6-o2o-harness-implementation-plan.md | sha256:eec97503b53ffff0 | 3절 기능별 API와 검증 연결 표의 결제와 확정 행과 취소와 만료 행과 접근 범위 행 |
 | 앞 묶음의 계약 하나 | harness/tasks/task-S9-booking.md | sha256:0876574192269065 | 2절 검사 순서 표(개정 반영판), 2-2절, 7절 D-1과 D-4와 D-5, 8-1 K5와 K12와 K17, 9절, 10절 개정 |
-| 앞 묶음의 계약 둘 | harness/tasks/task-S9-payment.md | sha256:ec7d3afac5bb5adf | 2절 대상 표와 openAttempt와 refund 검사 순서, 6절 이벤트 페이로드 행과 값 객체 행, 7절 D-1과 D-5와 D-6, 8-1 Y21, 10절 개정 다섯(1 격리 수준 READ COMMITTED, 2 재개 러너 자리, 3 강제 실패 구독자의 BEFORE_COMMIT). 2단계에서 기입 |
-| 앞 묶음의 계약 셋 | harness/tasks/task-S9-promotion-search.md | sha256:6ebe329e1cfca4f4 | 2절 PricingService 접점, 7절 D-1과 D-2의 이월(V17, V18, V19), 10절 |
+| 앞 묶음의 계약 둘 | harness/tasks/task-S9-payment.md | sha256:71a624284e313402 | 2절 대상 표와 openAttempt와 refund 검사 순서, 6절 이벤트 페이로드 행과 값 객체 행, 7절 D-1과 D-5와 D-6, 8-1 Y21, 10절 개정 다섯(1 격리 수준 READ COMMITTED, 2 재개 러너 자리, 3 강제 실패 구독자의 BEFORE_COMMIT). 2단계에서 기입 (그 전 sha256:ec7d3afac5bb5adf. 그 계약이 2026-09-14 라운드 mvp-eval-2026-09-14 편입으로 5절과 10절을 고쳤다. 2026-09-14 갱신) |
+| 앞 묶음의 계약 셋 | harness/tasks/task-S9-promotion-search.md | sha256:bca801eb6eb99e86 | 2절 PricingService 접점, 7절 D-1과 D-2의 이월(V17, V18, V19), 10절 (그 전 sha256:6ebe329e1cfca4f4. 그 계약이 2026-09-14 라운드 mvp-eval-2026-09-14 편입으로 5절과 10절을 고쳤다. 2026-09-14 갱신) |
 | 오늘의 전제 | harness/out/mvp-parallel-2026-09-11/README.md | sha256:7cbeaa454ed78eec | 1절 결정 셋, 4절 병합 순서와 접점 |
 | 이 세션의 프롬프트 | harness/out/mvp-parallel-2026-09-11/prompt-B-booking.md | sha256:6aa29f27984d2c16 | 머리의 2차 범위 문장, 접점 표, 검증 표의 2차로 열 |
 | 적용할 코드 양식 | harness/prompts/dev-ptcf-prompt.v3.md | sha256:4fd959abf491efe0 | Format 절과 3절 단계 번호 |
@@ -200,13 +200,14 @@ T1 TTL 만료의 건별 처리. 스케줄러가 잠금 없이 due 목록(status 
 
 10-6과 앞 묶음의 계약과 오늘의 전제와 프롬프트는 이 표에만 있고 5절에는 없다. 생성 후 기입이던 두 행은 결제 PR 133이 main에 들어간 뒤 2단계(2026-09-13)에서 채웠고 본보기 어댑터 행을 더했다. 5절의 평가 대상 행은 9단계(2026-09-13)에서 채웠다. 고칠 파일 넷(앱 서비스, API, 응답, 핸들러)의 해시도 같은 날 반영 뒤 값으로 갱신하고 1단계 시점 값을 읽을 범위 칸에 남겼다.
 
-## 5. A와 B 평가 허용 입력 (HR1)
+## 5. A와 B 평가 허용 입력 (HR1) (2026-09-14 라운드 합본 목록 행)
 
 오늘의 전제 결정 3에 따라 평가는 MVP 코드가 다 붙은 뒤 한 번이다. 이 표는 그 라운드에서 이 묶음 몫으로 넘길 것이다.
 
 | 자료 | 경로 | 버전 또는 해시 | 읽을 범위 |
 |---|---|---|---|
-| 평가 대상 코드 | harness/out/task-S9-booking-lifecycle-R1/eval-target-files.md | sha256:f335faecb128a1f0 | 전문. 브랜치 feat/task-s9-booking-lifecycle, 기준 커밋 892223f. 프로덕션 41개(booking 새 30과 고침 11, inventory 3)와 설정 1, 테스트 12파일 82건과 지원 7과 고친 1차 2. 파일 목록과 backend 커밋 스물셋이 그 문서에 있다. 9단계(2026-09-13) 기입 |
+| 평가 대상 코드 | harness/out/task-S9-booking-lifecycle-R1/eval-target-files.md | sha256:f335faecb128a1f0 | 전문. 브랜치 feat/task-s9-booking-lifecycle, 기준 커밋 892223f. 프로덕션 41개(booking 새 30과 고침 11, inventory 3)와 설정 1, 테스트 12파일 82건과 지원 7과 고친 1차 2. 파일 목록과 backend 커밋 스물셋이 그 문서에 있다. 9단계(2026-09-13) 기입. 라운드의 대상은 아래 합본 행이다 |
+| 평가 대상 코드 (라운드 합본) | harness/out/mvp-eval-2026-09-14/eval-target-files-booking.md | sha256:79859e3f5bb5bddd | 전문. 라운드 mvp-eval-2026-09-14 D-4 가에 따라 1차와 2차를 한 쌍이 본다. 브랜치 main, 기준 커밋 1bdadfe. 프로덕션 87개(booking 74, inventory 12, shared 1)와 테스트 29파일 155건과 설정 1. 위 행의 목록과 1차 계약 5절의 목록은 브랜치 시점 기록으로 남는다. 2026-09-14 기입 |
 | 입력 팩 | harness/project-sync/o2o-review-input-pack.md | sha256:1608942c0815f911 | 전문 |
 | 이 작업 계약 | harness/tasks/task-S9-booking-lifecycle.md | 자기 해시 없음 | 전문 |
 | 실제 평가 기준 | harness/prompts/eval-criteria-code.md | sha256:c5ed835951fe09a5 | 축, 심각도, 출력 스키마 |
@@ -398,4 +399,5 @@ T23이 예약 몫까지 닫히는 뜻. 11의 문장(재전달 시 정상 완료)
 | 미해결 사항과 다음 작업 | PR 138 병합과 병합 기록 행(chore/merge-138-record 브랜치의 기록 PR. 앞 PR 136 자리). 병합 뒤 README 6절 끝 40. troubleshooting.md에 관찰 여섯. 이월 셋은 아래 그대로. 그 전 기록. 사용자 완료 판단과 개정 후보 여덟(step9-verification.md 4절)의 확정. PR 138 병합. 병합 뒤 progress.md 병합 done 행과 README 6절 갱신(끝 40). 이월 셋: T2 순찰과 정산 표식(7절 D-1 나), 테스트 컨텍스트 연결 수 140 대 151과 전체 실행 멈춤 둘의 진단, 결제 테스트의 ERROR 로그 18건. 그 전 기록. 4-1단계 가격 포트 교체. 작업 공간은 사용자 지시(2026-09-13)로 o2o-dev 워크트리에 이 브랜치를 체크아웃한다 |
 | 최종 산출물과 버전 | 브랜치 feat/task-s9-booking-lifecycle. 마지막 backend 커밋 892223f(6-2단계 L23). backend 커밋 스물셋은 eval-target-files.md 1절. 테스트 419건 실패 0(이 묶음 82건, 기준선 337건 그대로). 결과 사본 harness/out/task-S9-booking-lifecycle-R1/step4-1부터 step6-2와 step9. 실제 서버 기록 step6과 step6-2의 http-calls.txt. 검증 표 step9-verification.md. PR 138. 병합 커밋 해시는 최종 판단 뒤 progress.md 병합 행에 |
 | 실제 사용 시간 | 개발 152분. 4-1단계 9, 4-2단계 8, 4-3단계 20, 4-4단계 10, 5단계 30, 6단계 35, 6-2단계 40. 1단계 48분과 2단계 12분은 승인과 브랜치. 9단계는 progress.md 9단계 행. 3단계 건너뜀, 7과 8단계 해당 없음 |
+| 블라인드 평가 라운드 (2026-09-14) | 라운드 mvp-eval-2026-09-14에 1차와 2차를 한 쌍(쌍 4)으로 넣는다. 5절 합본 목록 행. 리포트는 harness/reviews/task-S9-booking-R1-A.md와 -B.md, 결정표는 harness/decisions/task-S9-booking-R1.md(계약 둘과 해시 둘을 적는다). 반영 인계는 이 계약 10절에 적는다. 1차 계약은 최종 완료라 고치지 않으며 그 5절의 application.properties 해시(sha256:f091e83f098bd0d1)는 결제 묶음이 고치기 전 값이라 요청문이 지금 값을 적는다. 라운드 README 5절 D-4 가. join5201, 2026-09-14. 발언은 추천대로 6건 확정하고 진행해라 |
 | 최종 완료 판단 | 완료. join5201, 2026-09-13. 발언은 일단 진행해라(23:42). 9단계 정지점에서 남은 것이 완료 판단과 개정 후보 여덟 확정과 PR 138 병합 지시였으므로 셋을 함께 진행하라는 것으로 읽었다. 이 판단으로 개정 여덟을 확정하고 PR 138을 병합한다 |
