@@ -296,6 +296,34 @@ class CatalogUpdateAndListApiTest {
         assertEquals(404, res.statusCode(), res.body());
     }
 
+    @Test
+    void C14_CAT_07_maxOccupancy_0과_101은_400이고_값과_version이_그대로다() throws Exception {
+        // R1 평가 B-05. I14는 수정 경로에서도 지켜야 하고 상한 100은 11 공통 규칙이다.
+        // 수정 DTO의 하한이나 RoomType.update의 검사를 지우면 이 테스트가 잡는다
+        JsonNode property = registerProperty(HOST, "인원 경계 수정용", "SEOUL");
+        String roomTypeId = JSON.readTree(send("POST",
+                "/api/v1/properties/" + property.get("id").stringValue() + "/room-types", HOST,
+                """
+                {"name":"경계 객실","maxOccupancy":4,"description":""}
+                """).body()).get("id").stringValue();
+        String path = "/api/v1/room-types/" + roomTypeId;
+
+        HttpResponse<String> zero = send("PATCH", path, HOST, """
+                {"version":0,"maxOccupancy":0}
+                """);
+        HttpResponse<String> over = send("PATCH", path, HOST, """
+                {"version":0,"maxOccupancy":101}
+                """);
+
+        assertEquals(400, zero.statusCode(), zero.body());
+        assertTrue(zero.body().contains("INVALID_REQUEST"), zero.body());
+        assertEquals(400, over.statusCode(), over.body());
+        assertTrue(over.body().contains("INVALID_REQUEST"), over.body());
+        JsonNode after = JSON.readTree(send("GET", path, null, null).body());
+        assertEquals(4, after.get("maxOccupancy").asInt(), "거절됐는데 값이 바뀌었다");
+        assertEquals(0, after.get("version").asInt());
+    }
+
     // ---------- CAT-04와 C7, C8 ----------
 
     @Test
