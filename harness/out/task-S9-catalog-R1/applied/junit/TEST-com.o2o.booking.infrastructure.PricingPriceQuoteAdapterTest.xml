@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.booking.infrastructure.PricingPriceQuoteAdapterTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-09-14T12:24:33.458Z" hostname="BOOK-QD5U7FFOBT" time="0.962">
+  <properties/>
+  <testcase name="L5_프로모션이_있으면_스냅샷에_적용_프로모션과_날짜별_할인이_들고_총액이_날짜_합이다()" classname="com.o2o.booking.infrastructure.PricingPriceQuoteAdapterTest" time="0.197"/>
+  <testcase name="L5_예상_총액이_할인_전_금액이면_PRICE_CHANGED다()" classname="com.o2o.booking.infrastructure.PricingPriceQuoteAdapterTest" time="0.175"/>
+  <testcase name="L5_예약_뒤_프로모션을_바꿔도_스냅샷과_총액이_그대로다()" classname="com.o2o.booking.infrastructure.PricingPriceQuoteAdapterTest" time="0.284"/>
+  <testcase name="L5_요금_없는_날짜가_있으면_예약_컨텍스트의_RateNotConfigured다()" classname="com.o2o.booking.infrastructure.PricingPriceQuoteAdapterTest" time="0.087"/>
+  <testcase name="L5_프로모션_조건_밖이면_할인_0이고_적용_프로모션이_없다()" classname="com.o2o.booking.infrastructure.PricingPriceQuoteAdapterTest" time="0.168"/>
+  <system-out><![CDATA[2026-09-14T21:24:33.460+09:00  INFO 35280 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.infrastructure.PricingPriceQuoteAdapterTest]: PricingPriceQuoteAdapterTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-14T21:24:33.497+09:00  INFO 35280 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.infrastructure.PricingPriceQuoteAdapterTest
+2026-09-14T21:24:33.497+09:00  INFO 35280 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.infrastructure.PricingPriceQuoteAdapterTest]: PricingPriceQuoteAdapterTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-14T21:24:33.497+09:00  INFO 35280 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.infrastructure.PricingPriceQuoteAdapterTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

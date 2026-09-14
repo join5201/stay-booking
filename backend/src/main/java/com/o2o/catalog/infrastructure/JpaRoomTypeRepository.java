@@ -24,9 +24,10 @@ public class JpaRoomTypeRepository implements RoomTypeRepository {
         this.jpaRepository = jpaRepository;
     }
 
+    /** JpaPropertyRepository.save와 같은 이유로 flush까지 한다 */
     @Override
     public RoomType save(RoomType roomType) {
-        return jpaRepository.save(roomType);
+        return jpaRepository.saveAndFlush(roomType);
     }
 
     @Override

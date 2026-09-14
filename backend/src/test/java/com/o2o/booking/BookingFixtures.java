@@ -26,6 +26,7 @@ import com.o2o.payment.domain.PaymentAttempt;
 import com.o2o.payment.domain.PaymentRepository;
 import com.o2o.shared.HostId;
 import com.o2o.shared.Money;
+import com.o2o.shared.RegionRegistry;
 import com.o2o.shared.RoomTypeId;
 
 /**
@@ -50,6 +51,7 @@ public class BookingFixtures {
     private final BookingRepository bookingRepository;
     private final DailyInventoryRepository inventoryRepository;
     private final PaymentRepository paymentRepository;
+    private final RegionRegistry regionRegistry;
     private final TransactionTemplate transaction;
     private final MutableClock clock;
 
@@ -58,7 +60,7 @@ public class BookingFixtures {
                            BookingApplicationService bookingService,
                            BookingRepository bookingRepository,
                            DailyInventoryRepository inventoryRepository,
-                           PaymentRepository paymentRepository,
+                           PaymentRepository paymentRepository, RegionRegistry regionRegistry,
                            PlatformTransactionManager transactionManager, MutableClock clock) {
         this.catalogService = catalogService;
         this.inventoryService = inventoryService;
@@ -66,6 +68,7 @@ public class BookingFixtures {
         this.bookingRepository = bookingRepository;
         this.inventoryRepository = inventoryRepository;
         this.paymentRepository = paymentRepository;
+        this.regionRegistry = regionRegistry;
         this.transaction = new TransactionTemplate(transactionManager);
         this.clock = clock;
     }
@@ -76,6 +79,8 @@ public class BookingFixtures {
     }
 
     public RoomTypeId roomType(String regionCode) {
+        // 등록된 지역 코드만 숙소가 된다(CAT-01). 새로 뽑은 코드는 fixture에 먼저 넣는다
+        regionRegistry.register(regionCode);
         Property property = catalogService.registerProperty(
                 HOST, "2차 테스트 스테이", regionCode, "서울특별시 중구 예시로 1", "");
         RoomType roomType = catalogService.registerRoomType(HOST, property.id(), "스탠다드", 2, "");

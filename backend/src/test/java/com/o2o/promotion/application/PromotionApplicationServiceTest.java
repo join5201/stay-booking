@@ -34,6 +34,7 @@ import com.o2o.shared.HostId;
 import com.o2o.shared.PageQuery;
 import com.o2o.shared.PageResult;
 import com.o2o.shared.PromotionId;
+import com.o2o.shared.RegionRegistry;
 import com.o2o.shared.RoomTypeId;
 import com.o2o.shared.VersionConflictException;
 
@@ -83,6 +84,9 @@ class PromotionApplicationServiceTest {
 
     @Autowired
     private CatalogApplicationService catalogApplicationService;
+
+    @Autowired
+    private RegionRegistry regionRegistry;
 
     @Autowired
     private InventoryApplicationService inventoryApplicationService;
@@ -316,6 +320,8 @@ class PromotionApplicationServiceTest {
     }
 
     private RoomTypeId 객실_타입(String region, int maxOccupancy) {
+        // 등록된 지역 코드만 숙소가 된다(CAT-01). 새로 뽑은 코드는 fixture에 먼저 넣는다
+        regionRegistry.register(region);
         Property property = catalogApplicationService.registerProperty(
                 HOST, "테스트 스테이", region, "서울특별시 중구 예시로 1", "");
         RoomType roomType = catalogApplicationService.registerRoomType(

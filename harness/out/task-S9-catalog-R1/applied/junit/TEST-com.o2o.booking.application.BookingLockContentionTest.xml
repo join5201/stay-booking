@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.booking.application.BookingLockContentionTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-09-14T12:24:16.259Z" hostname="BOOK-QD5U7FFOBT" time="9.605">
+  <properties/>
+  <testcase name="L23_만료를_먼저_보내고_승인을_이어_보내도_한_경로만_남고_held는_0이다()" classname="com.o2o.booking.application.BookingLockContentionTest" time="4.827"/>
+  <testcase name="L23_승인을_먼저_보내고_만료를_이어_보내도_한_경로만_남고_held는_0이다()" classname="com.o2o.booking.application.BookingLockContentionTest" time="4.768"/>
+  <system-out><![CDATA[2026-09-14T21:24:16.260+09:00  INFO 35280 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.application.BookingLockContentionTest]: BookingLockContentionTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-14T21:24:16.260+09:00  INFO 35280 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.application.BookingLockContentionTest
+2026-09-14T21:24:16.260+09:00  INFO 35280 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.application.BookingLockContentionTest]: BookingLockContentionTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-14T21:24:16.265+09:00  INFO 35280 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.application.BookingLockContentionTest
+2026-09-14T21:24:21.027+09:00  INFO 35280 --- [pool-6-thread-1] c.o.b.a.BookingExpirationService         : 만료 대신 확정. 승인 시도가 있다. booking=booking_a3a2a39648af4d13bbe593149a56d78a attempt=attempt_b75dfc12aa8e4f739e179a791b6fe103
+2026-09-14T21:24:21.059+09:00  INFO 35280 --- [pool-6-thread-2] c.o.b.application.PaymentOutcomeService  : 승인 처리 무시. 종착 상태다. booking=booking_a3a2a39648af4d13bbe593149a56d78a status=CONFIRMED
+2026-09-14T21:24:25.762+09:00  INFO 35280 --- [pool-7-thread-1] c.o.b.application.PaymentOutcomeService  : 지연 승인. 만료 시각을 지나 환불하고 만료시킨다. booking=booking_f07e638ed2534aea87045e3b7d0149c4 attempt=attempt_aea01007e921459ea63c713ef8ab032a
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.booking.api.BookingApiTest" tests="17" skipped="0" failures="0" errors="0" timestamp="2026-09-14T12:23:32.833Z" hostname="BOOK-QD5U7FFOBT" time="11.879">
+  <properties/>
+  <testcase name="K23_체크아웃_날짜에는_재고와_요금이_없어도_201이다()" classname="com.o2o.booking.api.BookingApiTest" time="0.444"/>
+  <testcase name="K15_같은_키_같은_body_재전송은_같은_응답과_Idempotency_Replayed이고_선점이_더_안_오른다()" classname="com.o2o.booking.api.BookingApiTest" time="0.341"/>
+  <testcase name="K23_재고_행_없는_날짜는_409_INVENTORY_NOT_CONFIGURED다()" classname="com.o2o.booking.api.BookingApiTest" time="0.279"/>
+  <testcase name="K14_멱등키가_없거나_형식이_틀리면_400_IDEMPOTENCY_KEY_REQUIRED다()" classname="com.o2o.booking.api.BookingApiTest" time="0.288"/>
+  <testcase name="K17_처리_중인_같은_키는_409_REQUEST_IN_PROGRESS이고_잠금이_풀리면_첫_요청은_201이다()" classname="com.o2o.booking.api.BookingApiTest" time="2.339"/>
+  <testcase name="K23_요금_없는_날짜는_409_RATE_NOT_CONFIGURED다()" classname="com.o2o.booking.api.BookingApiTest" time="0.295"/>
+  <testcase name="K23_최대_인원_초과는_409_OCCUPANCY_EXCEEDED다()" classname="com.o2o.booking.api.BookingApiTest" time="0.242"/>
+  <testcase name="K13_예약을_요청하면_201과_Location과_Booking_20개_필드가_온다()" classname="com.o2o.booking.api.BookingApiTest" time="0.32"/>
+  <testcase name="K20_필드_값이_범위를_벗어나거나_미정의_필드가_있으면_400_INVALID_REQUEST다()" classname="com.o2o.booking.api.BookingApiTest" time="0.105"/>
+  <testcase name="K20_날짜_순서와_30박과_과거와_형식은_400_INVALID_DATE_RANGE이고_서울_오늘은_통과한다()" classname="com.o2o.booking.api.BookingApiTest" time="2.614"/>
+  <testcase name="K22_선점된_날짜의_총량을_선점_아래로_내리면_409_INVENTORY_BELOW_COMMITTED다()" classname="com.o2o.booking.api.BookingApiTest" time="0.218"/>
+  <testcase name="K21_행위자가_없으면_401이고_HOST가_예약하면_403이다()" classname="com.o2o.booking.api.BookingApiTest" time="0.148"/>
+  <testcase name="K16_키_순서만_다른_body는_같은_body라_재전송이다()" classname="com.o2o.booking.api.BookingApiTest" time="0.198"/>
+  <testcase name="K16_같은_키_다른_body는_409_IDEMPOTENCY_KEY_REUSED다()" classname="com.o2o.booking.api.BookingApiTest" time="0.214"/>
+  <testcase name="K19_마지막_객실_하나에_두_손님이_동시에_요청하면_하나만_201이다()" classname="com.o2o.booking.api.BookingApiTest" time="3.296"/>
+  <testcase name="K18_거절된_요청은_캐시되지_않고_같은_키로_고친_body가_201이다()" classname="com.o2o.booking.api.BookingApiTest" time="0.299"/>
+  <testcase name="K23_없는_객실_타입은_404_RESOURCE_NOT_FOUND다()" classname="com.o2o.booking.api.BookingApiTest" time="0.082"/>
+  <system-out><![CDATA[2026-09-14T21:23:32.837+09:00  INFO 35280 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.api.BookingApiTest]: BookingApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-14T21:23:32.891+09:00  INFO 35280 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.api.BookingApiTest
+2026-09-14T21:23:32.891+09:00  INFO 35280 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.api.BookingApiTest]: BookingApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-14T21:23:32.891+09:00  INFO 35280 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.api.BookingApiTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
