@@ -9,8 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+
+import com.o2o.shared.RegionRegistry;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -27,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *
  * 목록 검사는 전체 개수를 세지 않는다. 이 테스트에는 트랜잭션 롤백이 없어서 다른 테스트가
  * 만든 자료가 같은 DB에 남아 있다. 그래서 검사할 때마다 고유한 지역 코드를 붙여 그 범위만 본다.
+ * 고유한 코드는 등록된 지역이어야 숙소가 되므로(CAT-01, R1 평가 A-02) fixture에 먼저 넣는다.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class CatalogUpdateAndListApiTest {
@@ -40,6 +44,9 @@ class CatalogUpdateAndListApiTest {
 
     @LocalServerPort
     private int port;
+
+    @Autowired
+    private RegionRegistry regionRegistry;
 
     private HttpResponse<String> send(String method, String path, String actorId, String body)
             throws Exception {
@@ -56,6 +63,13 @@ class CatalogUpdateAndListApiTest {
             b.method(method, HttpRequest.BodyPublishers.ofString(body));
         }
         return client.send(b.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    /** 이 테스트만 쓰는 지역 코드를 뽑아 fixture에 넣는다. 목록 검사의 범위가 된다 */
+    private String 새_지역(String prefix) {
+        String region = prefix + System.nanoTime();
+        regionRegistry.register(region);
+        return region;
     }
 
     private JsonNode registerProperty(String actorId, String name, String regionCode)
@@ -194,7 +208,7 @@ class CatalogUpdateAndListApiTest {
 
     @Test
     void CAT_04_지역_코드로_거른다() throws Exception {
-        String region = "REGION_" + System.nanoTime();
+        String region = 새_지역("REGION_");
         registerProperty(HOST, "지역 하나", region);
         registerProperty(HOST, "지역 둘", region);
 
@@ -227,7 +241,7 @@ class CatalogUpdateAndListApiTest {
 
     @Test
     void C8_기본_정렬이_id_오름차순이다() throws Exception {
-        String region = "SORT_" + System.nanoTime();
+        String region = 새_지역("SORT_");
         for (int i = 0; i < 3; i++) {
             registerProperty(HOST, "정렬 " + i, region);
         }
@@ -243,7 +257,7 @@ class CatalogUpdateAndListApiTest {
 
     @Test
     void C8_페이지_범위를_넘으면_빈_items다() throws Exception {
-        String region = "EMPTY_" + System.nanoTime();
+        String region = 새_지역("EMPTY_");
         registerProperty(HOST, "한 건", region);
 
         JsonNode json = JSON.readTree(send(
@@ -251,6 +265,87 @@ class CatalogUpdateAndListApiTest {
 
         assertEquals(0, json.get("items").size());
         assertEquals(1, json.get("totalElements").asInt());
+    }
+
+    // ---------- 등록 지역 코드. C12 (R1 평가 A-02, B-02) ----------
+
+    @Test
+    void C12_미등록_지역_코드로_등록하면_400_INVALID_REQUEST다() throws Exception {
+        // 11 CAT-01 처리 규칙. 등록된 지역 코드를 확인하고 저장한다. 형식은 맞는 값이다
+        String body = """
+                {"name":"미등록 지역","regionCode":"NOWHERE_%d","address":"서울특별시 종로구 예시로 30","description":""}
+                """.formatted(System.nanoTime());
+
+        HttpResponse<String> res = send("POST", "/api/v1/properties", HOST, body);
+
+        assertEquals(400, res.statusCode(), res.body());
+        JsonNode json = JSON.readTree(res.body());
+        assertEquals("INVALID_REQUEST", json.get("code").stringValue());
+        assertEquals("regionCode", json.get("details").get(0).get("field").stringValue());
+    }
+
+    @Test
+    void C12_등록된_fixture_지역_코드로는_등록된다() throws Exception {
+        // 통과 짝. 초기 fixture의 값 하나
+        registerProperty(HOST, "제주 스테이", "JEJU");
+    }
+
+    @Test
+    void C12_미등록_지역_코드로_수정하면_400이고_바뀌지_않는다() throws Exception {
+        JsonNode created = registerProperty(HOST, "지역 수정용", "SEOUL");
+        String id = created.get("id").stringValue();
+        String body = """
+                {"version":0,"regionCode":"NOWHERE_%d"}
+                """.formatted(System.nanoTime());
+
+        HttpResponse<String> res = send("PATCH", "/api/v1/properties/" + id, HOST, body);
+
+        assertEquals(400, res.statusCode(), res.body());
+        assertTrue(res.body().contains("INVALID_REQUEST"), res.body());
+        JsonNode after = JSON.readTree(send("GET", "/api/v1/properties/" + id, null, null).body());
+        assertEquals("SEOUL", after.get("regionCode").stringValue(), "거절됐는데 값이 바뀌었다");
+        assertEquals(0, after.get("version").asInt());
+    }
+
+    @Test
+    void C12_등록된_지역_코드로_수정하면_200이다() throws Exception {
+        JsonNode created = registerProperty(HOST, "지역 수정 통과용", "SEOUL");
+        String id = created.get("id").stringValue();
+
+        HttpResponse<String> res = send("PATCH", "/api/v1/properties/" + id, HOST, """
+                {"version":0,"regionCode":"BUSAN"}
+                """);
+
+        assertEquals(200, res.statusCode(), res.body());
+        assertEquals("BUSAN", JSON.readTree(res.body()).get("regionCode").stringValue());
+    }
+
+    @Test
+    void C12_미등록_지역_코드로_목록을_조회하면_400_INVALID_REQUEST다() throws Exception {
+        // 11 CAT-04 쿼리표. 빈 목록이 아니라 400이다. 미등록 코드로 빈 목록을 주면 없는 지역이
+        // 있는 것처럼 보인다
+        HttpResponse<String> res = send(
+                "GET", "/api/v1/properties?regionCode=NOWHERE_" + System.nanoTime(), null, null);
+
+        assertEquals(400, res.statusCode(), res.body());
+        assertEquals("INVALID_REQUEST", JSON.readTree(res.body()).get("code").stringValue());
+    }
+
+    @Test
+    void C12_목록의_지역_코드는_32자까지_받고_33자와_공백만은_400이다() throws Exception {
+        // 11 CAT-04 쿼리표의 1자 이상 32자 이하. 길이 검사가 등록 검사보다 먼저다
+        String code32 = ("B" + System.nanoTime() + "A".repeat(32)).substring(0, 32);
+        regionRegistry.register(code32);
+
+        assertEquals(200, send("GET", "/api/v1/properties?regionCode=" + code32, null, null)
+                .statusCode());
+        HttpResponse<String> tooLong = send(
+                "GET", "/api/v1/properties?regionCode=" + code32 + "A", null, null);
+        HttpResponse<String> blank = send("GET", "/api/v1/properties?regionCode=%20", null, null);
+
+        assertEquals(400, tooLong.statusCode(), tooLong.body());
+        assertEquals("INVALID_REQUEST", JSON.readTree(tooLong.body()).get("code").stringValue());
+        assertEquals(400, blank.statusCode(), blank.body());
     }
 
     // ---------- CAT-05 ----------
