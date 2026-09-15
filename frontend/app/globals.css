@@ -1,1 +1,73 @@
 @import "tailwindcss";
+
+/* 토큰. 인계 문서 88행부터 100행. Tailwind 4라 tailwind.config 대신 @theme(계약 6절 스택 행) */
+@theme {
+  --color-ink: #2f3e4e;
+  --color-ink-2: #4a5a6a;
+  --color-ink-3: #6f7f8d;
+  --color-ink-4: #9aa7b3;
+
+  --color-line: #e4e9ee;
+  --color-line-strong: #cdd6df;
+  --color-line-soft: #eef1f4;
+
+  --color-surface: #ffffff;
+  --color-surface-2: #fbfbf9;
+  --color-surface-page: #f7f8f6;
+  --color-surface-missing: #f1f3f1;
+
+  --color-devbar: #2b7de9;
+  --color-devbar-2: #5a9bf0;
+
+  /* 오류 테두리. 빨강 대신 따뜻한 주황 */
+  --color-warn: #d9895a;
+
+  --color-badge-held-bg: #dcecfd;
+  --color-badge-held-fg: #1f5fb8;
+  --color-badge-confirmed-bg: #dfeadb;
+  --color-badge-confirmed-fg: #3f6b3a;
+  --color-badge-expired-bg: #e9edef;
+  --color-badge-expired-fg: #4a5a6a;
+  --color-badge-canceled-bg: #f1e1dc;
+  --color-badge-canceled-fg: #8a4a3c;
+
+  --font-sans: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+  --font-mono: ui-monospace, monospace;
+
+  --text-11: 11px;
+  --text-12: 12px;
+  --text-13: 13px;
+  --text-14: 14px;
+  --text-15: 15px;
+  --text-16: 16px;
+  --text-18: 18px;
+  --text-22: 22px;
+  --text-24: 24px;
+  --text-26: 26px;
+  --text-28: 28px;
+  --text-34: 34px;
+
+  --radius-badge: 3px;
+  --radius-control: 4px;
+  --radius-card: 6px;
+
+  --shadow-dropdown: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* 높이와 폭. 유틸리티 이름 공간이 없어 변수로 두고 h-(--h-devbar)처럼 쓴다 */
+:root {
+  --h-devbar: 36px;
+  --h-roletabs: 48px;
+  --h-input: 38px;
+  --h-button: 38px;
+  --h-button-lg: 42px;
+  --w-page: 1200px;
+  --w-form: 700px;
+}
+
+body {
+  background: var(--color-surface-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-14);
+}

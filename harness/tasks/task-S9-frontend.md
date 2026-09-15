@@ -1,7 +1,7 @@
 # 작업 계약 task-S9-frontend (프론트 화면 전체)
 
 최초 작성: 2026-09-15
-최종 갱신: 2026-09-15 (T1 기반 끝. 9절 실행 환경 행에 package-lock.json 판 기입과 T1 실행 결과 행, 10절 마지막 성공 단계와 실제 사용 시간. 그 전 같은 날 계약 승인. D-1부터 D-7 추천대로 확정. 작업 표 이름 확정, 6절 지역 코드 행, 7절 결정 줄 일곱, 10절. 그 전 같은 날 초안. 인계 문서 HANDOFF.md를 받아 화면과 API 대응표를 옮기고 백엔드 실물과의 차이 여섯을 2-1절에 고정)
+최종 갱신: 2026-09-15 (T2 공통 UI 끝. 6절 스택 행에 Tailwind 4 토큰 자리와 proxy 이름, 9절 실행 환경과 T2 실행 결과 행, 10절. 그 전 같은 날 T1 기반 끝. 9절 실행 환경 행에 package-lock.json 판 기입과 T1 실행 결과 행, 10절 마지막 성공 단계와 실제 사용 시간. 그 전 같은 날 계약 승인. D-1부터 D-7 추천대로 확정. 작업 표 이름 확정, 6절 지역 코드 행, 7절 결정 줄 일곱, 10절. 그 전 같은 날 초안. 인계 문서 HANDOFF.md를 받아 화면과 API 대응표를 옮기고 백엔드 실물과의 차이 여섯을 2-1절에 고정)
 양식: harness/prompts/task-contract.md v6
 
 이 계약은 프론트 Task 계열의 첫 계약이다. 백엔드 40단위가 main에 다 올라간 뒤(2026-09-13 PR 138, 커밋 1bdadfe) 사용자가 2026-09-14 Claude Design에 화면 설계를 시켰고(harness/out/claude-design-handoff-2026-09-14/prompt.md와 context.md), 그 결과의 요약본 HANDOFF.md가 2026-09-15 04:54에 왔다. 원문은 같은 폴더 received/ 아래에 받은 그대로 두었다. 이 계약은 그 요약본을 구현 입력으로 옮기되 백엔드 실물과 어긋난 여섯 곳을 명세 값으로 바로잡는다(2-1절). 사용자 결정 셋(2026-09-15 05:0x)이 전제다. 첫째, 데스크톱 전용과 브랜드 색은 사용자가 디자인 세션에서 정한 것이다. 둘째, 화면 설계 파일 다섯(01부터 05 .dc.html)은 없고 요약대로 간다. 셋째, 계약 초안을 진행한다.
@@ -163,7 +163,7 @@ middleware는 쿠키의 역할과 경로 앞부분(/host, /operator, /bookings)�
 
 요구사항 역추적 축에 대한 지시. 입력 팩 2절의 R1부터 R5는 백엔드가 지키는 보장이고 화면은 그 보장을 깨는 동작을 유도하지 않는 쪽이다(context.md 1절 표의 셋째 칸). 이 Task의 역추적 대상은 2절 대응표의 화면 열여섯 행과 2-1절 여섯 행과 8-1절 E01부터 E06이다. 백엔드 보장 자체는 해당 없음으로 적고 미커버로 적지 않는다.
 
-## 6. 정책 적용
+## 6. 정책 적용 (2026-09-15 T2 스택 행 실측 기입)
 
 | 정책 ID 또는 쟁점 | 적용할 값 또는 판단 | 상태와 사용자 확인 |
 |---|---|---|
@@ -176,7 +176,7 @@ middleware는 쿠키의 역할과 경로 앞부분(/host, /operator, /bookings)�
 | P07 로컬 행위자 | 채택. 쿠키 dev_actor를 fetch 래퍼가 X-Dev-Actor-Id로 바꾼다. public이면 헤더 생략. 로그인 화면 없음. 개발용이라는 것이 화면에서 드러난다 | 확정 |
 | P09 가격 계산과 P10 판매 제약 | 표시만. 날짜별 표는 서버 값 그대로. 재고 0과 누락은 판매 안 함 | 확정 |
 | P11 프로모션 종료 | 채택. 사용 끄기는 PROMO-02에 enabled false와 version. 상태 값 없음 | 확정 |
-| 스택 | Next.js App Router, TypeScript, 전부 use client 페이지, TanStack Query v5, Tailwind(토큰은 tailwind.config theme.extend), next.config rewrites, MSW(훅 테스트 목), Playwright(E2E). 판은 T1에서 설치된 실제 판을 9절에 적는다. 기억으로 적지 않는다(N6) | 인계 문서 5행부터 11행. 사용자 확정 2026-09-15 |
+| 스택 | Next.js App Router, TypeScript, 전부 use client 페이지, TanStack Query v5, Tailwind(토큰은 tailwind.config theme.extend), next.config rewrites, MSW(훅 테스트 목), Playwright(E2E). 판은 T1에서 설치된 실제 판을 9절에 적는다. 기억으로 적지 않는다(N6). T2 실측: 설치된 Tailwind가 4판이라 토큰은 tailwind.config가 아니라 app/globals.css의 @theme에 있고 tailwind.config 파일은 없다(빌드 CSS에 토큰 유틸리티 생성 확인. harness/out/task-S9-frontend-R1/t2/css-tokens-check.txt). middleware는 Next 16에서 proxy로 이름이 바뀌어 파일이 frontend/proxy.ts이고 함수 이름도 proxy다(node_modules/next/dist/lib/constants.js의 PROXY_FILENAME과 server/web/types.d.ts의 NextMiddleware deprecated 표시). 인계 문서의 두 이름은 그대로 두고 여기서 고쳐 읽는다 | 인계 문서 5행부터 11행. 사용자 확정 2026-09-15. Tailwind 4와 proxy는 2026-09-15 T2 실측 |
 | 개발용 쿠키 | dev_actor와 dev_mock_mode. Path는 /, SameSite는 Lax, httpOnly 아님, 30일 | 인계 문서 9행. 확정 |
 | mockMode의 자리 | 게스트 화면이 아니라 개발용 바. 디자인 프롬프트 질문 목록의 첫 항목이 이렇게 닫혔다 | 인계 문서 9행과 109행. 확정 |
 | 멱등키 | crypto.randomUUID(). 화면 상태(useRef)에만 보관하고 URL과 저장소에 두지 않는다. G4는 마운트 시 하나, PRICE_CHANGED 뒤 다시 확인은 새 키, 네트워크와 5xx와 REQUEST_IN_PROGRESS 재시도만 같은 키. G5는 클릭마다 새 키. G7 취소는 시트가 열릴 때 하나. 쓰기 성공이나 replayed 뒤 BOOK-03 재조회 | 인계 문서 41행부터 46행. 명세 멱등 규칙 5와 6과 일치 |
@@ -319,7 +319,7 @@ W는 컴포넌트와 훅 테스트(MSW 목), E는 Playwright E2E(백엔드와 DB
 | 항목 | 내용 |
 |---|---|
 | 작업 디렉터리 | frontend/ |
-| 실행 환경 | Node 24.14.1, npm 11.11.0(2026-09-15 실측. pnpm 없음). package-lock.json 값(2026-09-15 T1 설치): next 16.3.5, react와 react-dom 19.2.8, @tanstack/react-query 5.102.8, tailwindcss와 @tailwindcss/postcss 4.3.3, msw 2.15.0, @playwright/test 1.63.0(브라우저 내려받기는 T10), vitest 5.0.1(vite 8.3.0), typescript 5.9.3, eslint 9.39.5, eslint-config-next 16.3.5, @types/node 24.13.4(create-next-app의 ^20을 실행 Node 24와 vitest 5의 peer 조건에 맞춰 올림). Tailwind는 4판이라 설정이 CSS 우선(globals.css의 @import "tailwindcss")이고 6절 스택 행의 tailwind.config theme.extend는 T2에서 @config 지시어로 잇거나 @theme으로 옮긴다. 어느 쪽인지는 T2에서 실측하고 6절에 적는다. 백엔드는 backend/README.md 3절대로 컨테이너(127.0.0.1:3307)와 JDK 21로 띄우고 dev 프로파일(기본값)과 포트 8080(설정 없음). 환경변수 이름은 BACKEND_URL(프론트), SPRING_DATASOURCE_URL과 O2O_BOOKING_HOLD_TTL(E2E용 백엔드, D-4와 D-7). 값은 여기 적지 않는다 |
+| 실행 환경 | Node 24.14.1, npm 11.11.0(2026-09-15 실측. pnpm 없음). package-lock.json 값(2026-09-15 T1 설치): next 16.3.5, react와 react-dom 19.2.8, @tanstack/react-query 5.102.8, tailwindcss와 @tailwindcss/postcss 4.3.3, msw 2.15.0, @playwright/test 1.63.0(브라우저 내려받기는 T10), vitest 5.0.1(vite 8.3.0), typescript 5.9.3, eslint 9.39.5, eslint-config-next 16.3.5, @types/node 24.13.4(create-next-app의 ^20을 실행 Node 24와 vitest 5의 peer 조건에 맞춰 올림). T2 추가: @testing-library/react 16.3.3, @testing-library/dom 10.4.2, jsdom 29.1.1. Vitest 설정은 vitest.config.mts(환경 jsdom, @ 별칭. proxy 테스트만 파일 머리 주석으로 node 환경). Tailwind는 4판이라 설정이 CSS 우선(globals.css의 @import "tailwindcss")이고 6절 스택 행의 tailwind.config theme.extend는 T2에서 @config 지시어로 잇거나 @theme으로 옮긴다. 어느 쪽인지는 T2에서 실측하고 6절에 적는다. 백엔드는 backend/README.md 3절대로 컨테이너(127.0.0.1:3307)와 JDK 21로 띄우고 dev 프로파일(기본값)과 포트 8080(설정 없음). 환경변수 이름은 BACKEND_URL(프론트), SPRING_DATASOURCE_URL과 O2O_BOOKING_HOLD_TTL(E2E용 백엔드, D-4와 D-7). 값은 여기 적지 않는다 |
 | 실행할 명령 | npm run typecheck(타입 오류 0), npm run lint(오류 0), npm run build(빌드 실패 0), npm run test(W01부터 W15 통과), npm run test:e2e(E01부터 E06 통과. 백엔드와 DB가 떠 있을 때만). 스크립트 이름은 T1에서 package.json에 이 이름으로 만든다. T1 반영: typecheck는 next typegen && tsc --noEmit(라우트 타입 파일 .next/types가 추적 제외라 먼저 생성한다), lint는 eslint, test는 vitest run, test:e2e는 playwright test(설정 파일과 시험은 T10. 지금 돌리면 시험 없음으로 실패) |
 | 테스트 DB | 127.0.0.1:3307 o2o_web_test(D-7). 컴포넌트와 훅 테스트는 DB 사용 없음 |
 | 데이터 초기화 허용 범위 | o2o_web_test만. 다른 DB는 읽지도 않는다 |
@@ -327,16 +327,17 @@ W는 컴포넌트와 훅 테스트(MSW 목), E는 Playwright E2E(백엔드와 DB
 | 계약 테스트 ID | 8-1절 W01부터 W15, E01부터 E06. 10-6 F절의 항목(연속 실행, 취소와 환불과 재고 반환, 실패와 재시도와 TTL 만료와 지연 승인, 중복 클릭과 새로고침) |
 | A와 B 평가 범위 | harness/prompts/eval-criteria-code.md의 축에 D-2의 프론트 축을 더한 것 |
 | 필수 검증을 실행하지 못했을 때 | progress.md에 halted 행과 미실행 사유. 5절 평가 대상 행을 채우지 않고 평가 요청으로 가지 않는다 |
+| T2 실행 결과 (2026-09-15 통과) | npm run typecheck와 lint와 build와 test 넷 다 종료 코드 0. test는 7파일 38건 통과(W06 Countdown 4건, W07 지역 코드 대조 3건, W10 여섯 조합과 통과 여섯과 proxy 배선 4건, 쿠키와 서울 시각과 날짜 도우미, T1의 rewrites 5건). build는 라우트 둘이 동적(layout이 요청 쿠키를 읽는다)이고 Proxy 줄이 있다. 실증: next start 3000에 curl로 어긋난 조합 넷이 307과 역할 첫 화면, 맞는 조합 둘이 통과(화면이 없어 404), host_001 쿠키로 / 를 받으면 행위자 선택이 host_001이고 탭이 내 숙소와 Mock 선택이 DEFER, 쿠키 없음이면 public과 내 예약 비활성. 로그와 실증 사본은 harness/out/task-S9-frontend-R1/t2/(typecheck.log, lint.log, test.log, build.log, proxy-check.txt, css-tokens-check.txt). 컴포넌트는 인계 문서 103행의 이름 스물아홉 전부(계약 8절의 스물여섯은 그 줄의 세는 방식 차이이고 목록은 같다)와 TextArea, AppShell, DevActorProvider 셋을 더했다 |
 | T1 실행 결과 (2026-09-15 통과) | npm run typecheck와 lint와 build와 test 넷 다 종료 코드 0. build는 라우트 둘(/, /_not-found) 정적 생성. test는 next.config.test.ts 1파일 5건 통과(BACKEND_URL 기본값과 빈 값과 끝 슬래시, rewrites 규칙). rewrites 실증: next start 3000과 8080의 가짜 백엔드(경로와 헤더를 돌려주는 Node 서버)로 GET /api/v1/properties?regionCode=SEOUL이 200과 같은 경로와 X-Dev-Actor-Id 값으로 돌아옴. 로그와 실증 사본은 harness/out/task-S9-frontend-R1/t1/(typecheck.log, lint.log, test.log, build.log, rewrites-check.txt). 실제 백엔드는 안 띄웠다 |
 
-## 10. 승인과 진행 (2026-09-15 T1 기입. 같은 날 승인 기입)
+## 10. 승인과 진행 (2026-09-15 T2 기입. 같은 날 T1 기입과 승인 기입)
 
 | 항목 | 기록 |
 |---|---|
 | 작업 계약 승인 | 승인. join5201, 2026-09-15. 발언은 병합해라. 계약 승인하고 D-1부터 D-7 추천대로 확정해라(05:3x). 결정 7건은 전부 가. PR 149 병합은 이 기입 뒤 |
-| 마지막 성공 단계 | T1 기반(2026-09-15). 그 전 계약 승인과 계약 초안(같은 날) |
-| 미해결 사항과 다음 작업 | 다음은 T2 공통 UI(T1 PR 병합 뒤). 한 턴에 한 단계. 프론트 평가 축 이슈(D-2)는 하네스 세션 몫이고 T10 전까지. 남은 평가 네 쌍의 반영이 백엔드를 바꾸면 2-1절과 4절 해시 갱신 |
+| 마지막 성공 단계 | T2 공통 UI(2026-09-15). 그 전 T1 기반과 계약 승인과 계약 초안(같은 날) |
+| 미해결 사항과 다음 작업 | 다음은 T3 API 층(T2 PR 병합 뒤). 한 턴에 한 단계. 프론트 평가 축 이슈(D-2)는 하네스 세션 몫이고 T10 전까지. 남은 평가 네 쌍의 반영이 백엔드를 바꾸면 2-1절과 4절 해시 갱신 |
 | 최종 산출물과 버전 | 작업 후 기록 |
 | 실제 사용 시간 (계약 초안) | 약 30분. 2026-09-15 04:54 파일 수신부터 05:22 기록 행까지. 대조, 원문 보관, 계약 작성, fill과 g1, 이슈와 PR. 승인 기입 턴은 따로다 |
-| 실제 사용 시간 | T1 기반 약 12분(2026-09-15 18:15 뼈대 생성부터 18:27 기록 행까지. PR 150 병합 10:51은 계약 몫이라 안 센다). 합계 12분 |
+| 실제 사용 시간 | T1 기반 약 12분(2026-09-15 18:15 뼈대 생성부터 18:27 기록 행까지. PR 150 병합 10:51은 계약 몫이라 안 센다). T2 공통 UI 약 20분(18:36 PR 152 병합 직후부터 18:56 기록 행까지). 합계 32분 |
 | 최종 완료 판단 | 대기. 사용자 |
