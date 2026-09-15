@@ -391,6 +391,47 @@ class BookingApiTest {
         assertEquals(201, record.responseStatus());
     }
 
+    // ---------- K27 ----------
+
+    /**
+     * K27. 멱등 규칙 2가 규칙 4보다 앞이다. 처리 중인 같은 키에 다른 body가 오면 409
+     * REQUEST_IN_PROGRESS가 아니라 409 IDEMPOTENCY_KEY_REUSED이고 Retry-After가 없다. 잠금 방식은
+     * K17과 같다. R1 평가 A-01 반영(2026-09-15).
+     */
+    @Test
+    void K27_처리_중인_같은_키에_다른_body는_409_IDEMPOTENCY_KEY_REUSED다() throws Exception {
+        String roomTypeId = roomTypeOf(HOST);
+        LocalDate checkIn = today().plusDays(10);
+        prepare(roomTypeId, checkIn, 1, 2);
+        RoomTypeId id = RoomTypeId.of(roomTypeId);
+        String key = newKey();
+        String body = body(roomTypeId, checkIn, 1, 1);
+        String otherBody = body(roomTypeId, checkIn, 1, 2);
+
+        ExecutorService waiter = Executors.newSingleThreadExecutor();
+        try {
+            Future<HttpResponse<String>> first = new TransactionTemplate(transactionManager)
+                    .execute((status) -> {
+                        inventoryRepository.findForUpdate(id, checkIn).orElseThrow();
+                        Future<HttpResponse<String>> sent = waiter.submit(() -> book(GUEST, key, body));
+                        assertThrows(TimeoutException.class, () -> sent.get(2, TimeUnit.SECONDS));
+
+                        HttpResponse<String> other = assertDoesNotThrow(() -> book(GUEST, key, otherBody));
+                        assertError(other, 409, "IDEMPOTENCY_KEY_REUSED");
+                        assertTrue(other.headers().firstValue("Retry-After").isEmpty());
+                        return sent;
+                    });
+
+            HttpResponse<String> res = first.get(30, TimeUnit.SECONDS);
+            assertEquals(201, res.statusCode(), res.body());
+        } finally {
+            waiter.shutdownNow();
+        }
+        // 다른 body의 거절은 첫 요청에 영향이 없다. 예약 하나, 선점 하나
+        assertEquals(1, heldCount(roomTypeId, checkIn));
+        assertEquals(1, bookingsOf(GUEST, roomTypeId).size());
+    }
+
     // ---------- K18 ----------
 
     @Test
