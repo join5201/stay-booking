@@ -2,7 +2,7 @@
 
 양식: harness/prompts/decision-table.md v4 (2026-09-08)
 최초 작성: 2026-09-15
-최종 갱신: 2026-09-15 (결정 6건 확정. 사용자 발언은 초안대로 반영해라. B-02의 기준 시점은 초안인 승인 기록 시각. 반영 인계 표는 반영 뒤 기입)
+최종 갱신: 2026-09-15 (반영 뒤 인계 표 기입. 브랜치 fix/task-s9-booking-r1-apply, 코드 마지막 커밋 f8626d1, 계약 개정 둘 뒤의 해시로 승인된 작업 계약 행 갱신. 그 전 같은 날 결정 6건 확정. 사용자 발언은 초안대로 반영해라. B-02의 기준 시점은 초안인 승인 기록 시각)
 
 왜 이 파일이 필요한가: 리포트를 눈으로 읽고 반영하면 자기 결정에 불리한 지적이 조용히 빠진다(HR4). 원본 행을 하나씩 옮겨 두면 g2가 ID 집합과 심각도를 원본과 대조할 수 있다.
 
@@ -17,7 +17,7 @@
 | 평가 라운드 | R1 |
 | 평가 대상 절대경로와 파일 목록 | harness/out/mvp-eval-2026-09-14/eval-target-files-booking.md |
 | 평가 대상 버전 또는 해시 | sha256:79859e3f5bb5bddd. 목록이 가리키는 프로덕션 87개와 테스트 29파일 155건과 설정 1개의 기준 커밋은 1bdadfe5a78722f1e708d96bafc0f728eddfc4a1(PR 138 병합, main)이고 파일별 sha256은 목록 2절과 A와 B 리포트의 읽은 파일 표에 있다. 평가 브랜치 eval/mvp-2026-09-14 |
-| 승인된 작업 계약 절대경로와 버전 | harness/tasks/task-S9-booking.md sha256:0876574192269065, harness/tasks/task-S9-booking-lifecycle.md sha256:af5cba4e4077a2f0 |
+| 승인된 작업 계약 절대경로와 버전 | harness/tasks/task-S9-booking.md sha256:36838aa51307d9f5, harness/tasks/task-S9-booking-lifecycle.md sha256:4fffcf69c5667fa1. 2026-09-15 R1 반영을 받은 판(1차 개정 4, 2차 개정 11)의 해시다. 평가와 결정 시점의 판은 1차 0876574192269065, 2차 af5cba4e4077a2f0이고 그 판과의 차이는 각 계약의 0절과 5절 또는 2절과 8-1절과 10절의 개정뿐이다 |
 | A 원본 리포트 절대경로와 버전 또는 해시 | harness/reviews/task-S9-booking-R1-A.md sha256:dd73a45092d4f880 |
 | B 원본 리포트 절대경로와 버전 또는 해시 | harness/reviews/task-S9-booking-R1-B.md sha256:e9bd22e8ced18cf1 |
 | A 원본 지적 수 | 4 |
@@ -84,21 +84,21 @@ A는 치명 0, 보통 3, 확인필요 1이다. B는 치명 0, 보통 1, 확인�
 | 확인 항목 | 기록 |
 |---|---|
 | 확인자와 날짜 | g2 실행은 2026-09-15 Claude Code(개발 세션). 사람 서명 대기 |
-| G2 결과 | PASS. --mode pre 60건 통과(2026-09-15 18:23). version-match는 대상 목록과 계약 둘과 리포트 둘의 다섯 해시 전부 일치 |
+| G2 결과 | PASS. --mode pre 60건 통과(2026-09-15 18:23. version-match는 대상 목록과 계약 둘과 리포트 둘의 다섯 해시 전부 일치). 같은 명령 --mode final은 반영 뒤 인계 표 기입 후 실행했고 결과는 이 행 끝에 적는다. --mode final 62건 통과(2026-09-15 19:07) |
 | 미완료 사유 | 없음. 사용자가 2026-09-15 결정 6건을 확정했고 B-02의 기준 시점은 초안(승인 기록 시각)으로 정해졌다. 기계 검사는 위 결과 |
 
 ## 반영과 최종 확인 인계
 
 | 확인 대상 | 기록 |
 |---|---|
-| 반영본 절대경로와 버전 또는 해시 | 반영 후 작성 |
-| 수용 항목 반영 확인 | 반영 후 작성. 수용 5건의 반영 위치는 이유 열에 적었다. 반영 순서 제안은 B-01(재고 version), A-01(멱등 순서), B-02(기준 시점. 사용자 선택 뒤), A-03(PageResponse), A-04(전체 테스트 실행) |
-| 미수용 항목 무변경 확인 | 반영 후 작성. 거부 하나(A-02)가 짚은 BookingController의 list는 바꾸지 않는다 |
+| 반영본 절대경로와 버전 또는 해시 | 브랜치 fix/task-s9-booking-r1-apply. 코드 마지막 커밋 f8626d1(브랜치 시작은 이 결정표의 확정 커밋 821fd45). backend/ 아래 15개 파일(프로덕션 6, 삭제 1, 테스트 8)의 sha256은 harness/out/task-S9-booking-R1/applied/apply-report.md 2절. diff 전문은 같은 폴더 apply.diff. 계약은 harness/tasks/task-S9-booking.md 개정 4 sha256:36838aa51307d9f5와 harness/tasks/task-S9-booking-lifecycle.md 개정 11 sha256:4fffcf69c5667fa1 |
+| 수용 항목 반영 확인 | 5건 전부 반영했다. 위치는 apply-report 3절. B-01은 DailyInventory의 hold와 commit과 releaseHeld와 releaseSold의 version 증가와 K26 셋과 K22 둘. A-01은 IdempotentRequestExecutor의 body 대조 선행과 K27, L24, L25. B-02는 Booking.acceptsApprovalAt과 P1의 이벤트 occurredAt 대조와 T1의 승인 시도 completedAt 대조(만료 이상이면 환불 뒤 만료)와 L23 결과 하나와 L26 둘과 L7과 L9 하나씩. A-03은 booking/api/PageResponse 사본 제거와 BookingController의 shared import. A-04는 코드 변경 없이 Docker를 켠 환경의 전체 테스트 430건 실패 0. 결정표와 다르게 간 것 다섯(비교 자리를 도메인 한 곳에, L7과 L9 추가, K3 목록, 개정 번호 정정, A-04를 반영본 430건으로 확인)은 apply-report 4절 |
+| 미수용 항목 무변경 확인 | 거부 하나(A-02)가 짚은 BookingController의 BOOK-02 처리(list의 파라미터와 검사와 응답)와 K24는 그대로다. BookingController는 A-03의 import 한 줄과 BOOK-02 주석으로만 바뀌었다. 미정의 Query 필드 거절은 넣지 않았다. 2절 15개 밖은 backend/ 아래 어느 파일도 바뀌지 않았고 결제 패키지는 한 파일도 바뀌지 않았다. apply-report 5절 |
 | 남은 실제 치명 지적 | 없음 |
 | 오판 정정 완료 항목 | 없음 |
-| 마지막 반영본에 필요한 검증과 결과 | 반영 후 작성. Docker Desktop을 켠 뒤 전체 테스트, g1 code, 계약 둘 fill, 처리 중 다른 body 반례 셋, 선점 뒤 version 반례, 승인 시각 기준 경합 테스트 |
-| 코드 작업의 직접 실행 근거 | 반영 후 작성 |
+| 마지막 반영본에 필요한 검증과 결과 | 전체 테스트 --rerun-tasks 48클래스 430건 실패 0 오류 0 건너뜀 0(평가 전 419건에 11 추가. Docker Desktop을 켠 환경). g1 code 100건 통과(바뀐 14개 파일 전부, --artifact junit 48개). 계약 fill은 1차 151건 중 3건 실패(개정 전부터 있던 것)와 2차 226건 중 6건 실패(이번 반영이 바꾼 파일의 해시. 0-3절이 이유). 처리 중 다른 body 반례 셋(K27, L24, L25)과 선점 뒤 version 반례(K22)와 승인 시각 기준 경합(L23, L26) 전부 통과. 변이 검사 셋은 apply-report 6절. g2 --mode final은 위 G2 결과 행 |
+| 코드 작업의 직접 실행 근거 | harness/out/task-S9-booking-R1/applied/junit/ 아래 JUnit XML 48개(2026-09-15 18:54 실행, DB o2o_fix_test). 명령과 숫자는 apply-report 6절 |
 | 평가 대상 소스와 테스트의 무변경 확인 | 평가 전후 대조. A가 적은 24개와 B가 적은 54개 파일의 sha256이 대상 목록의 앞 16자리와 같고 현재 파일과 같다. verify-eval-workspace.mjs가 두 worktree에서 10건 PASS였고 평가 뒤 git status에 리포트 말고 바뀐 파일이 없다 |
-| 검증 미완료 사항 | 사용자 확정. A의 전체 테스트가 Docker 엔진 부재로 돌지 못한 것은 반영 라운드의 전체 테스트 실행이 대신한다(A-04 행) |
-| 사용자 최종 완료 판단과 날짜 | 미완료. 결정 6건은 2026-09-15 확정됐고 반영 전이다 |
-| 실제 판단 및 확인에 사용한 시간 | 초안 작성 약 50분. 사용자 판단 시간은 미측정 |
+| 검증 미완료 사항 | 사용자 확정. A의 전체 테스트가 Docker 엔진 부재로 돌지 못한 것은 반영 라운드의 전체 테스트 실행이 대신한다(A-04 행). 그 실행을 반영에서 했다(430건 실패 0). 남은 것은 병합 뒤 main에서의 실행이고 그것은 PR 병합 뒤의 일이다 |
+| 사용자 최종 완료 판단과 날짜 | 미완료. 결정 6건은 2026-09-15 확정됐고 반영은 같은 날 끝났다. PR 병합 지시가 남았다 |
+| 실제 판단 및 확인에 사용한 시간 | 초안 작성 약 50분. 사용자 판단 시간은 미측정. 반영은 코드와 테스트 약 21분(확정 커밋 18:27부터 코드 마지막 커밋 18:48), 변이 검사와 계약 개정과 기록 약 25분 |
