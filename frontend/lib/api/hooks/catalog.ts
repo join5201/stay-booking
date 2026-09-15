@@ -33,13 +33,13 @@ export function useUpdateProperty(propertyId: string) {
   });
 }
 
-// CAT-03. G6과 G7의 이름 표시에도 쓴다(Q1). staleTime 60초
-export function useProperty(propertyId: string | undefined) {
+// CAT-03. G6과 G7의 이름 표시에도 쓴다(Q1). staleTime 60초. 수정 폼(H2)은 fresh로 진입마다 다시 읽어 version을 새로 받는다
+export function useProperty(propertyId: string | undefined, options: { fresh?: boolean } = {}) {
   return useQuery({
     queryKey: keys.property(propertyId ?? ""),
     queryFn: async () => (await api<Property>(`/properties/${propertyId}`)).data,
     enabled: !!propertyId,
-    staleTime: ONE_MINUTE,
+    staleTime: options.fresh ? 0 : ONE_MINUTE,
   });
 }
 
@@ -83,13 +83,13 @@ export function useUpdateRoomType(roomTypeId: string) {
   });
 }
 
-// CAT-08. staleTime 60초
-export function useRoomType(roomTypeId: string | undefined) {
+// CAT-08. staleTime 60초. 편집 패널(H3)은 fresh로 열릴 때마다 다시 읽는다
+export function useRoomType(roomTypeId: string | undefined, options: { fresh?: boolean } = {}) {
   return useQuery({
     queryKey: keys.roomType(roomTypeId ?? ""),
     queryFn: async () => (await api<RoomType>(`/room-types/${roomTypeId}`)).data,
     enabled: !!roomTypeId,
-    staleTime: ONE_MINUTE,
+    staleTime: options.fresh ? 0 : ONE_MINUTE,
   });
 }
 
