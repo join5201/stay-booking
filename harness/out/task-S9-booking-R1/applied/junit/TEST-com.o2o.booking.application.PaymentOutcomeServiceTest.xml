@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.booking.application.PaymentOutcomeServiceTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-09-15T09:53:33.103Z" hostname="BOOK-QD5U7FFOBT" time="1.364">
+  <properties/>
+  <testcase name="L8_실패_한_번과_두_번은_HELD와_held가_그대로다()" classname="com.o2o.booking.application.PaymentOutcomeServiceTest" time="0.131"/>
+  <testcase name="L7_승인_시각이_expiresAt_1초_전이면_확정이다()" classname="com.o2o.booking.application.PaymentOutcomeServiceTest" time="0.1"/>
+  <testcase name="L8_셋째_실패가_만료_시각_이상이면_TTL_EXPIRED가_우선한다()" classname="com.o2o.booking.application.PaymentOutcomeServiceTest" time="0.147"/>
+  <testcase name="L7_승인_시각이_정확히_expiresAt이면_TTL_EXPIRED로_만료되고_held가_줄고_환불_1건이다()" classname="com.o2o.booking.application.PaymentOutcomeServiceTest" time="0.107"/>
+  <testcase name="L7_HELD이고_만료_전_승인이면_CONFIRMED이고_날짜마다_held_1_감소_sold_1_증가와_BookingConfirmed_1건이다()" classname="com.o2o.booking.application.PaymentOutcomeServiceTest" time="0.129"/>
+  <testcase name="L7_CONFIRMED와_CANCELED에_온_승인은_로그_후_무시이고_아무것도_바뀌지_않는다()" classname="com.o2o.booking.application.PaymentOutcomeServiceTest" time="0.135"/>
+  <testcase name="L7_승인_시각이_만료_전이면_처리_시각이_만료_뒤라도_확정이고_환불이_없다()" classname="com.o2o.booking.application.PaymentOutcomeServiceTest" time="0.087"/>
+  <testcase name="L8_이미_EXPIRED거나_CONFIRMED면_실패_처리가_아무것도_바꾸지_않는다()" classname="com.o2o.booking.application.PaymentOutcomeServiceTest" time="0.177"/>
+  <testcase name="L7_없는_예약의_승인은_불변_위반_예외다()" classname="com.o2o.booking.application.PaymentOutcomeServiceTest" time="0.056"/>
+  <testcase name="L8_셋째_실패가_만료_전이면_PAYMENT_FAILED로_만료되고_held_감소가_한_번이다()" classname="com.o2o.booking.application.PaymentOutcomeServiceTest" time="0.166"/>
+  <testcase name="L7_이미_EXPIRED인_예약의_승인은_환불_1건이고_재고_변화가_없다()" classname="com.o2o.booking.application.PaymentOutcomeServiceTest" time="0.116"/>
+  <system-out><![CDATA[2026-09-15T18:53:33.104+09:00  INFO 30504 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.application.PaymentOutcomeServiceTest]: PaymentOutcomeServiceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-15T18:53:33.104+09:00  INFO 30504 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.application.PaymentOutcomeServiceTest
+2026-09-15T18:53:33.104+09:00  INFO 30504 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.application.PaymentOutcomeServiceTest]: PaymentOutcomeServiceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-15T18:53:33.107+09:00  INFO 30504 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.application.PaymentOutcomeServiceTest
+2026-09-15T18:53:33.570+09:00  INFO 30504 --- [    Test worker] c.o.b.application.PaymentOutcomeService  : 지연 승인. 승인 시각이 만료 시각 이상이라 환불하고 만료시킨다. booking=booking_03912f25d2f2417da0967f0f91e1c210 attempt=attempt_e44c0f09dd4b47b9ac8890018cc5dc27 approvedAt=2026-10-01T20:10:00Z
+2026-09-15T18:53:33.818+09:00  INFO 30504 --- [    Test worker] c.o.b.application.PaymentOutcomeService  : 승인 처리 무시. 종착 상태다. booking=booking_47670265719d4757a6e20937cb998125 status=CONFIRMED
+2026-09-15T18:53:33.852+09:00  INFO 30504 --- [    Test worker] c.o.b.application.PaymentOutcomeService  : 승인 처리 무시. 종착 상태다. booking=booking_47670265719d4757a6e20937cb998125 status=CANCELED
+2026-09-15T18:53:34.020+09:00  INFO 30504 --- [    Test worker] c.o.b.application.PaymentOutcomeService  : 실패 처리 무해. 이미 만료다. booking=booking_e35c9b431dcb4afcb27ebe90d92ce4ce
+2026-09-15T18:53:34.117+09:00  INFO 30504 --- [    Test worker] c.o.b.application.PaymentOutcomeService  : 실패 처리 무시. 종착 상태다. booking=booking_ed2417a759614ad1b6fc8499735b2c4b status=CONFIRMED
+2026-09-15T18:53:34.442+09:00  INFO 30504 --- [    Test worker] c.o.b.application.PaymentOutcomeService  : 지연 승인. 이미 만료된 예약이라 환불만 한다. booking=booking_bfe5b406ddcd4521a007e204c9b3348b attempt=attempt_874595706c97470483a7fb2c54a2ff4c
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

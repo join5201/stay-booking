@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.booking.application.CancelBookingTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-09-15T09:54:11.740Z" hostname="BOOK-QD5U7FFOBT" time="0.727">
+  <properties/>
+  <testcase name="L10_CONFIRMED이고_서울_오늘이_checkIn_전이면_CANCELED와_환불_1건과_날짜마다_sold_1_감소와_BookingCanceled_1건이다()" classname="com.o2o.booking.application.CancelBookingTest" time="0.116"/>
+  <testcase name="L10_checkIn이_서울_오늘이면_CancellationNotAllowed이고_어제여도_같으며_전날은_통과다()" classname="com.o2o.booking.application.CancelBookingTest" time="0.1"/>
+  <testcase name="L11_환불_뒤_재고_반환이_깨지면_CANCELED도_환불도_남지_않고_다시_취소하면_정상_완료다()" classname="com.o2o.booking.application.CancelBookingTest" time="0.126"/>
+  <testcase name="L10_사유_생략은_빈_문자열이다()" classname="com.o2o.booking.application.CancelBookingTest" time="0.086"/>
+  <testcase name="L10_HELD와_EXPIRED와_CANCELED는_InvalidStateTransition이고_수량이_그대로다()" classname="com.o2o.booking.application.CancelBookingTest" time="0.199"/>
+  <testcase name="L10_남의_예약과_없는_예약은_BookingNotFound다()" classname="com.o2o.booking.application.CancelBookingTest" time="0.091"/>
+  <system-out><![CDATA[2026-09-15T18:54:11.742+09:00  INFO 30504 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.application.CancelBookingTest]: CancelBookingTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-15T18:54:11.743+09:00  INFO 30504 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.application.CancelBookingTest
+2026-09-15T18:54:11.744+09:00  INFO 30504 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.application.CancelBookingTest]: CancelBookingTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-15T18:54:11.744+09:00  INFO 30504 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.application.CancelBookingTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
