@@ -59,7 +59,9 @@ public class DailyInventory {
 
     // 11 응답 모델 DailyInventory가 version을 필수로 적고 INV-03 요청이 이 값을 대조한다.
     // 잠금과 함께 쓰는 근거는 계약 7절 D-2다. 잠금은 같은 순간의 두 요청을 줄 세우고
-    // 이 값은 오래된 화면을 보고 보낸 요청을 거절한다. 막는 것이 서로 다르다
+    // 이 값은 오래된 화면을 보고 보낸 요청을 거절한다. 막는 것이 서로 다르다.
+    // 수량을 바꾸는 다섯 경로 전부가 1을 더한다. 11 공통 규칙 43행이 Hold와 확정과 반환도
+    // 재고 version을 증가시킨다고 적는다(예약 R1 평가 B-01 반영. 2026-09-15)
     @Column(name = "version", nullable = false)
     private long version;
 
@@ -146,6 +148,7 @@ public class DailyInventory {
         }
         validateCounts(this.totalCount, this.soldCount, this.heldCount + n);
         this.heldCount = this.heldCount + n;
+        this.version = this.version + 1;
         this.updatedAt = now;
     }
 
@@ -162,6 +165,7 @@ public class DailyInventory {
         validateCounts(this.totalCount, this.soldCount + n, this.heldCount - n);
         this.heldCount = this.heldCount - n;
         this.soldCount = this.soldCount + n;
+        this.version = this.version + 1;
         this.updatedAt = now;
     }
 
@@ -176,6 +180,7 @@ public class DailyInventory {
         }
         validateCounts(this.totalCount, this.soldCount, this.heldCount - n);
         this.heldCount = this.heldCount - n;
+        this.version = this.version + 1;
         this.updatedAt = now;
     }
 
@@ -190,6 +195,7 @@ public class DailyInventory {
         }
         validateCounts(this.totalCount, this.soldCount - n, this.heldCount);
         this.soldCount = this.soldCount - n;
+        this.version = this.version + 1;
         this.updatedAt = now;
     }
 

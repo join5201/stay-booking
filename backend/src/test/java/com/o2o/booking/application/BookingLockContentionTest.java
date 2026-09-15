@@ -35,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * L23. 설계 근거: task-S9-booking-lifecycle 8-1절 L23, 2절 T1 표(잠금 뒤 재확인)와 P1 표, T19(만료
@@ -45,18 +46,24 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * 스레드 둘로 보낸다. 둘 다 REQUIRES_NEW라 각자 새 트랜잭션에서 같은 행을 잠그려다 기다린다.
  * 잠금을 풀면 MySQL이 둘 중 하나를 먼저 들여보내고 남은 하나는 그 결과를 잠근 뒤 다시 읽는다.
  * 그래서 두 번째는 종착 상태를 보고 아무것도 하지 않는다. 승인 시도를 심어 두고(T6) 시계를 만료
- * 시각 뒤로 두므로 어느 쪽이 먼저든 정당한 한 경로다.
+ * 시각 뒤로 둔다.
+ *
+ * 기준 시점은 승인 기록의 서버 시각 하나다(2차 계약 개정 11. R1 평가 B-02 반영, 2026-09-15). 그래서
+ * 누가 먼저 잠그든 결과가 하나다. 전에는 만료가 먼저면 확정, 승인이 먼저면 환불과 만료로 갈렸고
+ * 이 테스트가 둘 다 허용했다.
  *
  * <ul>
- * <li>만료가 먼저: 승인 시도가 있어 만료 대신 확정한다(확정 우선). 뒤의 승인은 CONFIRMED를 보고
- * 무시한다. 환불 없음, sold 1</li>
- * <li>승인이 먼저: 만료 시각을 지났으니 지연 승인이라 환불하고 TTL_EXPIRED로 끝낸다. 뒤의 만료는
- * HELD가 아니라 SKIPPED다. 환불 LATE_APPROVAL 하나, sold 0</li>
+ * <li>L23. 승인 기록이 만료 전: 어느 쪽이 먼저든 CONFIRMED다. 만료가 먼저면 확정 우선으로 확정하고
+ * 뒤의 승인은 종착을 보고 무시한다. 승인이 먼저면 승인 시각으로 확정하고 뒤의 만료는 SKIPPED다.
+ * 환불 없음, sold 1</li>
+ * <li>L26. 승인 기록이 만료 시각과 같음(T18 경계): 어느 쪽이 먼저든 EXPIRED와 TTL_EXPIRED와 환불
+ * LATE_APPROVAL 하나다. 만료가 먼저면 T1이 환불하고 만료시키며 뒤의 승인은 EXPIRED를 보고 환불만
+ * 시도하나 이미 환불이라 전이가 없다. 승인이 먼저면 P1이 환불하고 만료시키며 뒤의 만료는 SKIPPED다.
+ * sold 0</li>
  * </ul>
  *
- * 어느 순서로 들어가는지는 InnoDB가 정하므로 두 경로 중 하나임을 검사하고 둘이 섞이지 않았음을
- * 본다. 보내는 순서를 바꾼 짝을 둬 실행마다 두 경로가 모두 밟히도록 기울인다. 재고는 어느 쪽이든
- * held 0이다.
+ * 어느 순서로 들어가는지는 InnoDB가 정하므로 보내는 순서를 바꾼 짝을 둬 실행마다 두 순서가 모두
+ * 밟히도록 기울인다. 재고는 어느 쪽이든 held 0이다.
  */
 @SpringBootTest
 @Import(BookingLifecycleTestConfiguration.class)
@@ -93,20 +100,36 @@ class BookingLockContentionTest {
     }
 
     @Test
-    void L23_만료를_먼저_보내고_승인을_이어_보내도_한_경로만_남고_held는_0이다() throws Exception {
-        경합(true);
+    void L23_만료를_먼저_보내고_승인을_이어_보내도_만료_전_승인은_CONFIRMED_하나이고_held는_0이다() throws Exception {
+        경합(true, true);
     }
 
     @Test
-    void L23_승인을_먼저_보내고_만료를_이어_보내도_한_경로만_남고_held는_0이다() throws Exception {
-        경합(false);
+    void L23_승인을_먼저_보내고_만료를_이어_보내도_만료_전_승인은_CONFIRMED_하나이고_held는_0이다() throws Exception {
+        경합(false, true);
     }
 
-    private void 경합(boolean expiryFirst) throws Exception {
+    @Test
+    void L26_만료를_먼저_보내고_승인을_이어_보내도_만료_시각의_승인은_EXPIRED와_환불_하나이고_held는_0이다()
+            throws Exception {
+        경합(true, false);
+    }
+
+    @Test
+    void L26_승인을_먼저_보내고_만료를_이어_보내도_만료_시각의_승인은_EXPIRED와_환불_하나이고_held는_0이다()
+            throws Exception {
+        경합(false, false);
+    }
+
+    private void 경합(boolean expiryFirst, boolean approvedBeforeExpiry) throws Exception {
         Booking booking = fixtures.held(1);
+        if (!approvedBeforeExpiry) {
+            // T18 경계. 승인 기록의 서버 시각이 정확히 expiresAt이면 지연 승인이다
+            clock.set(booking.expiresAt());
+        }
         PaymentAttempt approved = fixtures.seedApproved(booking);
         PaymentApproved event = new PaymentApproved(PaymentId.newId(), booking.id().value(),
-                approved.id(), approved.pgTransactionId(), fixtures.charge(booking), 1, clock.instant());
+                approved.id(), approved.pgTransactionId(), fixtures.charge(booking), 1, approved.completedAt());
         clock.set(booking.expiresAt().plus(Duration.ofMinutes(1)));
 
         ExecutorService threads = Executors.newFixedThreadPool(2);
@@ -138,19 +161,22 @@ class BookingLockContentionTest {
             RefundView refund = paymentService.attemptsOf(booking.id().value()).refund();
             assertEquals(1L, after.version(), "전이는 한 번이다");
             assertEquals(0, fixtures.heldCount(booking.roomTypeId(), CHECK_IN));
-            if (after.status() == BookingStatus.CONFIRMED) {
-                // 만료가 먼저 들어가 확정 우선으로 닫았고 승인은 종착 상태를 보고 무시했다
-                assertEquals(BookingExpirationService.Outcome.CONFIRMED, expiryOutcome);
+            if (approvedBeforeExpiry) {
+                // 결과는 하나다. 만료가 먼저면 확정 우선(CONFIRMED), 승인이 먼저면 뒤의 만료가 SKIPPED
+                assertEquals(BookingStatus.CONFIRMED, after.status());
+                assertTrue(expiryOutcome == BookingExpirationService.Outcome.CONFIRMED
+                        || expiryOutcome == BookingExpirationService.Outcome.SKIPPED, "" + expiryOutcome);
                 assertEquals(clock.instant(), after.confirmedAt());
                 assertNull(refund);
                 assertEquals(1, fixtures.soldCount(booking.roomTypeId(), CHECK_IN));
                 assertEquals(1, events.confirmedOf(booking.id()));
                 assertEquals(0, events.expiredOf(booking.id()));
             } else {
-                // 승인이 먼저 들어가 지연 승인으로 환불하고 만료시켰고 만료는 HELD가 아니라 건너뛰었다
+                // 결과는 하나다. 만료가 먼저면 T1이 환불하고 만료(EXPIRED), 승인이 먼저면 뒤의 만료가 SKIPPED
                 assertEquals(BookingStatus.EXPIRED, after.status());
                 assertEquals(ExpirationReason.TTL_EXPIRED, after.expirationReason());
-                assertEquals(BookingExpirationService.Outcome.SKIPPED, expiryOutcome);
+                assertTrue(expiryOutcome == BookingExpirationService.Outcome.EXPIRED
+                        || expiryOutcome == BookingExpirationService.Outcome.SKIPPED, "" + expiryOutcome);
                 assertNotNull(refund);
                 assertEquals(approved.id().value(), refund.paymentAttemptId());
                 assertEquals(RefundReason.LATE_APPROVAL, refund.reason());

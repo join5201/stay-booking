@@ -19,12 +19,15 @@ import com.o2o.booking.domain.BookingRepository;
 import com.o2o.booking.domain.BookingStatus;
 import com.o2o.booking.domain.ExpirationReason;
 import com.o2o.payment.application.PaymentApplicationService;
+import com.o2o.payment.application.RefundView;
 import com.o2o.payment.domain.MockMode;
 import com.o2o.payment.domain.PaymentAttempt;
+import com.o2o.payment.domain.RefundReason;
 
 import static com.o2o.booking.BookingFixtures.CHECK_IN;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -118,6 +121,36 @@ class ExpireDueBookingsTest {
         // 두 번째 처리는 스킵이다. 종착 무해
         assertEquals(BookingExpirationService.Outcome.SKIPPED, expirationService.expireIfDue(booking.id()));
         assertEquals(1L, fixtures.reload(booking.id()).version());
+    }
+
+    @Test
+    void L9_만료_시각_이상의_승인_기록이_있으면_만료_대신_확정하지_않고_환불하고_만료시킨다() {
+        // R1 평가 B-02 반영. 기준 시점은 승인 기록의 서버 시각이다. 정확히 expiresAt에 기록된 승인은
+        // 지연 승인이라 T1도 P1과 같이 환불하고 TTL_EXPIRED로 끝낸다(T18의 T1 몫)
+        Booking booking = fixtures.held(1);
+        clock.set(booking.expiresAt());
+        PaymentAttempt approved = fixtures.seedApproved(booking);
+        clock.advance(Duration.ofMinutes(1));
+
+        assertEquals(BookingExpirationService.Outcome.EXPIRED, expirationService.expireIfDue(booking.id()));
+
+        Booking after = fixtures.reload(booking.id());
+        assertEquals(BookingStatus.EXPIRED, after.status());
+        assertEquals(ExpirationReason.TTL_EXPIRED, after.expirationReason());
+        assertEquals(clock.instant(), after.expiredAt());
+        assertEquals(1L, after.version());
+        assertEquals(0, fixtures.heldCount(booking.roomTypeId(), CHECK_IN));
+        assertEquals(0, fixtures.soldCount(booking.roomTypeId(), CHECK_IN));
+        RefundView refund = paymentService.attemptsOf(booking.id().value()).refund();
+        assertNotNull(refund);
+        assertEquals(approved.id().value(), refund.paymentAttemptId());
+        assertEquals(RefundReason.LATE_APPROVAL, refund.reason());
+        assertEquals(0, events.confirmedOf(booking.id()));
+        assertEquals(1, events.expiredOf(booking.id()));
+        // 두 번째 처리는 스킵이고 환불도 그대로 하나다
+        assertEquals(BookingExpirationService.Outcome.SKIPPED, expirationService.expireIfDue(booking.id()));
+        assertEquals(refund.paymentAttemptId(),
+                paymentService.attemptsOf(booking.id().value()).refund().paymentAttemptId());
     }
 
     @Test

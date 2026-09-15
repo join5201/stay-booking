@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.booking.api.BookingCancelApiTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-09-15T09:53:47.762Z" hostname="BOOK-QD5U7FFOBT" time="9.62">
+  <properties/>
+  <testcase name="L20_처리_중인_같은_키는_409_REQUEST_IN_PROGRESS이고_잠금이_풀리면_첫_요청은_200이며_취소는_한_번이다()" classname="com.o2o.booking.api.BookingCancelApiTest" time="2.294"/>
+  <testcase name="L19_같은_키_재전송은_최초_응답과_Idempotency_Replayed이고_환불과_반환이_한_번이며_reason_생략은_빈_문자열이다()" classname="com.o2o.booking.api.BookingCancelApiTest" time="0.54"/>
+  <testcase name="L20_체크인이_서울_오늘인_CONFIRMED는_409_CANCELLATION_NOT_ALLOWED이고_수량이_안_바뀌며_내일_체크인은_취소된다()" classname="com.o2o.booking.api.BookingCancelApiTest" time="0.459"/>
+  <testcase name="L21_목록의_항목과_상세가_같은_payment를_내고_시도_없는_예약은_0과_null과_빈_배열과_null이다()" classname="com.o2o.booking.api.BookingCancelApiTest" time="0.865"/>
+  <testcase name="L22_만료된_예약의_BOOK_01_성공_키를_재전송하면_최초_HELD_응답이고_GET은_EXPIRED다()" classname="com.o2o.booking.api.BookingCancelApiTest" time="0.261"/>
+  <testcase name="L20_HELD와_EXPIRED와_이미_취소된_예약에_새_키는_409_BOOKING_STATE_CONFLICT이고_수량이_안_바뀐다()" classname="com.o2o.booking.api.BookingCancelApiTest" time="0.611"/>
+  <testcase name="L20_멱등키_없음과_reason_301자와_미정의_필드는_400이고_401_403_404이며_어느_경우도_수량이_안_바뀌고_300자는_통과다()" classname="com.o2o.booking.api.BookingCancelApiTest" time="0.46"/>
+  <testcase name="L19_취소하면_200과_Booking_20개_필드이고_CANCELED와_환불_7개_필드와_승인_시도_유지와_sold_0이다()" classname="com.o2o.booking.api.BookingCancelApiTest" time="1.339"/>
+  <testcase name="L25_처리_중인_같은_키에_다른_body는_409_IDEMPOTENCY_KEY_REUSED다()" classname="com.o2o.booking.api.BookingCancelApiTest" time="2.328"/>
+  <testcase name="L22_승인_뒤_취소_뒤_같은_승인_이벤트를_다시_넣으면_200_DUPLICATE이고_CANCELED와_환불_한_번이_유지된다()" classname="com.o2o.booking.api.BookingCancelApiTest" time="0.407"/>
+  <system-out><![CDATA[2026-09-15T18:53:47.764+09:00  INFO 30504 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.api.BookingCancelApiTest]: BookingCancelApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-15T18:53:47.765+09:00  INFO 30504 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.api.BookingCancelApiTest
+2026-09-15T18:53:47.766+09:00  INFO 30504 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.api.BookingCancelApiTest]: BookingCancelApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-15T18:53:47.767+09:00  INFO 30504 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.api.BookingCancelApiTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

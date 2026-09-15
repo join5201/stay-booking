@@ -548,6 +548,48 @@ class BookingCancelApiTest {
         assertEquals("true", replay.headers().firstValue("Idempotency-Replayed").orElse(""));
     }
 
+    // ---------- L25 ----------
+
+    /**
+     * L25. 멱등 규칙 2가 규칙 4보다 앞이다. 처리 중인 같은 키에 다른 body가 오면 409
+     * IDEMPOTENCY_KEY_REUSED이고 취소는 첫 요청 한 번뿐이다. 잠금 방식은 L20과 같다. R1 평가 A-01
+     * 반영(2026-09-15).
+     */
+    @Test
+    void L25_처리_중인_같은_키에_다른_body는_409_IDEMPOTENCY_KEY_REUSED다() throws Exception {
+        Held held = confirmed(1);
+        String key = newKey();
+        String otherBody = "{\"reason\":\"다른 사유\"}";
+
+        ExecutorService waiter = Executors.newSingleThreadExecutor();
+        try {
+            Future<HttpResponse<String>> first = new TransactionTemplate(transactionManager)
+                    .execute((status) -> {
+                        bookingRepository.findByIdForUpdate(BookingId.of(held.bookingId())).orElseThrow();
+                        Future<HttpResponse<String>> sent = waiter.submit(
+                                () -> cancel(GUEST, held, key, REASON_BODY));
+                        assertThrows(TimeoutException.class, () -> sent.get(2, TimeUnit.SECONDS));
+
+                        HttpResponse<String> other = assertDoesNotThrow(
+                                () -> cancel(GUEST, held, key, otherBody));
+                        assertError(other, 409, "IDEMPOTENCY_KEY_REUSED");
+                        assertTrue(other.headers().firstValue("Retry-After").isEmpty());
+                        return sent;
+                    });
+
+            HttpResponse<String> res = first.get(30, TimeUnit.SECONDS);
+            assertEquals(200, res.statusCode(), res.body());
+            assertEquals("CANCELED", JSON.readTree(res.body()).get("status").asString());
+        } finally {
+            waiter.shutdownNow();
+        }
+        // 취소는 한 번이고 사유는 첫 요청의 것이다
+        JsonNode after = detail(held);
+        assertEquals(2, after.get("version").asInt());
+        assertEquals("일정 변경", after.get("cancellationReason").asString());
+        assertCounts(held, 0, 0);
+    }
+
     // ---------- L21 ----------
 
     @Test

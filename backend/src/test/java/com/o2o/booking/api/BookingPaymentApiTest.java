@@ -378,6 +378,43 @@ class BookingPaymentApiTest {
         assertEquals("true", replay.headers().firstValue("Idempotency-Replayed").orElse(""));
     }
 
+    // ---------- L24 ----------
+
+    /**
+     * L24. 멱등 규칙 2가 규칙 4보다 앞이다. 처리 중인 같은 키에 다른 body가 오면 409
+     * IDEMPOTENCY_KEY_REUSED이고 시도는 열리지 않는다. 잠금 방식은 L14와 같다. R1 평가 A-01 반영(2026-09-15).
+     */
+    @Test
+    void L24_처리_중인_같은_키에_다른_body는_409_IDEMPOTENCY_KEY_REUSED다() throws Exception {
+        Held held = held(1);
+        String key = newKey();
+        String body = "{\"mockMode\":\"DEFER\"}";
+        String otherBody = "{\"mockMode\":\"APPROVE\"}";
+
+        ExecutorService waiter = Executors.newSingleThreadExecutor();
+        try {
+            Future<HttpResponse<String>> first = new TransactionTemplate(transactionManager)
+                    .execute((status) -> {
+                        bookingRepository.findByIdForUpdate(BookingId.of(held.bookingId())).orElseThrow();
+                        Future<HttpResponse<String>> sent = waiter.submit(() -> pay(GUEST, held, key, body));
+                        assertThrows(TimeoutException.class, () -> sent.get(2, TimeUnit.SECONDS));
+
+                        HttpResponse<String> other = assertDoesNotThrow(() -> pay(GUEST, held, key, otherBody));
+                        assertError(other, 409, "IDEMPOTENCY_KEY_REUSED");
+                        assertTrue(other.headers().firstValue("Retry-After").isEmpty());
+                        return sent;
+                    });
+
+            HttpResponse<String> res = first.get(30, TimeUnit.SECONDS);
+            assertEquals(202, res.statusCode(), res.body());
+        } finally {
+            waiter.shutdownNow();
+        }
+        // 다른 body의 거절은 시도를 열지 않았다. DEFER 시도 하나만 남고 예약은 HELD다
+        assertEquals(1, attempts(held).get("attemptCount").asInt());
+        assertEquals("HELD", detail(held).get("status").asString());
+    }
+
     // ---------- L15 ----------
 
     @Test
