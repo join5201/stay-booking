@@ -1,7 +1,7 @@
 # 작업 계약 task-S9-frontend (프론트 화면 전체)
 
 최초 작성: 2026-09-15
-최종 갱신: 2026-09-15 (계약 승인. D-1부터 D-7 추천대로 확정. 작업 표 이름 확정, 6절 지역 코드 행, 7절 결정 줄 일곱, 10절. 그 전 같은 날 초안. 인계 문서 HANDOFF.md를 받아 화면과 API 대응표를 옮기고 백엔드 실물과의 차이 여섯을 2-1절에 고정)
+최종 갱신: 2026-09-15 (T1 기반 끝. 9절 실행 환경 행에 package-lock.json 판 기입과 T1 실행 결과 행, 10절 마지막 성공 단계와 실제 사용 시간. 그 전 같은 날 계약 승인. D-1부터 D-7 추천대로 확정. 작업 표 이름 확정, 6절 지역 코드 행, 7절 결정 줄 일곱, 10절. 그 전 같은 날 초안. 인계 문서 HANDOFF.md를 받아 화면과 API 대응표를 옮기고 백엔드 실물과의 차이 여섯을 2-1절에 고정)
 양식: harness/prompts/task-contract.md v6
 
 이 계약은 프론트 Task 계열의 첫 계약이다. 백엔드 40단위가 main에 다 올라간 뒤(2026-09-13 PR 138, 커밋 1bdadfe) 사용자가 2026-09-14 Claude Design에 화면 설계를 시켰고(harness/out/claude-design-handoff-2026-09-14/prompt.md와 context.md), 그 결과의 요약본 HANDOFF.md가 2026-09-15 04:54에 왔다. 원문은 같은 폴더 received/ 아래에 받은 그대로 두었다. 이 계약은 그 요약본을 구현 입력으로 옮기되 백엔드 실물과 어긋난 여섯 곳을 명세 값으로 바로잡는다(2-1절). 사용자 결정 셋(2026-09-15 05:0x)이 전제다. 첫째, 데스크톱 전용과 브랜드 색은 사용자가 디자인 세션에서 정한 것이다. 둘째, 화면 설계 파일 다섯(01부터 05 .dc.html)은 없고 요약대로 간다. 셋째, 계약 초안을 진행한다.
@@ -314,28 +314,29 @@ W는 컴포넌트와 훅 테스트(MSW 목), E는 Playwright E2E(백엔드와 DB
 | E05 | T10 | 취소와 환불. CONFIRMED에서 취소, 환불 줄, 재고 반환 | DB의 soldCount 감소와 refund 행 |
 | E06 | T10 | version 충돌. H2 폼을 연 뒤 시험 코드가 CAT-02로 먼저 수정, 저장 시 VERSION_CONFLICT Notice와 새로 읽기 뒤 저장 성공 | 두 번째 저장의 version이 오른 값 |
 
-## 9. 실행과 검증
+## 9. 실행과 검증 (2026-09-15 T1 기입)
 
 | 항목 | 내용 |
 |---|---|
 | 작업 디렉터리 | frontend/ |
-| 실행 환경 | Node 24.14.1, npm 11.11.0(2026-09-15 실측. pnpm 없음). Next.js, React, TanStack Query, Tailwind, MSW, Playwright, TypeScript의 판은 T1에서 설치된 lockfile 값을 이 행에 적는다(N6. 지금은 미기입). 백엔드는 backend/README.md 3절대로 컨테이너(127.0.0.1:3307)와 JDK 21로 띄우고 dev 프로파일(기본값)과 포트 8080(설정 없음). 환경변수 이름은 BACKEND_URL(프론트), SPRING_DATASOURCE_URL과 O2O_BOOKING_HOLD_TTL(E2E용 백엔드, D-4와 D-7). 값은 여기 적지 않는다 |
-| 실행할 명령 | npm run typecheck(타입 오류 0), npm run lint(오류 0), npm run build(빌드 실패 0), npm run test(W01부터 W15 통과), npm run test:e2e(E01부터 E06 통과. 백엔드와 DB가 떠 있을 때만). 스크립트 이름은 T1에서 package.json에 이 이름으로 만든다 |
+| 실행 환경 | Node 24.14.1, npm 11.11.0(2026-09-15 실측. pnpm 없음). package-lock.json 값(2026-09-15 T1 설치): next 16.3.5, react와 react-dom 19.2.8, @tanstack/react-query 5.102.8, tailwindcss와 @tailwindcss/postcss 4.3.3, msw 2.15.0, @playwright/test 1.63.0(브라우저 내려받기는 T10), vitest 5.0.1(vite 8.3.0), typescript 5.9.3, eslint 9.39.5, eslint-config-next 16.3.5, @types/node 24.13.4(create-next-app의 ^20을 실행 Node 24와 vitest 5의 peer 조건에 맞춰 올림). Tailwind는 4판이라 설정이 CSS 우선(globals.css의 @import "tailwindcss")이고 6절 스택 행의 tailwind.config theme.extend는 T2에서 @config 지시어로 잇거나 @theme으로 옮긴다. 어느 쪽인지는 T2에서 실측하고 6절에 적는다. 백엔드는 backend/README.md 3절대로 컨테이너(127.0.0.1:3307)와 JDK 21로 띄우고 dev 프로파일(기본값)과 포트 8080(설정 없음). 환경변수 이름은 BACKEND_URL(프론트), SPRING_DATASOURCE_URL과 O2O_BOOKING_HOLD_TTL(E2E용 백엔드, D-4와 D-7). 값은 여기 적지 않는다 |
+| 실행할 명령 | npm run typecheck(타입 오류 0), npm run lint(오류 0), npm run build(빌드 실패 0), npm run test(W01부터 W15 통과), npm run test:e2e(E01부터 E06 통과. 백엔드와 DB가 떠 있을 때만). 스크립트 이름은 T1에서 package.json에 이 이름으로 만든다. T1 반영: typecheck는 next typegen && tsc --noEmit(라우트 타입 파일 .next/types가 추적 제외라 먼저 생성한다), lint는 eslint, test는 vitest run, test:e2e는 playwright test(설정 파일과 시험은 T10. 지금 돌리면 시험 없음으로 실패) |
 | 테스트 DB | 127.0.0.1:3307 o2o_web_test(D-7). 컴포넌트와 훅 테스트는 DB 사용 없음 |
 | 데이터 초기화 허용 범위 | o2o_web_test만. 다른 DB는 읽지도 않는다 |
 | 빌드 출력과 로그 경로 | harness/out/task-S9-frontend-R1/ 아래. build 로그, 테스트 결과, Playwright 리포트 사본, 검증 표 |
 | 계약 테스트 ID | 8-1절 W01부터 W15, E01부터 E06. 10-6 F절의 항목(연속 실행, 취소와 환불과 재고 반환, 실패와 재시도와 TTL 만료와 지연 승인, 중복 클릭과 새로고침) |
 | A와 B 평가 범위 | harness/prompts/eval-criteria-code.md의 축에 D-2의 프론트 축을 더한 것 |
 | 필수 검증을 실행하지 못했을 때 | progress.md에 halted 행과 미실행 사유. 5절 평가 대상 행을 채우지 않고 평가 요청으로 가지 않는다 |
+| T1 실행 결과 (2026-09-15 통과) | npm run typecheck와 lint와 build와 test 넷 다 종료 코드 0. build는 라우트 둘(/, /_not-found) 정적 생성. test는 next.config.test.ts 1파일 5건 통과(BACKEND_URL 기본값과 빈 값과 끝 슬래시, rewrites 규칙). rewrites 실증: next start 3000과 8080의 가짜 백엔드(경로와 헤더를 돌려주는 Node 서버)로 GET /api/v1/properties?regionCode=SEOUL이 200과 같은 경로와 X-Dev-Actor-Id 값으로 돌아옴. 로그와 실증 사본은 harness/out/task-S9-frontend-R1/t1/(typecheck.log, lint.log, test.log, build.log, rewrites-check.txt). 실제 백엔드는 안 띄웠다 |
 
-## 10. 승인과 진행 (2026-09-15 승인 기입)
+## 10. 승인과 진행 (2026-09-15 T1 기입. 같은 날 승인 기입)
 
 | 항목 | 기록 |
 |---|---|
 | 작업 계약 승인 | 승인. join5201, 2026-09-15. 발언은 병합해라. 계약 승인하고 D-1부터 D-7 추천대로 확정해라(05:3x). 결정 7건은 전부 가. PR 149 병합은 이 기입 뒤 |
-| 마지막 성공 단계 | 계약 승인(2026-09-15). 그 전 계약 초안(같은 날). 인계 문서 원문을 received/에 보관 |
-| 미해결 사항과 다음 작업 | 다음은 T1 기반. 한 턴에 한 단계. 프론트 평가 축 이슈(D-2)는 하네스 세션 몫이고 T10 전까지. 남은 평가 네 쌍의 반영이 백엔드를 바꾸면 2-1절과 4절 해시 갱신 |
+| 마지막 성공 단계 | T1 기반(2026-09-15). 그 전 계약 승인과 계약 초안(같은 날) |
+| 미해결 사항과 다음 작업 | 다음은 T2 공통 UI(T1 PR 병합 뒤). 한 턴에 한 단계. 프론트 평가 축 이슈(D-2)는 하네스 세션 몫이고 T10 전까지. 남은 평가 네 쌍의 반영이 백엔드를 바꾸면 2-1절과 4절 해시 갱신 |
 | 최종 산출물과 버전 | 작업 후 기록 |
 | 실제 사용 시간 (계약 초안) | 약 30분. 2026-09-15 04:54 파일 수신부터 05:22 기록 행까지. 대조, 원문 보관, 계약 작성, fill과 g1, 이슈와 PR. 승인 기입 턴은 따로다 |
-| 실제 사용 시간 | 개발 시간은 T1부터 센다. 지금은 0 |
+| 실제 사용 시간 | T1 기반 약 12분(2026-09-15 18:15 뼈대 생성부터 18:27 기록 행까지. PR 150 병합 10:51은 계약 몫이라 안 센다). 합계 12분 |
 | 최종 완료 판단 | 대기. 사용자 |
