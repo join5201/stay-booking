@@ -14,6 +14,10 @@ import com.o2o.booking.domain.BookingId;
 import com.o2o.booking.domain.BookingRepository;
 import com.o2o.booking.domain.BookingStatus;
 import com.o2o.payment.application.PaymentApplicationService;
+import com.o2o.payment.application.PaymentAttemptView;
+import com.o2o.payment.application.PaymentSummaryView;
+import com.o2o.payment.domain.PaymentAttemptId;
+import com.o2o.payment.domain.RefundReason;
 
 /**
  * ExpireBooking의 건별 처리. T1 TTL 만료의 한 건과 PAY-01의 선만료가 같은 메서드다. 설계 근거:
@@ -25,9 +29,11 @@ import com.o2o.payment.application.PaymentApplicationService;
  * PAY-01은 409를 내려고 예외를 던지면 자기 트랜잭션이 되돌아가는데 11 명세는 만료와 재고 반환을
  * 먼저 저장하라 적으므로 그 저장이 바깥과 무관하게 커밋돼야 한다.
  *
- * 확정 우선. 잠근 뒤 결제에 승인 시도가 있으면 만료 대신 확정한다. P1이 유실된 예약(HELD인데
- * 승인 이력 있음)이 여기서 닫힌다(7절 D-1 나의 치유 자리). 잠금 순서는 Booking, Payment(조회만),
- * 재고 N행이다. 처리 시각은 여기서 읽는다(11 시간 경계의 전이 검사 시각).
+ * 확정 우선. 잠근 뒤 결제에 만료 시각 전의 승인 기록이 있으면 만료 대신 확정한다. P1이 유실된
+ * 예약(HELD인데 승인 이력 있음)이 여기서 닫힌다(7절 D-1 나의 치유 자리). 승인 기록의 서버 시각이
+ * 만료 시각 이상이면 지연 승인이라 P1과 같이 환불하고 만료시킨다(2차 계약 개정 3. R1 평가 B-02
+ * 반영, 2026-09-15). 기준 시점이 승인 시각 하나라 P1과 T1 중 누가 먼저 잠그든 답이 같다. 잠금
+ * 순서는 Booking, Payment(조회와 환불), 재고 N행이다. 처리 시각은 전이의 시각에만 쓴다.
  */
 @Service
 public class BookingExpirationService {
@@ -40,7 +46,7 @@ public class BookingExpirationService {
         SKIPPED,
         /** TTL_EXPIRED로 만료시키고 선점을 반환했다 */
         EXPIRED,
-        /** 승인 시도가 있어 만료 대신 확정했다(확정 우선) */
+        /** 만료 시각 전의 승인 기록이 있어 만료 대신 확정했다(확정 우선) */
         CONFIRMED
     }
 
@@ -59,7 +65,8 @@ public class BookingExpirationService {
 
     /**
      * 잠근 뒤 재확인하고 만료 시각이 지난 HELD만 끝낸다. 없는 예약은 SKIPPED다. 스캔 목록을 읽은
-     * 뒤 다른 경로가 먼저 전이했거나 예약이 사라진 경우라 오류가 아니다.
+     * 뒤 다른 경로가 먼저 전이했거나 예약이 사라진 경우라 오류가 아니다. 승인 기록이 있으면 그
+     * 시각으로 갈린다. 만료 전 승인은 확정, 만료 이상 승인은 환불 뒤 만료(P1의 지연 승인과 같다).
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Outcome expireIfDue(BookingId bookingId) {
@@ -68,14 +75,31 @@ public class BookingExpirationService {
         if (booking == null || booking.status() != BookingStatus.HELD || !booking.isDue(now)) {
             return Outcome.SKIPPED;
         }
-        String approvedAttemptId = paymentService.attemptsOf(bookingId.value()).approvedAttemptId();
+        PaymentSummaryView payments = paymentService.attemptsOf(bookingId.value());
+        String approvedAttemptId = payments.approvedAttemptId();
         if (approvedAttemptId != null) {
-            log.info("만료 대신 확정. 승인 시도가 있다. booking={} attempt={}", bookingId.value(),
-                    approvedAttemptId);
-            lifecycle.confirm(booking, now);
-            return Outcome.CONFIRMED;
+            Instant approvedAt = approvedAtOf(payments, approvedAttemptId);
+            if (booking.acceptsApprovalAt(approvedAt)) {
+                log.info("만료 대신 확정. 만료 전 승인 기록이 있다. booking={} attempt={} approvedAt={}",
+                        bookingId.value(), approvedAttemptId, approvedAt);
+                lifecycle.confirm(booking, now);
+                return Outcome.CONFIRMED;
+            }
+            log.info("지연 승인의 유실 처리. 승인 시각이 만료 시각 이상이라 환불하고 만료시킨다. booking={} attempt={} approvedAt={}",
+                    bookingId.value(), approvedAttemptId, approvedAt);
+            paymentService.refund(PaymentAttemptId.of(approvedAttemptId), RefundReason.LATE_APPROVAL);
         }
         lifecycle.expireByTtl(booking, now);
         return Outcome.EXPIRED;
+    }
+
+    /** 승인 시도의 완료 시각. 결제가 승인을 기록하며 찍은 서버 시각이고 P1 이벤트의 occurredAt과 같은 값이다 */
+    private static Instant approvedAtOf(PaymentSummaryView payments, String approvedAttemptId) {
+        return payments.attempts().stream()
+                .filter((attempt) -> attempt.id().equals(approvedAttemptId))
+                .map(PaymentAttemptView::completedAt)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "승인 시도가 시도 목록에 없다: " + approvedAttemptId));
     }
 }
