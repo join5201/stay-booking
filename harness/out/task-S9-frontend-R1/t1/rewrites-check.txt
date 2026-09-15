@@ -1,0 +1,13 @@
+# T1 rewrites 실증. next start(3000)와 가짜 백엔드(8080). 2026-09-15 18:24 KST
+GET /api/v1/properties?regionCode=SEOUL
+HTTP/1.1 200 OK
+content-type: application/json
+date: Tue, 15 Sep 2026 09:24:18 GMT
+connection: keep-alive
+keep-alive: timeout=5
+content-length: 65
+Vary: Accept-Encoding
+
+{"path":"/api/v1/properties?regionCode=SEOUL","actor":"host_001"}
+GET / (화면 자체는 백엔드로 안 간다)
+200
