@@ -30,8 +30,12 @@ import com.o2o.payment.domain.RefundReason;
  *
  * 분기 입력은 이벤트가 아니라 잠근 뒤의 Booking 상태다(06-4 v5 2-4). CONFIRMED와 CANCELED는
  * 로그 후 무시다. 정책 경로에서 종착 상태는 오류가 아니다(08-3 결정 5). 잠금 순서는 Booking,
- * Payment(환불), 재고 N행이다(08-3 결정 3). 처리 시각은 여기서 읽는다(11 시간 경계. 정확히
- * expiresAt이면 만료).
+ * Payment(환불), 재고 N행이다(08-3 결정 3).
+ *
+ * 승인과 만료의 기준 시점은 승인 기록의 서버 시각이다(2차 계약 개정 11. R1 평가 B-02 반영,
+ * 2026-09-15). P1은 이벤트의 occurredAt(결제가 승인을 기록한 completedAt)을 expiresAt과 대조하고
+ * T1은 같은 값을 결제 조회로 읽는다. 그래서 같은 상태에서 둘이 같은 답을 낸다. 처리 시각은
+ * 전이의 시각(confirmedAt, expiredAt)에만 쓴다. 승인 시각이 정확히 expiresAt이면 만료다(T18).
  */
 @Service
 public class PaymentOutcomeService {
@@ -52,22 +56,25 @@ public class PaymentOutcomeService {
     }
 
     /**
-     * P1. HELD이고 만료 시각 전이면 확정(A3). HELD인데 만료 시각 이상이거나 이미 EXPIRED면 지연
-     * 승인이라 전액 환불이고 HELD였으면 TTL_EXPIRED로 끝낸다(T18, T20). 환불이 재고보다 먼저인
-     * 이유는 잠금 순서다. 없는 예약은 불변 위반이다.
+     * P1. HELD이고 승인 시각이 만료 시각 전이면 확정(A3). HELD인데 승인 시각이 만료 시각 이상이거나
+     * 이미 EXPIRED면 지연 승인이라 전액 환불이고 HELD였으면 TTL_EXPIRED로 끝낸다(T18, T20). 승인
+     * 시각은 이벤트의 occurredAt이다. 구독자가 늦게 돌았다고 만료 전에 승인된 돈의 예약을 날리지
+     * 않는다(08-3 11-1의 이유를 P1에도 적용). 환불이 재고보다 먼저인 이유는 잠금 순서다. 없는
+     * 예약은 불변 위반이다.
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onApproved(PaymentApproved event) {
         Instant now = Instant.now(clock);
+        Instant approvedAt = event.occurredAt();
         BookingId bookingId = BookingId.of(event.bookingId());
         Booking booking = lockOrFail(bookingId);
         switch (booking.status()) {
             case HELD -> {
-                if (!booking.isDue(now)) {
+                if (booking.acceptsApprovalAt(approvedAt)) {
                     lifecycle.confirm(booking, now);
                 } else {
-                    log.info("지연 승인. 만료 시각을 지나 환불하고 만료시킨다. booking={} attempt={}",
-                            bookingId.value(), event.paymentAttemptId().value());
+                    log.info("지연 승인. 승인 시각이 만료 시각 이상이라 환불하고 만료시킨다. booking={} attempt={} approvedAt={}",
+                            bookingId.value(), event.paymentAttemptId().value(), approvedAt);
                     paymentService.refund(event.paymentAttemptId(), RefundReason.LATE_APPROVAL);
                     lifecycle.expireByTtl(booking, now);
                 }

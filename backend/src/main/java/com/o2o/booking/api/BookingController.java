@@ -32,6 +32,7 @@ import com.o2o.shared.Actor;
 import com.o2o.shared.ActorResolver;
 import com.o2o.shared.ActorRole;
 import com.o2o.shared.PageQuery;
+import com.o2o.shared.PageResponse;
 
 import jakarta.validation.Valid;
 import tools.jackson.databind.json.JsonMapper;
@@ -187,7 +188,11 @@ public class BookingController {
         return builder.body(stored.body());
     }
 
-    /** BOOK-02 본인 예약 목록. status 생략이면 전체. 정렬은 리포지토리가 한다 */
+    /**
+     * BOOK-02 본인 예약 목록. status 생략이면 전체. 정렬은 리포지토리가 한다. 응답 모델 Page는 shared의
+     * PageResponse다. 프로모션 묶음이 올린 것을 쓰고 booking의 사본은 치웠다(layers.md 3-2. R1 평가 A-03
+     * 반영, 2026-09-15)
+     */
     @GetMapping(BOOKINGS_PATH)
     public PageResponse<BookingResponse> list(
             @RequestHeader(value = "X-Dev-Actor-Id", required = false) String actorId,

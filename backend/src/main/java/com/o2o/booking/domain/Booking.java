@@ -360,4 +360,12 @@ public class Booking {
     public boolean isDue(Instant now) {
         return !now.isBefore(expiresAt);
     }
+
+    /**
+     * 승인 기록의 서버 시각이 만료 시각 전인가. P1과 T1이 같은 기준으로 확정과 지연 승인을 가른다
+     * (2차 계약 개정 11). 정확히 expiresAt이면 만료다(11 시간 경계, T18).
+     */
+    public boolean acceptsApprovalAt(Instant approvedAt) {
+        return approvedAt.isBefore(expiresAt);
+    }
 }

@@ -391,6 +391,47 @@ class BookingApiTest {
         assertEquals(201, record.responseStatus());
     }
 
+    // ---------- K27 ----------
+
+    /**
+     * K27. 멱등 규칙 2가 규칙 4보다 앞이다. 처리 중인 같은 키에 다른 body가 오면 409
+     * REQUEST_IN_PROGRESS가 아니라 409 IDEMPOTENCY_KEY_REUSED이고 Retry-After가 없다. 잠금 방식은
+     * K17과 같다. R1 평가 A-01 반영(2026-09-15).
+     */
+    @Test
+    void K27_처리_중인_같은_키에_다른_body는_409_IDEMPOTENCY_KEY_REUSED다() throws Exception {
+        String roomTypeId = roomTypeOf(HOST);
+        LocalDate checkIn = today().plusDays(10);
+        prepare(roomTypeId, checkIn, 1, 2);
+        RoomTypeId id = RoomTypeId.of(roomTypeId);
+        String key = newKey();
+        String body = body(roomTypeId, checkIn, 1, 1);
+        String otherBody = body(roomTypeId, checkIn, 1, 2);
+
+        ExecutorService waiter = Executors.newSingleThreadExecutor();
+        try {
+            Future<HttpResponse<String>> first = new TransactionTemplate(transactionManager)
+                    .execute((status) -> {
+                        inventoryRepository.findForUpdate(id, checkIn).orElseThrow();
+                        Future<HttpResponse<String>> sent = waiter.submit(() -> book(GUEST, key, body));
+                        assertThrows(TimeoutException.class, () -> sent.get(2, TimeUnit.SECONDS));
+
+                        HttpResponse<String> other = assertDoesNotThrow(() -> book(GUEST, key, otherBody));
+                        assertError(other, 409, "IDEMPOTENCY_KEY_REUSED");
+                        assertTrue(other.headers().firstValue("Retry-After").isEmpty());
+                        return sent;
+                    });
+
+            HttpResponse<String> res = first.get(30, TimeUnit.SECONDS);
+            assertEquals(201, res.statusCode(), res.body());
+        } finally {
+            waiter.shutdownNow();
+        }
+        // 다른 body의 거절은 첫 요청에 영향이 없다. 예약 하나, 선점 하나
+        assertEquals(1, heldCount(roomTypeId, checkIn));
+        assertEquals(1, bookingsOf(GUEST, roomTypeId).size());
+    }
+
     // ---------- K18 ----------
 
     @Test
@@ -535,7 +576,9 @@ class BookingApiTest {
 
     @Test
     void K22_선점된_날짜의_총량을_선점_아래로_내리면_409_INVENTORY_BELOW_COMMITTED다() throws Exception {
-        // T04의 heldCount 몫. 앞 묶음 V1은 판매분을 DB에 직접 놓았고 이번엔 예약이 실제로 만든다
+        // T04의 heldCount 몫. 앞 묶음 V1은 판매분을 DB에 직접 놓았고 이번엔 예약이 실제로 만든다.
+        // 선점이 version을 1 올리므로(11 공통 규칙 43행. R1 평가 B-01 반영) 선점 뒤 조회한
+        // version 1로 보내야 수량 검사에 닿는다
         String roomTypeId = roomTypeOf(HOST);
         LocalDate checkIn = today().plusDays(10);
         prepare(roomTypeId, checkIn, 1, 1);
@@ -543,14 +586,39 @@ class BookingApiTest {
 
         HttpResponse<String> res = send("PATCH",
                 "/api/v1/room-types/" + roomTypeId + "/inventories/" + checkIn, HOST,
-                "{\"version\":0,\"totalCount\":0}");
+                "{\"version\":1,\"totalCount\":0}");
 
         assertError(res, 409, "INVENTORY_BELOW_COMMITTED");
         DailyInventory after = inventoryRepository.findByRoomTypeIdAndStayDate(
                 RoomTypeId.of(roomTypeId), checkIn).orElseThrow();
         assertEquals(1, after.totalCount());
         assertEquals(1, after.heldCount());
-        assertEquals(0L, after.version());
+        assertEquals(1L, after.version());
+    }
+
+    @Test
+    void K22_선점_전에_조회한_version으로_수정하면_409_VERSION_CONFLICT다() throws Exception {
+        // 11 공통 규칙 43행의 뜻. 호스트가 조회한 뒤 예약이 선점을 넣었으면 그 화면의 수정은 막힌다.
+        // 선점 전 version 0을 그대로 보내면 수량 검사보다 version 대조가 먼저 걸린다
+        String roomTypeId = roomTypeOf(HOST);
+        LocalDate checkIn = today().plusDays(10);
+        prepare(roomTypeId, checkIn, 1, 2);
+        assertEquals(201, book(GUEST, newKey(), body(roomTypeId, checkIn, 1, 1)).statusCode());
+
+        HttpResponse<String> stale = send("PATCH",
+                "/api/v1/room-types/" + roomTypeId + "/inventories/" + checkIn, HOST,
+                "{\"version\":0,\"totalCount\":3}");
+        assertError(stale, 409, "VERSION_CONFLICT");
+
+        HttpResponse<String> fresh = send("PATCH",
+                "/api/v1/room-types/" + roomTypeId + "/inventories/" + checkIn, HOST,
+                "{\"version\":1,\"totalCount\":3}");
+        assertEquals(200, fresh.statusCode());
+        DailyInventory after = inventoryRepository.findByRoomTypeIdAndStayDate(
+                RoomTypeId.of(roomTypeId), checkIn).orElseThrow();
+        assertEquals(3, after.totalCount());
+        assertEquals(1, after.heldCount());
+        assertEquals(2L, after.version());
     }
 
     // ---------- K23 ----------

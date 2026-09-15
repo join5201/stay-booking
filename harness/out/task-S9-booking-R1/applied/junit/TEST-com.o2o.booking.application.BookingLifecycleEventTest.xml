@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.booking.application.BookingLifecycleEventTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-09-15T09:54:10.363Z" hostname="BOOK-QD5U7FFOBT" time="0.601">
+  <properties/>
+  <testcase name="L12_롤백된_취소의_이벤트는_구독자에_닿지_않고_상태도_그대로다()" classname="com.o2o.booking.application.BookingLifecycleEventTest" time="0.196"/>
+  <testcase name="L12_취소하면_BookingCanceled_1건과_InventoryReleased_SOLD_N건이_커밋_뒤_닿는다()" classname="com.o2o.booking.application.BookingLifecycleEventTest" time="0.141"/>
+  <testcase name="L12_만료하면_BookingExpired_1건과_InventoryReleased_HELD_N건이_커밋_뒤_닿는다()" classname="com.o2o.booking.application.BookingLifecycleEventTest" time="0.133"/>
+  <testcase name="L12_확정하면_BookingConfirmed_1건과_InventoryCommitted_N건이_커밋_뒤_닿는다()" classname="com.o2o.booking.application.BookingLifecycleEventTest" time="0.123"/>
+  <system-out><![CDATA[2026-09-15T18:54:10.365+09:00  INFO 30504 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.application.BookingLifecycleEventTest]: BookingLifecycleEventTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-15T18:54:10.365+09:00  INFO 30504 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.application.BookingLifecycleEventTest
+2026-09-15T18:54:10.367+09:00  INFO 30504 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.application.BookingLifecycleEventTest]: BookingLifecycleEventTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-15T18:54:10.367+09:00  INFO 30504 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.application.BookingLifecycleEventTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
