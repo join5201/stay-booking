@@ -16,10 +16,15 @@ import com.o2o.booking.domain.RequestInProgressException;
  * 멱등 실행기. 설계 근거: 11 명세 멱등 처리 절의 아홉 규칙, 06-4 0절 멱등 반환, 계약 2절 검사
  * 순서 4와 5와 13, 계약 7절 D-1.
  *
- * 순서. 기록을 조회하거나 진행 중으로 남긴다(별도 커밋). 완료 기록이면 body를 대조해 최초
- * 응답을 되돌리거나(규칙 3) 거절한다(규칙 2). 진행 중이면 거절한다(규칙 4). 최초면 본
- * 트랜잭션을 열어 작업을 돌리고 그 안에서 기록을 완료로 바꾼다(규칙 6). 작업이 거절되면 본
- * 트랜잭션이 되돌아가고 진행 중 기록을 따로 지운다(규칙 7).
+ * 순서. 기록을 조회하거나 진행 중으로 남긴다(별도 커밋). 기존 기록이면 완료 여부와 무관하게
+ * body를 먼저 대조해 다르면 거절한다(규칙 2). 같은 body가 진행 중이면 거절하고(규칙 4)
+ * 완료면 최초 응답을 되돌린다(규칙 3). 최초면 본 트랜잭션을 열어 작업을 돌리고 그 안에서
+ * 기록을 완료로 바꾼다(규칙 6). 작업이 거절되면 본 트랜잭션이 되돌아가고 진행 중 기록을
+ * 따로 지운다(규칙 7).
+ *
+ * body 대조가 진행 중 판정보다 앞인 이유. 규칙 2는 완료 여부를 조건으로 두지 않고 계약 2절
+ * 검사 순서 4도 body 다름의 409를 진행 중의 409보다 앞에 적는다. 키 재사용은 1초 뒤 다시
+ * 보내도 풀리지 않는 오류라 먼저 알려야 맞다(R1 평가 A-01 반영. 2026-09-15).
  *
  * 작업은 공급자로 받는다. api 층이 앱 서비스를 부르고 응답 JSON을 만드는 람다를 넘긴다.
  * 이 클래스는 그 안을 모르므로 2차의 결제 요청과 취소도 같은 실행기를 쓴다.
@@ -51,11 +56,11 @@ public class IdempotentRequestExecutor {
         }
         if (!begun.created()) {
             IdempotencyRecord existing = begun.record();
-            if (!existing.isCompleted()) {
-                throw new RequestInProgressException(scope);
-            }
             if (!existing.sameBody(bodyHash)) {
                 throw new IdempotencyKeyReusedException(scope);
+            }
+            if (!existing.isCompleted()) {
+                throw new RequestInProgressException(scope);
             }
             return new IdempotentResult(new StoredResponse(existing.responseStatus(),
                     existing.responseLocation(), existing.responseBody()), true);
