@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 
 import com.o2o.shared.RoomTypeId;
+import com.o2o.shared.VersionConflictException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -18,6 +19,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * 기존 DailyInventoryTest에 붙이지 않고 따로 둔 이유는 그 파일이 앞 묶음의 산출물이라서다.
  * 이 묶음의 변경 허용 범위는 inventory의 domain과 infrastructure 코드이고 앞 묶음의 테스트를
  * 고치지 않는다(계약 3절).
+ *
+ * K26은 R1 평가 B-01 반영(2026-09-15)이다. 11 공통 규칙 43행대로 네 수량 변경이 성공할 때만
+ * version이 1 오른다. 실패는 그대로다.
  */
 class DailyInventoryAllocationTest {
 
@@ -135,5 +139,57 @@ class DailyInventoryAllocationTest {
         assertThrows(InsufficientSoldException.class, () -> inventory.releaseSold(1, NOW));
 
         assertEquals(0, inventory.soldCount());
+    }
+
+    // ---------- K26 ----------
+
+    @Test
+    void K26_선점과_확정과_반환_둘이_성공할_때마다_version이_1_오른다() {
+        // 11 공통 규칙 43행. 호스트가 조회한 뒤 수정하는 사이 예약이 수량을 바꿨으면 그 수정이
+        // VERSION_CONFLICT로 막혀야 한다. adjust만 올리던 것을 네 경로도 올린다
+        DailyInventory inventory = DailyInventory.open(ROOM_TYPE_ID, STAY_DATE, 3, NOW);
+        assertEquals(0L, inventory.version());
+
+        inventory.hold(1, LATER);
+        assertEquals(1L, inventory.version());
+
+        inventory.commit(1, LATER);
+        assertEquals(2L, inventory.version());
+
+        inventory.releaseSold(1, LATER);
+        assertEquals(3L, inventory.version());
+
+        inventory.hold(1, LATER);
+        inventory.releaseHeld(1, LATER);
+        assertEquals(5L, inventory.version());
+    }
+
+    @Test
+    void K26_수량_변경이_실패하면_version은_그대로다() {
+        DailyInventory inventory = DailyInventory.open(ROOM_TYPE_ID, STAY_DATE, 1, NOW);
+        inventory.hold(1, NOW);
+
+        assertThrows(InventoryShortageException.class, () -> inventory.hold(1, LATER));
+        assertThrows(InsufficientHoldException.class, () -> inventory.commit(2, LATER));
+        assertThrows(InsufficientHoldException.class, () -> inventory.releaseHeld(2, LATER));
+        assertThrows(InsufficientSoldException.class, () -> inventory.releaseSold(1, LATER));
+        assertThrows(IllegalArgumentException.class, () -> inventory.commit(0, LATER));
+
+        assertEquals(1L, inventory.version());
+    }
+
+    @Test
+    void K26_선점_뒤의_낡은_version_조정은_거절되고_새_version_조정은_통과한다() {
+        // 계약 7절 D-2의 version 대조가 예약의 선점에도 걸린다. 선점 전 화면(version 0)은 막히고
+        // 선점 뒤 다시 조회한 화면(version 1)은 통과한다
+        DailyInventory inventory = DailyInventory.open(ROOM_TYPE_ID, STAY_DATE, 3, NOW);
+        inventory.hold(1, NOW);
+
+        assertThrows(VersionConflictException.class, () -> inventory.adjust(0L, 5, LATER));
+        assertEquals(3, inventory.totalCount());
+
+        inventory.adjust(1L, 5, LATER);
+        assertEquals(5, inventory.totalCount());
+        assertEquals(2L, inventory.version());
     }
 }

@@ -535,7 +535,9 @@ class BookingApiTest {
 
     @Test
     void K22_선점된_날짜의_총량을_선점_아래로_내리면_409_INVENTORY_BELOW_COMMITTED다() throws Exception {
-        // T04의 heldCount 몫. 앞 묶음 V1은 판매분을 DB에 직접 놓았고 이번엔 예약이 실제로 만든다
+        // T04의 heldCount 몫. 앞 묶음 V1은 판매분을 DB에 직접 놓았고 이번엔 예약이 실제로 만든다.
+        // 선점이 version을 1 올리므로(11 공통 규칙 43행. R1 평가 B-01 반영) 선점 뒤 조회한
+        // version 1로 보내야 수량 검사에 닿는다
         String roomTypeId = roomTypeOf(HOST);
         LocalDate checkIn = today().plusDays(10);
         prepare(roomTypeId, checkIn, 1, 1);
@@ -543,14 +545,39 @@ class BookingApiTest {
 
         HttpResponse<String> res = send("PATCH",
                 "/api/v1/room-types/" + roomTypeId + "/inventories/" + checkIn, HOST,
-                "{\"version\":0,\"totalCount\":0}");
+                "{\"version\":1,\"totalCount\":0}");
 
         assertError(res, 409, "INVENTORY_BELOW_COMMITTED");
         DailyInventory after = inventoryRepository.findByRoomTypeIdAndStayDate(
                 RoomTypeId.of(roomTypeId), checkIn).orElseThrow();
         assertEquals(1, after.totalCount());
         assertEquals(1, after.heldCount());
-        assertEquals(0L, after.version());
+        assertEquals(1L, after.version());
+    }
+
+    @Test
+    void K22_선점_전에_조회한_version으로_수정하면_409_VERSION_CONFLICT다() throws Exception {
+        // 11 공통 규칙 43행의 뜻. 호스트가 조회한 뒤 예약이 선점을 넣었으면 그 화면의 수정은 막힌다.
+        // 선점 전 version 0을 그대로 보내면 수량 검사보다 version 대조가 먼저 걸린다
+        String roomTypeId = roomTypeOf(HOST);
+        LocalDate checkIn = today().plusDays(10);
+        prepare(roomTypeId, checkIn, 1, 2);
+        assertEquals(201, book(GUEST, newKey(), body(roomTypeId, checkIn, 1, 1)).statusCode());
+
+        HttpResponse<String> stale = send("PATCH",
+                "/api/v1/room-types/" + roomTypeId + "/inventories/" + checkIn, HOST,
+                "{\"version\":0,\"totalCount\":3}");
+        assertError(stale, 409, "VERSION_CONFLICT");
+
+        HttpResponse<String> fresh = send("PATCH",
+                "/api/v1/room-types/" + roomTypeId + "/inventories/" + checkIn, HOST,
+                "{\"version\":1,\"totalCount\":3}");
+        assertEquals(200, fresh.statusCode());
+        DailyInventory after = inventoryRepository.findByRoomTypeIdAndStayDate(
+                RoomTypeId.of(roomTypeId), checkIn).orElseThrow();
+        assertEquals(3, after.totalCount());
+        assertEquals(1, after.heldCount());
+        assertEquals(2L, after.version());
     }
 
     // ---------- K23 ----------
