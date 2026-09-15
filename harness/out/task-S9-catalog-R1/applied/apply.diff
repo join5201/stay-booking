@@ -1,0 +1,1816 @@
+diff --git a/backend/src/main/java/com/o2o/catalog/api/PropertyController.java b/backend/src/main/java/com/o2o/catalog/api/PropertyController.java
+index 613dc5a..f91807f 100644
+--- a/backend/src/main/java/com/o2o/catalog/api/PropertyController.java
++++ b/backend/src/main/java/com/o2o/catalog/api/PropertyController.java
+@@ -20,6 +20,7 @@ import com.o2o.shared.ActorResolver;
+ import com.o2o.shared.ActorRole;
+ import com.o2o.shared.PageQuery;
+ import com.o2o.shared.PropertyId;
++import com.o2o.shared.RegionRegistry;
+ 
+ import jakarta.validation.Valid;
+ 
+@@ -90,6 +91,7 @@ public class PropertyController {
+     /**
+      * CAT-04 숙소 목록 조회. 인증 불필요. 지역 코드는 선택이다.
+      * page와 size의 기본값과 상한은 PageQuery가 갖고 있다. 11 공통 목록과 날짜 범위.
++     * regionCode의 형식(1자 이상 32자 이하)은 여기서 보고 등록 여부는 앱 서비스가 본다.
+      */
+     @GetMapping
+     public PageResponse<PropertyResponse> list(
+@@ -97,7 +99,23 @@ public class PropertyController {
+             @RequestParam(required = false) Integer page,
+             @RequestParam(required = false) Integer size) {
+         return PageResponse.from(
+-                catalogApplicationService.listProperties(regionCode, PageQuery.of(page, size)),
++                catalogApplicationService.listProperties(regionCode(regionCode), PageQuery.of(page, size)),
+                 PropertyResponse::from);
+     }
++
++    /**
++     * 11 CAT-04 쿼리표의 regionCode 제약. 공백만이거나 32자를 넘으면 400 INVALID_REQUEST.
++     * 검색 SEARCH-01의 같은 검사와 같은 모양이다. 애너테이션 대신 검사문인 이유도 같다.
++     * R1 평가 B-02
++     */
++    private static String regionCode(String regionCode) {
++        if (regionCode == null) {
++            return null;
++        }
++        if (regionCode.isBlank() || regionCode.length() > RegionRegistry.CODE_MAX_LENGTH) {
++            throw new IllegalArgumentException("regionCode는 1자 이상 " + RegionRegistry.CODE_MAX_LENGTH
++                    + "자 이하여야 한다: " + regionCode);
++        }
++        return regionCode;
++    }
+ }
+diff --git a/backend/src/main/java/com/o2o/catalog/api/RegisterPropertyRequest.java b/backend/src/main/java/com/o2o/catalog/api/RegisterPropertyRequest.java
+index a87e5b5..b91df62 100644
+--- a/backend/src/main/java/com/o2o/catalog/api/RegisterPropertyRequest.java
++++ b/backend/src/main/java/com/o2o/catalog/api/RegisterPropertyRequest.java
+@@ -1,25 +1,81 @@
+ package com.o2o.catalog.api;
+ 
++import com.fasterxml.jackson.annotation.JsonSetter;
++import com.fasterxml.jackson.annotation.Nulls;
++
+ import jakarta.validation.constraints.NotBlank;
+ import jakarta.validation.constraints.Size;
+ 
+ /**
+  * CAT-01 요청 body. 설계 근거: 11 숙소 CAT-01의 필드표.
+  *
+- * 제약값이 전부 그 표에서 왔다. 이름 1~100, 지역 코드 1~32, 주소 1~300, 설명 최대 2000.
+- * 검증이 여기 있는 근거는 06-4 1-4다. 형식 검증은 컨트롤러가 한다.
++ * 제약값이 전부 그 표에서 왔다. 이름은 공백 제거 후 1~100, 지역 코드 1~32, 주소 1~300, 설명 최대
++ * 2000. 검증이 여기 있는 근거는 06-4 1-4다. 형식 검증은 컨트롤러가 한다.
+  *
+  * hostId가 없는 것이 핵심이다. 11 인증과 접근 제어가 body의 hostId로 소유자를 정하지
+  * 말라고 적는다. 받을 칸이 없으면 실수로 쓸 수도 없다. 8-1절 C6이 이것을 검사한다.
++ *
++ * record가 아니라 setter를 가진 클래스인 이유(R1 평가 A-03). 11 공통 규칙은 생략과 명시적 null을
++ * 가른다. description을 생략하면 빈 문자열이고 null을 보내면 허용하지 않은 null이라 400이다.
++ * Jackson 3.1.5는 record의 생성자 속성에 생략도 null로 넘겨서 JsonSetter의 nulls = FAIL이 생략까지
++ * 거절한다(2026-09-14 실측). setter는 그 필드가 body에 있을 때만 불리므로 둘을 가를 수 있다.
++ *
++ * name은 setter에서 strip한다. 필드표가 공백 제거 후 1~100자라 검증도 저장도 strip한 값이다(B-03).
++ * 접근자 이름을 record와 같은 name() 꼴로 둔 것은 부르는 쪽을 바꾸지 않기 위해서다.
+  */
+-public record RegisterPropertyRequest(
+-        @NotBlank @Size(min = 1, max = 100) String name,
+-        @NotBlank @Size(min = 1, max = 32) String regionCode,
+-        @NotBlank @Size(min = 1, max = 300) String address,
+-        @Size(max = 2000) String description) {
++public class RegisterPropertyRequest {
++
++    @NotBlank
++    @Size(min = 1, max = 100)
++    private String name;
++
++    @NotBlank
++    @Size(min = 1, max = 32)
++    private String regionCode;
++
++    @NotBlank
++    @Size(min = 1, max = 300)
++    private String address;
++
++    @Size(max = 2000)
++    private String description;
++
++    public void setName(String name) {
++        this.name = strip(name);
++    }
++
++    public void setRegionCode(String regionCode) {
++        this.regionCode = regionCode;
++    }
++
++    public void setAddress(String address) {
++        this.address = address;
++    }
++
++    /** 생략은 빈 문자열, 명시적 null은 400. 11 공통 요청과 응답 규칙의 허용하지 않은 null */
++    @JsonSetter(nulls = Nulls.FAIL)
++    public void setDescription(String description) {
++        this.description = description;
++    }
++
++    public String name() {
++        return name;
++    }
++
++    public String regionCode() {
++        return regionCode;
++    }
++
++    public String address() {
++        return address;
++    }
+ 
+     /** 11 필드표가 description 생략 시 빈 문자열로 적는다. null을 도메인에 넘기지 않는다 */
+     public String descriptionOrEmpty() {
+         return description == null ? "" : description;
+     }
++
++    static String strip(String value) {
++        return value == null ? null : value.strip();
++    }
+ }
+diff --git a/backend/src/main/java/com/o2o/catalog/api/RegisterRoomTypeRequest.java b/backend/src/main/java/com/o2o/catalog/api/RegisterRoomTypeRequest.java
+index ebb5f22..76ada39 100644
+--- a/backend/src/main/java/com/o2o/catalog/api/RegisterRoomTypeRequest.java
++++ b/backend/src/main/java/com/o2o/catalog/api/RegisterRoomTypeRequest.java
+@@ -1,5 +1,8 @@
+ package com.o2o.catalog.api;
+ 
++import com.fasterxml.jackson.annotation.JsonSetter;
++import com.fasterxml.jackson.annotation.Nulls;
++
+ import jakarta.validation.constraints.Max;
+ import jakarta.validation.constraints.Min;
+ import jakarta.validation.constraints.NotBlank;
+@@ -16,11 +19,44 @@ import jakarta.validation.constraints.Size;
+  * 여기 검증은 형식이고 I14는 도메인이 따로 지킨다. 06-4 1-4가 그 둘을 갈라 둔다.
+  *
+  * propertyId가 없는 것도 의도다. 11 CAT-06 처리 규칙이 propertyId는 경로에서 가져온다고 적는다.
++ *
++ * setter 클래스인 이유와 name의 strip은 RegisterPropertyRequest 머리와 같다(R1 평가 A-03, B-03).
+  */
+-public record RegisterRoomTypeRequest(
+-        @NotBlank @Size(min = 1, max = 100) String name,
+-        @NotNull @Min(1) @Max(100) Integer maxOccupancy,
+-        @Size(max = 2000) String description) {
++public class RegisterRoomTypeRequest {
++
++    @NotBlank
++    @Size(min = 1, max = 100)
++    private String name;
++
++    @NotNull
++    @Min(1)
++    @Max(100)
++    private Integer maxOccupancy;
++
++    @Size(max = 2000)
++    private String description;
++
++    public void setName(String name) {
++        this.name = RegisterPropertyRequest.strip(name);
++    }
++
++    public void setMaxOccupancy(Integer maxOccupancy) {
++        this.maxOccupancy = maxOccupancy;
++    }
++
++    /** 생략은 빈 문자열, 명시적 null은 400 */
++    @JsonSetter(nulls = Nulls.FAIL)
++    public void setDescription(String description) {
++        this.description = description;
++    }
++
++    public String name() {
++        return name;
++    }
++
++    public Integer maxOccupancy() {
++        return maxOccupancy;
++    }
+ 
+     public String descriptionOrEmpty() {
+         return description == null ? "" : description;
+diff --git a/backend/src/main/java/com/o2o/catalog/api/UpdatePropertyRequest.java b/backend/src/main/java/com/o2o/catalog/api/UpdatePropertyRequest.java
+index 2b1c553..b27d202 100644
+--- a/backend/src/main/java/com/o2o/catalog/api/UpdatePropertyRequest.java
++++ b/backend/src/main/java/com/o2o/catalog/api/UpdatePropertyRequest.java
+@@ -1,28 +1,97 @@
+ package com.o2o.catalog.api;
+ 
++import com.fasterxml.jackson.annotation.JsonSetter;
++import com.fasterxml.jackson.annotation.Nulls;
++
+ import jakarta.validation.constraints.AssertTrue;
+ import jakarta.validation.constraints.Min;
+ import jakarta.validation.constraints.NotNull;
++import jakarta.validation.constraints.Pattern;
+ import jakarta.validation.constraints.Size;
+ 
+ /**
+  * CAT-02 요청 body. 설계 근거: 11 숙소 CAT-02의 필드표.
+  *
+  * version만 필수이고 나머지는 선택이다. 생략하면 기존 값을 유지한다고 그 표가 적는다.
+- * 그래서 여기서는 NotBlank를 쓰지 않는다. null과 빈 문자열이 다른 뜻이다.
++ * 그래서 여기서는 NotBlank를 쓰지 않는다. 생략(null)과 빈 문자열이 다른 뜻이다.
++ *
++ * 생략과 명시적 null은 다르다(R1 평가 A-03). 생략은 유지이고 명시적 null은 허용하지 않은 null이라
++ * 400이다(11 공통 요청과 응답 규칙). 그 둘을 가르려고 record 대신 setter를 가진 클래스다.
++ * 이유는 RegisterPropertyRequest 머리와 같다. 문자열 셋은 공백만 있는 값도 400이다. name은
++ * strip한 뒤 1~100자를 보고 strip한 값을 저장한다(B-03). regionCode와 address는 strip 규칙이
++ * 필드표에 없어 공백만 있는지만 본다.
+  *
+  * 그 표가 version 외 변경 필드가 한 개 이상 필요하다고도 적는다. 그것을 아래 검사가 본다.
+  * 형식 검증이므로 컨트롤러 층에 있는 것이 맞다(06-4 1-4). 8-2절 C5가 이 검사를 검사한다.
+  */
+-public record UpdatePropertyRequest(
+-        @NotNull @Min(0) Long version,
+-        @Size(min = 1, max = 100) String name,
+-        @Size(min = 1, max = 32) String regionCode,
+-        @Size(min = 1, max = 300) String address,
+-        @Size(max = 2000) String description) {
++public class UpdatePropertyRequest {
++
++    private static final String NOT_BLANK = "(?s).*\\S.*";
++
++    @NotNull
++    @Min(0)
++    private Long version;
++
++    @Size(min = 1, max = 100)
++    private String name;
++
++    @Size(min = 1, max = 32)
++    @Pattern(regexp = NOT_BLANK, message = "공백만 있는 값은 받지 않는다")
++    private String regionCode;
++
++    @Size(min = 1, max = 300)
++    @Pattern(regexp = NOT_BLANK, message = "공백만 있는 값은 받지 않는다")
++    private String address;
++
++    @Size(max = 2000)
++    private String description;
++
++    public void setVersion(Long version) {
++        this.version = version;
++    }
++
++    @JsonSetter(nulls = Nulls.FAIL)
++    public void setName(String name) {
++        this.name = RegisterPropertyRequest.strip(name);
++    }
++
++    @JsonSetter(nulls = Nulls.FAIL)
++    public void setRegionCode(String regionCode) {
++        this.regionCode = regionCode;
++    }
++
++    @JsonSetter(nulls = Nulls.FAIL)
++    public void setAddress(String address) {
++        this.address = address;
++    }
++
++    @JsonSetter(nulls = Nulls.FAIL)
++    public void setDescription(String description) {
++        this.description = description;
++    }
+ 
+     @AssertTrue(message = "version 외에 바꿀 필드가 한 개 이상 필요하다")
+     public boolean isAnyFieldPresent() {
+         return name != null || regionCode != null || address != null || description != null;
+     }
++
++    public Long version() {
++        return version;
++    }
++
++    public String name() {
++        return name;
++    }
++
++    public String regionCode() {
++        return regionCode;
++    }
++
++    public String address() {
++        return address;
++    }
++
++    public String description() {
++        return description;
++    }
+ }
+diff --git a/backend/src/main/java/com/o2o/catalog/api/UpdateRoomTypeRequest.java b/backend/src/main/java/com/o2o/catalog/api/UpdateRoomTypeRequest.java
+index 59d6fe2..7907a2f 100644
+--- a/backend/src/main/java/com/o2o/catalog/api/UpdateRoomTypeRequest.java
++++ b/backend/src/main/java/com/o2o/catalog/api/UpdateRoomTypeRequest.java
+@@ -1,5 +1,8 @@
+ package com.o2o.catalog.api;
+ 
++import com.fasterxml.jackson.annotation.JsonSetter;
++import com.fasterxml.jackson.annotation.Nulls;
++
+ import jakarta.validation.constraints.AssertTrue;
+ import jakarta.validation.constraints.Max;
+ import jakarta.validation.constraints.Min;
+@@ -9,17 +12,63 @@ import jakarta.validation.constraints.Size;
+ /**
+  * CAT-07 요청 body. 설계 근거: 11 객실 타입 CAT-07의 필드표.
+  *
+- * UpdatePropertyRequest와 같은 규칙이다. version만 필수이고 하나 이상은 바꿔야 한다.
++ * UpdatePropertyRequest와 같은 규칙이다. version만 필수이고 하나 이상은 바꿔야 한다. 생략은
++ * 유지, 명시적 null은 400, name은 strip한 뒤 1~100자(R1 평가 A-03, B-03).
+  * propertyId가 없는 것이 의도다. 같은 절의 처리 규칙이 propertyId를 바꾸지 않는다고 적는다.
+  */
+-public record UpdateRoomTypeRequest(
+-        @NotNull @Min(0) Long version,
+-        @Size(min = 1, max = 100) String name,
+-        @Min(1) @Max(100) Integer maxOccupancy,
+-        @Size(max = 2000) String description) {
++public class UpdateRoomTypeRequest {
++
++    @NotNull
++    @Min(0)
++    private Long version;
++
++    @Size(min = 1, max = 100)
++    private String name;
++
++    @Min(1)
++    @Max(100)
++    private Integer maxOccupancy;
++
++    @Size(max = 2000)
++    private String description;
++
++    public void setVersion(Long version) {
++        this.version = version;
++    }
++
++    @JsonSetter(nulls = Nulls.FAIL)
++    public void setName(String name) {
++        this.name = RegisterPropertyRequest.strip(name);
++    }
++
++    @JsonSetter(nulls = Nulls.FAIL)
++    public void setMaxOccupancy(Integer maxOccupancy) {
++        this.maxOccupancy = maxOccupancy;
++    }
++
++    @JsonSetter(nulls = Nulls.FAIL)
++    public void setDescription(String description) {
++        this.description = description;
++    }
+ 
+     @AssertTrue(message = "version 외에 바꿀 필드가 한 개 이상 필요하다")
+     public boolean isAnyFieldPresent() {
+         return name != null || maxOccupancy != null || description != null;
+     }
++
++    public Long version() {
++        return version;
++    }
++
++    public String name() {
++        return name;
++    }
++
++    public Integer maxOccupancy() {
++        return maxOccupancy;
++    }
++
++    public String description() {
++        return description;
++    }
+ }
+diff --git a/backend/src/main/java/com/o2o/catalog/application/CatalogApplicationService.java b/backend/src/main/java/com/o2o/catalog/application/CatalogApplicationService.java
+index 1cab4e6..6f4cf7c 100644
+--- a/backend/src/main/java/com/o2o/catalog/application/CatalogApplicationService.java
++++ b/backend/src/main/java/com/o2o/catalog/application/CatalogApplicationService.java
+@@ -23,6 +23,7 @@ import com.o2o.shared.HostId;
+ import com.o2o.shared.PageQuery;
+ import com.o2o.shared.PageResult;
+ import com.o2o.shared.PropertyId;
++import com.o2o.shared.RegionRegistry;
+ import com.o2o.shared.RoomTypeId;
+ 
+ /**
+@@ -42,15 +43,18 @@ public class CatalogApplicationService {
+ 
+     private final PropertyRepository propertyRepository;
+     private final RoomTypeRepository roomTypeRepository;
++    private final RegionRegistry regionRegistry;
+     private final ApplicationEventPublisher eventPublisher;
+     private final Clock clock;
+ 
+     public CatalogApplicationService(PropertyRepository propertyRepository,
+                                      RoomTypeRepository roomTypeRepository,
++                                     RegionRegistry regionRegistry,
+                                      ApplicationEventPublisher eventPublisher,
+                                      Clock clock) {
+         this.propertyRepository = propertyRepository;
+         this.roomTypeRepository = roomTypeRepository;
++        this.regionRegistry = regionRegistry;
+         this.eventPublisher = eventPublisher;
+         this.clock = clock;
+     }
+@@ -60,9 +64,14 @@ public class CatalogApplicationService {
+      *
+      * hostId를 인자로 받고 요청 body에서 읽지 않는다. 11 인증과 접근 제어가 body의 hostId로
+      * 권한을 정하지 말라고 적는다. 그 규칙을 8-1절 C6이 검사한다.
++     *
++     * 지역 코드의 등록 여부를 여기서 본다. 11 CAT-01 처리 규칙이 등록된 지역 코드를 확인하고
++     * 저장한다고 적고, 존재 확인은 컨텍스트를 넘는 선행조건이라 앱 서비스 몫이다(06-4 1-4).
++     * 형식(1자 이상 32자 이하)은 컨트롤러가 이미 봤다. R1 평가 A-02, B-02
+      */
+     public Property registerProperty(HostId hostId, String name, String regionCode,
+                                      String address, String description) {
++        regionRegistry.require(regionCode);
+         Instant now = Instant.now(clock);
+         Property property = Property.register(hostId, name, Region.of(regionCode),
+                 Address.of(address), description, now);
+@@ -113,6 +122,9 @@ public class CatalogApplicationService {
+         if (!property.hostId().equals(hostId)) {
+             throw new PropertyNotFoundException(propertyId);
+         }
++        if (regionCode != null) {
++            regionRegistry.require(regionCode);
++        }
+         property.update(expectedVersion, name,
+                 regionCode == null ? null : Region.of(regionCode),
+                 address == null ? null : Address.of(address),
+@@ -147,9 +159,14 @@ public class CatalogApplicationService {
+ 
+     /**
+      * CAT-04. 설계 근거: 11 숙소 CAT-04. 인증이 불필요하고 지역 코드는 선택이다.
++     * 주면 등록된 코드여야 한다. 필드표가 등록된 지역 코드라고 적는다. 미등록 코드로 빈 목록을
++     * 주면 없는 지역이 있는 것처럼 보인다. R1 평가 A-02, B-02
+      */
+     @Transactional(readOnly = true)
+     public PageResult<Property> listProperties(String regionCode, PageQuery pageQuery) {
++        if (regionCode != null) {
++            regionRegistry.require(regionCode);
++        }
+         return propertyRepository.findAll(regionCode, pageQuery);
+     }
+ 
+diff --git a/backend/src/main/java/com/o2o/catalog/domain/Property.java b/backend/src/main/java/com/o2o/catalog/domain/Property.java
+index dac1089..62230a4 100644
+--- a/backend/src/main/java/com/o2o/catalog/domain/Property.java
++++ b/backend/src/main/java/com/o2o/catalog/domain/Property.java
+@@ -11,6 +11,7 @@ import jakarta.persistence.Embedded;
+ import jakarta.persistence.Entity;
+ import jakarta.persistence.Id;
+ import jakarta.persistence.Table;
++import jakarta.persistence.Version;
+ 
+ /**
+  * 숙소 애그리거트 루트. 설계 근거: 06-2 1절 Property 행, 06-2 6절 카탈로그 CRC.
+@@ -52,7 +53,11 @@ public class Property {
+     private String description;
+ 
+     // 11 응답 모델 Property가 필수로 적는 필드다. 등록 시 0이고 수정마다 1씩 오른다.
+-    // 대조 방식은 2026-09-09 결정으로 낙관적 잠금이다. update가 그 대조를 한다
++    // 대조 방식은 2026-09-09 결정으로 낙관적 잠금이다. update가 요청 값과 읽은 값을 대조하고,
++    // @Version이 저장할 때 DB의 값과 한 번 더 대조한다. 두 요청이 같은 version을 읽고 둘 다
++    // 메모리 대조를 지나도 뒤의 UPDATE는 where version = ? 에서 0행이 되어 실패한다.
++    // 증가는 프레임워크가 flush 때 한다. 손으로 더하지 않는다(R1 평가 A-01, B-01)
++    @Version
+     @Column(name = "version", nullable = false)
+     private long version;
+ 
+@@ -93,6 +98,8 @@ public class Property {
+      * 버전 대조가 여기 있는 근거는 06-4 1-4다. 규칙 검증은 애그리거트가 한다. 그리고
+      * 2026-09-09 사용자 결정으로 동시 수정 처리를 낙관적 잠금으로 확정했다. 저장할 때
+      * 요청이 들고 온 숫자와 현재 숫자를 대조한다. 계약 2-2절이 그 결정의 정본이다.
++     * 여기의 대조는 읽은 값과의 대조라 순차적인 낡은 요청을 바로 거절하고, 같은 값을 읽은
++     * 동시 요청은 저장 시점의 @Version 대조가 거른다. version을 여기서 올리지 않는다.
+      *
+      * null은 유지를 뜻한다. 11 CAT-02 필드표가 생략하면 기존 값 유지라고 적는다.
+      * 식별자와 소유자와 생성 시각은 바꾸지 않는다. 같은 절의 처리 규칙이다.
+@@ -114,7 +121,6 @@ public class Property {
+         if (description != null) {
+             this.description = description;
+         }
+-        this.version = this.version + 1;
+         this.updatedAt = now;
+     }
+ 
+diff --git a/backend/src/main/java/com/o2o/catalog/domain/Region.java b/backend/src/main/java/com/o2o/catalog/domain/Region.java
+index 12cafaf..c4e5a88 100644
+--- a/backend/src/main/java/com/o2o/catalog/domain/Region.java
++++ b/backend/src/main/java/com/o2o/catalog/domain/Region.java
+@@ -7,9 +7,9 @@ import jakarta.persistence.Embeddable;
+  * 지역 값 객체. 설계 근거: 06-2 1절 Property 내부 요소, 06-2 6절 Property CRC의 협력자.
+  *
+  * 등록된 지역 코드인지 확인하는 책임은 여기 없다. 11 CAT-01 처리 규칙이 그 확인을 적지만
+- * 그것은 형식이 아니라 존재 확인이고, 지역 fixture는 초기 세팅에서 준비한다고 같은 줄이
+- * 적는다. 이번 바퀴에 지역 fixture가 없으므로 그 확인은 아직 어느 층에도 두지 않는다.
+- * 두 번째 바퀴의 선행 항목이다.
++ * 그것은 형식이 아니라 존재 확인이고, 존재 확인은 컨텍스트를 넘는 선행조건이라 앱 서비스가
++ * shared의 RegionRegistry로 한다(06-4 1-4). 2026-09-14 R1 평가 A-02와 B-02로 그 자리가 생겼다.
++ * 그 전에는 지역 fixture가 없어 어느 층에도 두지 않았다.
+  */
+ @Embeddable
+ public class Region {
+diff --git a/backend/src/main/java/com/o2o/catalog/domain/RoomType.java b/backend/src/main/java/com/o2o/catalog/domain/RoomType.java
+index 656e305..60338f7 100644
+--- a/backend/src/main/java/com/o2o/catalog/domain/RoomType.java
++++ b/backend/src/main/java/com/o2o/catalog/domain/RoomType.java
+@@ -10,6 +10,7 @@ import jakarta.persistence.Column;
+ import jakarta.persistence.Entity;
+ import jakarta.persistence.Id;
+ import jakarta.persistence.Table;
++import jakarta.persistence.Version;
+ 
+ /**
+  * 객실 타입 애그리거트 루트. 설계 근거: 06-2 1절 RoomType 행, 06-2 6절 카탈로그 CRC.
+@@ -43,7 +44,9 @@ public class RoomType {
+     @Column(name = "description", nullable = false, length = 2000)
+     private String description;
+ 
+-    // Property의 같은 필드와 같은 이유다. 11 응답 모델 RoomType이 필수로 적는다
++    // Property의 같은 필드와 같은 이유다. 11 응답 모델 RoomType이 필수로 적는다.
++    // 저장 시점 대조와 증가는 @Version이 한다(R1 평가 B-01이 47행과 94행을 짚었다)
++    @Version
+     @Column(name = "version", nullable = false)
+     private long version;
+ 
+@@ -87,7 +90,7 @@ public class RoomType {
+      * 하향 허용의 근거는 같은 행의 괄호다. 기존 예약에 영향이 없다고 적는다. 11 CAT-07 처리
+      * 규칙도 최대 인원 수정은 신규 예약에 적용한다고 적는다. 그래서 내리는 값을 막지 않는다.
+      *
+-     * 버전 대조는 Property.update와 같다. 계약 2-2절.
++     * 버전 대조는 Property.update와 같다. 계약 2-2절. version을 여기서 올리지 않는다.
+      */
+     public void update(long expectedVersion, String name, Integer maxOccupancy,
+                        String description, Instant now) {
+@@ -106,7 +109,6 @@ public class RoomType {
+         if (description != null) {
+             this.description = description;
+         }
+-        this.version = this.version + 1;
+         this.updatedAt = now;
+     }
+ 
+diff --git a/backend/src/main/java/com/o2o/catalog/infrastructure/JpaPropertyRepository.java b/backend/src/main/java/com/o2o/catalog/infrastructure/JpaPropertyRepository.java
+index b819081..e0f6a7a 100644
+--- a/backend/src/main/java/com/o2o/catalog/infrastructure/JpaPropertyRepository.java
++++ b/backend/src/main/java/com/o2o/catalog/infrastructure/JpaPropertyRepository.java
+@@ -27,9 +27,14 @@ public class JpaPropertyRepository implements PropertyRepository {
+         this.jpaRepository = jpaRepository;
+     }
+ 
++    /**
++     * 저장하면서 바로 flush한다. version의 저장 시점 대조(@Version)가 여기서 일어나게 하기 위해서다.
++     * 커밋까지 미루면 충돌이 트랜잭션 경계 밖에서 터지고 응답과 이벤트가 옛 version을 들고 나간다.
++     * R1 평가 A-01, B-01
++     */
+     @Override
+     public Property save(Property property) {
+-        return jpaRepository.save(property);
++        return jpaRepository.saveAndFlush(property);
+     }
+ 
+     @Override
+diff --git a/backend/src/main/java/com/o2o/catalog/infrastructure/JpaRoomTypeRepository.java b/backend/src/main/java/com/o2o/catalog/infrastructure/JpaRoomTypeRepository.java
+index c968adb..467ab91 100644
+--- a/backend/src/main/java/com/o2o/catalog/infrastructure/JpaRoomTypeRepository.java
++++ b/backend/src/main/java/com/o2o/catalog/infrastructure/JpaRoomTypeRepository.java
+@@ -24,9 +24,10 @@ public class JpaRoomTypeRepository implements RoomTypeRepository {
+         this.jpaRepository = jpaRepository;
+     }
+ 
++    /** JpaPropertyRepository.save와 같은 이유로 flush까지 한다 */
+     @Override
+     public RoomType save(RoomType roomType) {
+-        return jpaRepository.save(roomType);
++        return jpaRepository.saveAndFlush(roomType);
+     }
+ 
+     @Override
+diff --git a/backend/src/main/java/com/o2o/shared/RegionRegistry.java b/backend/src/main/java/com/o2o/shared/RegionRegistry.java
+new file mode 100644
+index 0000000..fa989fb
+--- /dev/null
++++ b/backend/src/main/java/com/o2o/shared/RegionRegistry.java
+@@ -0,0 +1,60 @@
++package com.o2o.shared;
++
++import java.util.List;
++import java.util.Set;
++import java.util.concurrent.ConcurrentHashMap;
++
++import org.springframework.stereotype.Component;
++
++/**
++ * 등록된 지역 코드 fixture. 설계 근거: 11 CAT-01 처리 규칙(등록된 지역 코드를 확인하고 저장한다.
++ * 지역 fixture와 프론트 선택 목록은 초기 세팅에서 준비한다), CAT-01과 CAT-02와 CAT-04 필드표의
++ * 등록된 지역 코드. R1 평가 A-02와 B-02.
++ *
++ * shared에 두는 이유는 검색 SEARCH-01과 프로모션의 regionCodes도 같은 문구를 쓰기 때문이다.
++ * 그 둘이 이 목록을 확인할지는 프로모션과 검색 쌍의 결정표가 가른다. 이번 바퀴에 확인하는 것은
++ * 카탈로그의 등록과 수정과 목록 셋이다.
++ *
++ * 값을 코드에 두는 이유는 ActorRegistry와 같다. 비밀이 아니고 초기 세팅 값이다. 목록은 광역
++ * 자치단체 17곳의 영문 코드로 제안한 것이고 사용자가 정한다(결정표 A-02 행. 명세 예시는 SEOUL
++ * 하나뿐이다). 바꿀 때는 이 목록 한 곳만 고친다.
++ *
++ * register는 초기 세팅과 테스트 fixture용이다. 요청 경로에서 부르지 않는다. 테스트가 서로의
++ * 목록에 섞이지 않게 고유한 코드를 쓰는데 그 코드가 여기 있어야 등록이 통과하기 때문이다.
++ */
++@Component
++public class RegionRegistry {
++
++    public static final int CODE_MAX_LENGTH = 32;
++
++    private static final List<String> FIXTURE = List.of(
++            "SEOUL", "BUSAN", "DAEGU", "INCHEON", "GWANGJU", "DAEJEON", "ULSAN", "SEJONG",
++            "GYEONGGI", "GANGWON", "CHUNGBUK", "CHUNGNAM", "JEONBUK", "JEONNAM",
++            "GYEONGBUK", "GYEONGNAM", "JEJU");
++
++    private final Set<String> codes = ConcurrentHashMap.newKeySet();
++
++    public RegionRegistry() {
++        codes.addAll(FIXTURE);
++    }
++
++    public boolean isRegistered(String code) {
++        return code != null && codes.contains(code);
++    }
++
++    /** 등록된 코드가 아니면 거절한다. 400 INVALID_REQUEST로 나간다 */
++    public void require(String code) {
++        if (!isRegistered(code)) {
++            throw new UnregisteredRegionException(code);
++        }
++    }
++
++    /** 초기 세팅과 테스트 fixture용. 요청 경로에서 부르지 않는다 */
++    public void register(String code) {
++        if (code == null || code.isBlank() || code.length() > CODE_MAX_LENGTH) {
++            throw new IllegalArgumentException("지역 코드는 1자 이상 " + CODE_MAX_LENGTH
++                    + "자 이하여야 한다: " + code);
++        }
++        codes.add(code);
++    }
++}
+diff --git a/backend/src/main/java/com/o2o/shared/SharedExceptionHandler.java b/backend/src/main/java/com/o2o/shared/SharedExceptionHandler.java
+index e1a49fe..31631c9 100644
+--- a/backend/src/main/java/com/o2o/shared/SharedExceptionHandler.java
++++ b/backend/src/main/java/com/o2o/shared/SharedExceptionHandler.java
+@@ -2,12 +2,15 @@ package com.o2o.shared;
+ 
+ import java.util.List;
+ 
++import org.springframework.dao.OptimisticLockingFailureException;
+ import org.springframework.http.HttpStatus;
+ import org.springframework.http.ResponseEntity;
+ import org.springframework.http.converter.HttpMessageNotReadableException;
+ import org.springframework.web.bind.MethodArgumentNotValidException;
++import org.springframework.web.bind.MissingServletRequestParameterException;
+ import org.springframework.web.bind.annotation.ExceptionHandler;
+ import org.springframework.web.bind.annotation.RestControllerAdvice;
++import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+ 
+ /**
+  * 컨텍스트를 가리지 않는 오류를 11 에러 응답 표의 코드로 바꾼다.
+@@ -16,6 +19,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
+  * 카탈로그 고유 예외는 여기서 다루지 않는다. shared가 catalog를 참조하면 공유 커널이
+  * 한 컨텍스트에 묶인다. 그쪽은 catalog/api의 핸들러가 맡는다.
+  *
++ * 예상하지 못한 예외의 500은 여기 없다. 어드바이스에 Exception 핸들러를 두면 어드바이스
++ * 순서에 따라 다른 컨텍스트의 핸들러를 삼키므로 UnexpectedExceptionResolver가 마지막 순번에서
++ * 받는다(R1 평가 B-04).
++ *
+  * 8-1절 C9와 C10이 이 클래스를 검사한다.
+  */
+ @RestControllerAdvice
+@@ -67,6 +74,56 @@ public class SharedExceptionHandler {
+                 .body(ErrorResponse.of("VERSION_CONFLICT", "수정 버전이 일치하지 않습니다."));
+     }
+ 
++    /**
++     * 저장 시점의 낙관적 잠금 실패. 두 요청이 같은 version을 읽어 애그리거트의 메모리 대조를
++     * 둘 다 지난 뒤 뒤의 저장이 @Version의 where version = ? 에서 0행이 된 경우다. 스프링이
++     * JPA의 OptimisticLockException을 이 예외 계열로 번역한다. 위와 같은 409 VERSION_CONFLICT다.
++     * R1 평가 A-01, B-01
++     */
++    @ExceptionHandler(OptimisticLockingFailureException.class)
++    public ResponseEntity<ErrorResponse> handleOptimisticLock(OptimisticLockingFailureException e) {
++        return ResponseEntity.status(HttpStatus.CONFLICT)
++                .body(ErrorResponse.of("VERSION_CONFLICT", "수정 버전이 일치하지 않습니다."));
++    }
++
++    /**
++     * 쿼리나 경로 값의 타입 오류. page=abc 같은 것이다. 11 공통 요청과 응답 규칙이 잘못된 타입을
++     * 400으로 적는다. 스프링 기본 처리기에 맡기면 공통 Error 모델이 아닌 본문으로 나간다.
++     * R1 평가 B-04
++     */
++    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
++    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
++        List<ErrorResponse.ErrorDetail> details = List.of(
++                new ErrorResponse.ErrorDetail(e.getName(), "값의 타입이 올바르지 않다"));
++        return ResponseEntity.badRequest()
++                .body(ErrorResponse.of("INVALID_REQUEST", "요청 값의 타입이 올바르지 않습니다.", details));
++    }
++
++    /**
++     * 필수 쿼리 파라미터 누락. 위와 같은 이유로 공통 Error 모델로 낸다. R1 평가 B-04
++     */
++    @ExceptionHandler(MissingServletRequestParameterException.class)
++    public ResponseEntity<ErrorResponse> handleMissingParameter(
++            MissingServletRequestParameterException e) {
++        List<ErrorResponse.ErrorDetail> details = List.of(
++                new ErrorResponse.ErrorDetail(e.getParameterName(), "필수 값이 없다"));
++        return ResponseEntity.badRequest()
++                .body(ErrorResponse.of("INVALID_REQUEST", "필수 요청 값이 없습니다.", details));
++    }
++
++    /**
++     * 등록되지 않은 지역 코드. 11 CAT-01 처리 규칙과 필드표의 등록된 지역 코드. 형식은 맞지만
++     * RegionRegistry에 없는 값이다. 11 에러 응답 표에 따로 코드가 없어 INVALID_REQUEST로 내고
++     * details에 필드를 적는다. R1 평가 A-02, B-02
++     */
++    @ExceptionHandler(UnregisteredRegionException.class)
++    public ResponseEntity<ErrorResponse> handleUnregisteredRegion(UnregisteredRegionException e) {
++        List<ErrorResponse.ErrorDetail> details = List.of(
++                new ErrorResponse.ErrorDetail("regionCode", "등록되지 않은 지역 코드다"));
++        return ResponseEntity.badRequest()
++                .body(ErrorResponse.of("INVALID_REQUEST", "등록되지 않은 지역 코드입니다.", details));
++    }
++
+     /**
+      * 쪽 나눔 값의 범위 위반. 11 공통 목록과 날짜 범위가 잘못된 범위를 400으로 적는다.
+      * PageQuery가 던지는 것을 여기서 받는다. 8-2절 C7이 이 경로를 검사한다.
+diff --git a/backend/src/main/java/com/o2o/shared/UnexpectedExceptionResolver.java b/backend/src/main/java/com/o2o/shared/UnexpectedExceptionResolver.java
+new file mode 100644
+index 0000000..361ff6f
+--- /dev/null
++++ b/backend/src/main/java/com/o2o/shared/UnexpectedExceptionResolver.java
+@@ -0,0 +1,69 @@
++package com.o2o.shared;
++
++import java.io.IOException;
++
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++import org.springframework.core.Ordered;
++import org.springframework.http.HttpStatus;
++import org.springframework.http.MediaType;
++import org.springframework.stereotype.Component;
++import org.springframework.web.servlet.HandlerExceptionResolver;
++import org.springframework.web.servlet.ModelAndView;
++
++import jakarta.servlet.http.HttpServletRequest;
++import jakarta.servlet.http.HttpServletResponse;
++import tools.jackson.databind.json.JsonMapper;
++
++/**
++ * 아무도 잡지 않은 예외의 마지막 자리. 11 에러 응답 표의 500 INTERNAL_ERROR다.
++ * 설계 근거: 11 에러 응답 표(예상하지 못한 오류. 내부 예외 내용은 응답에 넣지 않음). R1 평가 B-04.
++ *
++ * 어드바이스의 Exception 핸들러가 아니라 순번이 가장 늦은 HandlerExceptionResolver로 둔 이유.
++ * 어드바이스 여섯(shared 하나, 컨텍스트마다 하나)은 등록 순서대로 물어보고 먼저 맞는 핸들러가
++ * 이긴다. shared 어드바이스에 Exception 핸들러를 두면 그 어드바이스가 앞에 설 때 컨텍스트
++ * 핸들러의 404와 409를 전부 500으로 삼킨다. 지금은 패키지 이름 순으로 shared가 맨 뒤라 우연히
++ * 안전할 뿐이다. 이 클래스는 어드바이스와 스프링 기본 처리기가 모두 지나간 뒤에만 불리므로
++ * 순서를 이름에 기대지 않는다. 스프링 기본 처리기가 맡는 404와 405와 415는 여기 오지 않는다.
++ *
++ * 본문에 예외의 클래스나 메시지를 넣지 않는다. 로그에 traceId와 함께 남기고 응답에는 traceId만
++ * 준다. 사람이 로그와 응답을 그 값으로 잇는다.
++ */
++@Component
++public class UnexpectedExceptionResolver implements HandlerExceptionResolver, Ordered {
++
++    private static final Logger log = LoggerFactory.getLogger(UnexpectedExceptionResolver.class);
++
++    private final JsonMapper jsonMapper;
++
++    public UnexpectedExceptionResolver(JsonMapper jsonMapper) {
++        this.jsonMapper = jsonMapper;
++    }
++
++    @Override
++    public int getOrder() {
++        return Ordered.LOWEST_PRECEDENCE;
++    }
++
++    @Override
++    public ModelAndView resolveException(HttpServletRequest request, HttpServletResponse response,
++                                         Object handler, Exception ex) {
++        ErrorResponse body = ErrorResponse.of("INTERNAL_ERROR", "서버 내부 오류입니다.");
++        log.error("예상하지 못한 예외. traceId={} {} {}", body.traceId(), request.getMethod(),
++                request.getRequestURI(), ex);
++        if (response.isCommitted()) {
++            return null;
++        }
++        try {
++            response.resetBuffer();
++            response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
++            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
++            response.setCharacterEncoding("UTF-8");
++            response.getWriter().write(jsonMapper.writeValueAsString(body));
++        } catch (IOException e) {
++            return null;
++        }
++        // 빈 ModelAndView는 처리 완료의 표시다. 뷰 없이 응답이 이미 써졌다
++        return new ModelAndView();
++    }
++}
+diff --git a/backend/src/main/java/com/o2o/shared/UnregisteredRegionException.java b/backend/src/main/java/com/o2o/shared/UnregisteredRegionException.java
+new file mode 100644
+index 0000000..dc5d404
+--- /dev/null
++++ b/backend/src/main/java/com/o2o/shared/UnregisteredRegionException.java
+@@ -0,0 +1,22 @@
++package com.o2o.shared;
++
++/**
++ * 등록되지 않은 지역 코드. 400 INVALID_REQUEST. 설계 근거: 11 CAT-01 처리 규칙, CAT-01과
++ * CAT-02와 CAT-04 필드표의 등록된 지역 코드. R1 평가 A-02와 B-02.
++ *
++ * 형식(1자 이상 32자 이하)이 맞아도 RegionRegistry에 없으면 여기로 온다. shared에 두는 이유는
++ * RegionRegistry와 같다.
++ */
++public class UnregisteredRegionException extends RuntimeException {
++
++    private final String code;
++
++    public UnregisteredRegionException(String code) {
++        super("등록되지 않은 지역 코드다: " + code);
++        this.code = code;
++    }
++
++    public String code() {
++        return code;
++    }
++}
+diff --git a/backend/src/test/java/com/o2o/booking/BookingFixtures.java b/backend/src/test/java/com/o2o/booking/BookingFixtures.java
+index fd54e8e..290d104 100644
+--- a/backend/src/test/java/com/o2o/booking/BookingFixtures.java
++++ b/backend/src/test/java/com/o2o/booking/BookingFixtures.java
+@@ -26,6 +26,7 @@ import com.o2o.payment.domain.PaymentAttempt;
+ import com.o2o.payment.domain.PaymentRepository;
+ import com.o2o.shared.HostId;
+ import com.o2o.shared.Money;
++import com.o2o.shared.RegionRegistry;
+ import com.o2o.shared.RoomTypeId;
+ 
+ /**
+@@ -50,6 +51,7 @@ public class BookingFixtures {
+     private final BookingRepository bookingRepository;
+     private final DailyInventoryRepository inventoryRepository;
+     private final PaymentRepository paymentRepository;
++    private final RegionRegistry regionRegistry;
+     private final TransactionTemplate transaction;
+     private final MutableClock clock;
+ 
+@@ -58,7 +60,7 @@ public class BookingFixtures {
+                            BookingApplicationService bookingService,
+                            BookingRepository bookingRepository,
+                            DailyInventoryRepository inventoryRepository,
+-                           PaymentRepository paymentRepository,
++                           PaymentRepository paymentRepository, RegionRegistry regionRegistry,
+                            PlatformTransactionManager transactionManager, MutableClock clock) {
+         this.catalogService = catalogService;
+         this.inventoryService = inventoryService;
+@@ -66,6 +68,7 @@ public class BookingFixtures {
+         this.bookingRepository = bookingRepository;
+         this.inventoryRepository = inventoryRepository;
+         this.paymentRepository = paymentRepository;
++        this.regionRegistry = regionRegistry;
+         this.transaction = new TransactionTemplate(transactionManager);
+         this.clock = clock;
+     }
+@@ -76,6 +79,8 @@ public class BookingFixtures {
+     }
+ 
+     public RoomTypeId roomType(String regionCode) {
++        // 등록된 지역 코드만 숙소가 된다(CAT-01). 새로 뽑은 코드는 fixture에 먼저 넣는다
++        regionRegistry.register(regionCode);
+         Property property = catalogService.registerProperty(
+                 HOST, "2차 테스트 스테이", regionCode, "서울특별시 중구 예시로 1", "");
+         RoomType roomType = catalogService.registerRoomType(HOST, property.id(), "스탠다드", 2, "");
+diff --git a/backend/src/test/java/com/o2o/booking/BookingLifecycleTestConfiguration.java b/backend/src/test/java/com/o2o/booking/BookingLifecycleTestConfiguration.java
+index a9ee6e3..935c7bb 100644
+--- a/backend/src/test/java/com/o2o/booking/BookingLifecycleTestConfiguration.java
++++ b/backend/src/test/java/com/o2o/booking/BookingLifecycleTestConfiguration.java
+@@ -16,6 +16,7 @@ import com.o2o.inventory.application.InventoryApplicationService;
+ import com.o2o.inventory.domain.DailyInventoryRepository;
+ import com.o2o.payment.application.PaymentApplicationService;
+ import com.o2o.payment.domain.PaymentRepository;
++import com.o2o.shared.RegionRegistry;
+ 
+ /**
+  * 2차 통합 테스트가 같이 쓰는 컨텍스트 조각. 시계와 구독자와 준비 도구와 훅 둘이다. 테스트
+@@ -48,10 +49,12 @@ public class BookingLifecycleTestConfiguration {
+                                     BookingRepository bookingRepository,
+                                     DailyInventoryRepository inventoryRepository,
+                                     PaymentRepository paymentRepository,
++                                    RegionRegistry regionRegistry,
+                                     PlatformTransactionManager transactionManager,
+                                     MutableClock clock) {
+         return new BookingFixtures(catalogService, inventoryService, bookingService,
+-                bookingRepository, inventoryRepository, paymentRepository, transactionManager, clock);
++                bookingRepository, inventoryRepository, paymentRepository, regionRegistry,
++                transactionManager, clock);
+     }
+ 
+     @Bean
+diff --git a/backend/src/test/java/com/o2o/catalog/api/CatalogApiTest.java b/backend/src/test/java/com/o2o/catalog/api/CatalogApiTest.java
+index c2e085e..6aa81b3 100644
+--- a/backend/src/test/java/com/o2o/catalog/api/CatalogApiTest.java
++++ b/backend/src/test/java/com/o2o/catalog/api/CatalogApiTest.java
+@@ -7,9 +7,12 @@ import java.net.http.HttpResponse;
+ import java.time.Duration;
+ 
+ import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.boot.test.web.server.LocalServerPort;
+ 
++import com.o2o.shared.RegionRegistry;
++
+ import tools.jackson.databind.JsonNode;
+ import tools.jackson.databind.json.JsonMapper;
+ 
+@@ -45,6 +48,9 @@ class CatalogApiTest {
+     @LocalServerPort
+     private int port;
+ 
++    @Autowired
++    private RegionRegistry regionRegistry;
++
+     private HttpResponse<String> send(String method, String path, String actorId, String body)
+             throws Exception {
+         HttpRequest.Builder b = HttpRequest.newBuilder()
+@@ -349,6 +355,9 @@ class CatalogApiTest {
+ 
+     @Test
+     void 지역_코드는_32자까지_받고_33자는_거절한다() throws Exception {
++        // 길이 경계를 보는 테스트라 32자 코드를 등록된 지역으로 만들어 둔다(R1 평가 B-02).
++        // 미등록 코드의 400은 CatalogUpdateAndListApiTest의 CAT-01 미등록 테스트가 본다
++        regionRegistry.register("A".repeat(32));
+         String ok = propertyBody("지역 경계", "A".repeat(32), "주소", "");
+         String tooLong = propertyBody("지역 경계", "A".repeat(33), "주소", "");
+ 
+@@ -389,6 +398,73 @@ class CatalogApiTest {
+         assertEquals(400, send("POST", path, HOST, tooMany).statusCode());
+     }
+ 
++    // ---------- 공백과 명시적 null. C13 (R1 평가 A-03, B-03) ----------
++
++    @Test
++    void C13_이름은_앞뒤_공백을_뗀_값으로_저장하고_뗀_길이로_잰다() throws Exception {
++        // 11 CAT-01 필드표. name은 공백 제거 후 1~100자
++        HttpResponse<String> padded = send("POST", "/api/v1/properties", HOST,
++                propertyBody("  서울 스테이  ", "SEOUL", "주소", ""));
++
++        assertEquals(201, padded.statusCode(), padded.body());
++        assertEquals("서울 스테이", JSON.readTree(padded.body()).get("name").stringValue(),
++                "앞뒤 공백이 그대로 저장됐다");
++        // 앞뒤 공백을 빼면 100자인 입력은 원문 길이 104자로 거절되면 안 된다(B-03)
++        HttpResponse<String> hundred = send("POST", "/api/v1/properties", HOST,
++                propertyBody("  " + "가".repeat(100) + "  ", "SEOUL", "주소", ""));
++        assertEquals(201, hundred.statusCode(), hundred.body());
++        assertEquals(100, JSON.readTree(hundred.body()).get("name").stringValue().length());
++    }
++
++    @Test
++    void C13_이름이_공백만이면_400이고_어느_필드인지_알려준다() throws Exception {
++        HttpResponse<String> res = send("POST", "/api/v1/properties", HOST,
++                propertyBody("   ", "SEOUL", "주소", ""));
++
++        assertEquals(400, res.statusCode(), res.body());
++        JsonNode json = JSON.readTree(res.body());
++        assertEquals("INVALID_REQUEST", json.get("code").stringValue());
++        assertEquals("name", json.get("details").get(0).get("field").stringValue());
++    }
++
++    @Test
++    void C13_description의_명시적_null은_400이고_생략은_빈_문자열이다() throws Exception {
++        // 11 공통 요청과 응답 규칙. 허용하지 않은 null은 400이고 CAT-01 필드표는 생략 시 빈 문자열
++        HttpResponse<String> explicitNull = send("POST", "/api/v1/properties", HOST, """
++                {"name":"null 확인","regionCode":"SEOUL","address":"주소","description":null}
++                """);
++        HttpResponse<String> omitted = send("POST", "/api/v1/properties", HOST, """
++                {"name":"생략 확인","regionCode":"SEOUL","address":"주소"}
++                """);
++
++        assertEquals(400, explicitNull.statusCode(), explicitNull.body());
++        assertTrue(explicitNull.body().contains("INVALID_REQUEST"), explicitNull.body());
++        assertEquals(201, omitted.statusCode(), omitted.body());
++        assertEquals("", JSON.readTree(omitted.body()).get("description").stringValue());
++    }
++
++    @Test
++    void C13_객실_타입_등록도_이름을_strip하고_공백만과_명시적_null은_400이다() throws Exception {
++        // 11 CAT-06 필드표. 숙소와 같은 규칙이다
++        String propertyId = registerProperty("객실 공백용");
++        String path = "/api/v1/properties/" + propertyId + "/room-types";
++
++        HttpResponse<String> padded = send("POST", path, HOST, """
++                {"name":"  스탠다드  ","maxOccupancy":2,"description":""}
++                """);
++        HttpResponse<String> blank = send("POST", path, HOST, """
++                {"name":"   ","maxOccupancy":2,"description":""}
++                """);
++        HttpResponse<String> explicitNull = send("POST", path, HOST, """
++                {"name":"null 객실","maxOccupancy":2,"description":null}
++                """);
++
++        assertEquals(201, padded.statusCode(), padded.body());
++        assertEquals("스탠다드", JSON.readTree(padded.body()).get("name").stringValue());
++        assertEquals(400, blank.statusCode(), blank.body());
++        assertEquals(400, explicitNull.statusCode(), explicitNull.body());
++    }
++
+     @Test
+     void C10_공개_조회는_헤더_없이_된다() throws Exception {
+         // 통과 케이스. 인증 가드가 공개 경로까지 막으면 이 건이 잡는다
+diff --git a/backend/src/test/java/com/o2o/catalog/api/CatalogConcurrentUpdateApiTest.java b/backend/src/test/java/com/o2o/catalog/api/CatalogConcurrentUpdateApiTest.java
+new file mode 100644
+index 0000000..e625036
+--- /dev/null
++++ b/backend/src/test/java/com/o2o/catalog/api/CatalogConcurrentUpdateApiTest.java
+@@ -0,0 +1,174 @@
++package com.o2o.catalog.api;
++
++import java.net.URI;
++import java.net.http.HttpClient;
++import java.net.http.HttpRequest;
++import java.net.http.HttpResponse;
++import java.time.Duration;
++import java.time.Instant;
++import java.util.concurrent.ExecutorService;
++import java.util.concurrent.Executors;
++import java.util.concurrent.Future;
++import java.util.concurrent.TimeUnit;
++import java.util.concurrent.TimeoutException;
++
++import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.context.SpringBootTest;
++import org.springframework.boot.test.web.server.LocalServerPort;
++import org.springframework.transaction.PlatformTransactionManager;
++import org.springframework.transaction.support.TransactionTemplate;
++
++import com.o2o.catalog.domain.Property;
++import com.o2o.catalog.domain.PropertyRepository;
++import com.o2o.catalog.domain.RoomType;
++import com.o2o.catalog.domain.RoomTypeRepository;
++import com.o2o.shared.PropertyId;
++import com.o2o.shared.RoomTypeId;
++
++import tools.jackson.databind.JsonNode;
++import tools.jackson.databind.json.JsonMapper;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertThrows;
++import static org.junit.jupiter.api.Assertions.assertTrue;
++
++/**
++ * 8-1절 C11. 같은 version을 읽은 두 수정이 실제 MySQL에서 경합한다. R1 평가 A-01과 B-01.
++ * 설계 근거: 11 공통 요청과 응답 규칙의 version 불일치 409, 계약 2-2절의 낙관적 잠금.
++ *
++ * 순차적인 낡은 요청(C4)은 애그리거트의 메모리 대조가 잡는다. 동시 요청은 둘 다 version 0을
++ * 읽어 그 대조를 지나므로 저장 시점의 대조(@Version)가 있어야 잡힌다. 그 차이를 이렇게 본다.
++ * 테스트 트랜잭션이 version 0을 읽어 먼저 수정하고 flush해 행 잠금을 쥔 채로 서버에 version 0의
++ * PATCH를 보낸다. 서버는 커밋 전 값인 0을 읽어 메모리 대조를 지나고 저장에서 잠금을 기다린다.
++ * 잠금이 풀리기 전에 서버 요청이 끝나면 저장 시점 대조가 없는 것이다. 테스트 트랜잭션이 커밋되면
++ * 서버의 UPDATE는 where version = 0 에서 0행이 되어 409 VERSION_CONFLICT다. 남는 값은 먼저
++ * 커밋한 쪽이고 version은 1이다. 재고 묶음 R1 반영의 V14와 같은 모양이다.
++ *
++ * CatalogApiTest와 같은 방식으로 진짜 포트를 연다. 스프링 설정이 같아서 컨텍스트는 재사용된다.
++ */
++@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
++class CatalogConcurrentUpdateApiTest {
++
++    private static final String HOST = "host_001";
++    private static final JsonMapper JSON = JsonMapper.builder().build();
++
++    private final HttpClient client = HttpClient.newBuilder()
++            .connectTimeout(Duration.ofSeconds(5)).build();
++
++    @LocalServerPort
++    private int port;
++
++    @Autowired
++    private PlatformTransactionManager transactionManager;
++
++    @Autowired
++    private PropertyRepository propertyRepository;
++
++    @Autowired
++    private RoomTypeRepository roomTypeRepository;
++
++    private HttpResponse<String> send(String method, String path, String actorId, String body)
++            throws Exception {
++        HttpRequest.Builder b = HttpRequest.newBuilder()
++                .uri(URI.create("http://127.0.0.1:" + port + path))
++                .timeout(Duration.ofSeconds(60));
++        if (actorId != null) {
++            b.header("X-Dev-Actor-Id", actorId);
++        }
++        if (body == null) {
++            b.method(method, HttpRequest.BodyPublishers.noBody());
++        } else {
++            b.header("Content-Type", "application/json");
++            b.method(method, HttpRequest.BodyPublishers.ofString(body));
++        }
++        return client.send(b.build(), HttpResponse.BodyHandlers.ofString());
++    }
++
++    private String registerProperty(String name) throws Exception {
++        HttpResponse<String> res = send("POST", "/api/v1/properties", HOST, """
++                {"name":"%s","regionCode":"SEOUL","address":"서울특별시 종로구 예시로 30","description":""}
++                """.formatted(name));
++        assertEquals(201, res.statusCode(), res.body());
++        return JSON.readTree(res.body()).get("id").stringValue();
++    }
++
++    private String registerRoomType(String propertyId, String name) throws Exception {
++        HttpResponse<String> res = send("POST", "/api/v1/properties/" + propertyId + "/room-types",
++                HOST, """
++                {"name":"%s","maxOccupancy":4,"description":""}
++                """.formatted(name));
++        assertEquals(201, res.statusCode(), res.body());
++        return JSON.readTree(res.body()).get("id").stringValue();
++    }
++
++    @Test
++    void C11_같은_version의_동시_숙소_수정은_뒤에_저장하는_쪽이_409다() throws Exception {
++        String id = registerProperty("경합 전");
++        PropertyId propertyId = PropertyId.of(id);
++
++        ExecutorService waiter = Executors.newSingleThreadExecutor();
++        try {
++            Future<HttpResponse<String>> request = new TransactionTemplate(transactionManager)
++                    .execute(status -> {
++                        Property mine = propertyRepository.findById(propertyId).orElseThrow();
++                        assertEquals(0L, mine.version());
++                        // 같은 version 0으로 먼저 수정한다. flush된 UPDATE가 행 잠금을 쥔다
++                        mine.update(0L, "트랜잭션 쪽", null, null, null, Instant.now());
++                        propertyRepository.save(mine);
++                        Future<HttpResponse<String>> sent = waiter.submit(() -> send(
++                                "PATCH", "/api/v1/properties/" + id, HOST,
++                                """
++                                {"version":0,"name":"서버 쪽"}
++                                """));
++                        // 잠금을 쥔 동안 서버 요청이 끝나면 저장 시점 대조 없이 덮어쓴 것이다
++                        assertThrows(TimeoutException.class, () -> sent.get(2, TimeUnit.SECONDS));
++                        return sent;
++                    });
++
++            HttpResponse<String> res = request.get(30, TimeUnit.SECONDS);
++            assertEquals(409, res.statusCode(), res.body());
++            assertTrue(res.body().contains("VERSION_CONFLICT"), res.body());
++        } finally {
++            waiter.shutdownNow();
++        }
++        // 먼저 커밋한 쪽이 남고 version은 한 번만 오른다
++        JsonNode after = JSON.readTree(send("GET", "/api/v1/properties/" + id, null, null).body());
++        assertEquals("트랜잭션 쪽", after.get("name").stringValue());
++        assertEquals(1, after.get("version").asInt());
++    }
++
++    @Test
++    void C11_같은_version의_동시_객실_타입_수정도_뒤에_저장하는_쪽이_409다() throws Exception {
++        String propertyId = registerProperty("객실 경합용");
++        String id = registerRoomType(propertyId, "경합 전 객실");
++        RoomTypeId roomTypeId = RoomTypeId.of(id);
++
++        ExecutorService waiter = Executors.newSingleThreadExecutor();
++        try {
++            Future<HttpResponse<String>> request = new TransactionTemplate(transactionManager)
++                    .execute(status -> {
++                        RoomType mine = roomTypeRepository.findById(roomTypeId).orElseThrow();
++                        assertEquals(0L, mine.version());
++                        mine.update(0L, null, 3, null, Instant.now());
++                        roomTypeRepository.save(mine);
++                        Future<HttpResponse<String>> sent = waiter.submit(() -> send(
++                                "PATCH", "/api/v1/room-types/" + id, HOST,
++                                """
++                                {"version":0,"maxOccupancy":2}
++                                """));
++                        assertThrows(TimeoutException.class, () -> sent.get(2, TimeUnit.SECONDS));
++                        return sent;
++                    });
++
++            HttpResponse<String> res = request.get(30, TimeUnit.SECONDS);
++            assertEquals(409, res.statusCode(), res.body());
++            assertTrue(res.body().contains("VERSION_CONFLICT"), res.body());
++        } finally {
++            waiter.shutdownNow();
++        }
++        JsonNode after = JSON.readTree(send("GET", "/api/v1/room-types/" + id, null, null).body());
++        assertEquals(3, after.get("maxOccupancy").asInt());
++        assertEquals(1, after.get("version").asInt());
++    }
++}
+diff --git a/backend/src/test/java/com/o2o/catalog/api/CatalogUpdateAndListApiTest.java b/backend/src/test/java/com/o2o/catalog/api/CatalogUpdateAndListApiTest.java
+index 26cc72a..33d7422 100644
+--- a/backend/src/test/java/com/o2o/catalog/api/CatalogUpdateAndListApiTest.java
++++ b/backend/src/test/java/com/o2o/catalog/api/CatalogUpdateAndListApiTest.java
+@@ -9,9 +9,12 @@ import java.util.ArrayList;
+ import java.util.List;
+ 
+ import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.boot.test.web.server.LocalServerPort;
+ 
++import com.o2o.shared.RegionRegistry;
++
+ import tools.jackson.databind.JsonNode;
+ import tools.jackson.databind.json.JsonMapper;
+ 
+@@ -27,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
+  *
+  * 목록 검사는 전체 개수를 세지 않는다. 이 테스트에는 트랜잭션 롤백이 없어서 다른 테스트가
+  * 만든 자료가 같은 DB에 남아 있다. 그래서 검사할 때마다 고유한 지역 코드를 붙여 그 범위만 본다.
++ * 고유한 코드는 등록된 지역이어야 숙소가 되므로(CAT-01, R1 평가 A-02) fixture에 먼저 넣는다.
+  */
+ @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+ class CatalogUpdateAndListApiTest {
+@@ -41,6 +45,9 @@ class CatalogUpdateAndListApiTest {
+     @LocalServerPort
+     private int port;
+ 
++    @Autowired
++    private RegionRegistry regionRegistry;
++
+     private HttpResponse<String> send(String method, String path, String actorId, String body)
+             throws Exception {
+         HttpRequest.Builder b = HttpRequest.newBuilder()
+@@ -58,6 +65,13 @@ class CatalogUpdateAndListApiTest {
+         return client.send(b.build(), HttpResponse.BodyHandlers.ofString());
+     }
+ 
++    /** 이 테스트만 쓰는 지역 코드를 뽑아 fixture에 넣는다. 목록 검사의 범위가 된다 */
++    private String 새_지역(String prefix) {
++        String region = prefix + System.nanoTime();
++        regionRegistry.register(region);
++        return region;
++    }
++
+     private JsonNode registerProperty(String actorId, String name, String regionCode)
+             throws Exception {
+         String body = """
+@@ -149,6 +163,98 @@ class CatalogUpdateAndListApiTest {
+         assertEquals(400, send("PATCH", "/api/v1/properties/" + id, HOST, body).statusCode());
+     }
+ 
++    // ---------- 수정의 공백과 명시적 null. C13 (R1 평가 A-03, B-03) ----------
++
++    @Test
++    void C13_수정_이름은_strip한_값으로_저장한다() throws Exception {
++        JsonNode created = registerProperty(HOST, "strip 전", "SEOUL");
++        String id = created.get("id").stringValue();
++
++        HttpResponse<String> res = send("PATCH", "/api/v1/properties/" + id, HOST, """
++                {"version":0,"name":"  strip 후  "}
++                """);
++
++        assertEquals(200, res.statusCode(), res.body());
++        assertEquals("strip 후", JSON.readTree(res.body()).get("name").stringValue());
++    }
++
++    @Test
++    void C13_수정에서_공백만_있는_문자열은_400이고_바뀌지_않는다() throws Exception {
++        // 11 CAT-02 필드표. 생략은 유지이지만 공백만 있는 값은 값이 아니다
++        JsonNode created = registerProperty(HOST, "공백 수정용", "SEOUL");
++        String id = created.get("id").stringValue();
++
++        HttpResponse<String> name = send("PATCH", "/api/v1/properties/" + id, HOST, """
++                {"version":0,"name":"   "}
++                """);
++        HttpResponse<String> region = send("PATCH", "/api/v1/properties/" + id, HOST, """
++                {"version":0,"regionCode":"  "}
++                """);
++        HttpResponse<String> address = send("PATCH", "/api/v1/properties/" + id, HOST, """
++                {"version":0,"address":" "}
++                """);
++
++        assertEquals(400, name.statusCode(), name.body());
++        assertEquals("name", JSON.readTree(name.body()).get("details").get(0).get("field").stringValue());
++        assertEquals(400, region.statusCode(), region.body());
++        assertEquals(400, address.statusCode(), address.body());
++        JsonNode after = JSON.readTree(send("GET", "/api/v1/properties/" + id, null, null).body());
++        assertEquals("공백 수정용", after.get("name").stringValue(), "거절됐는데 값이 바뀌었다");
++        assertEquals(0, after.get("version").asInt());
++    }
++
++    @Test
++    void C13_수정에서_명시적_null은_400이고_생략은_유지다() throws Exception {
++        // 11 공통 요청과 응답 규칙의 허용하지 않은 null. 생략(유지)과 null(거절)을 가른다
++        JsonNode created = registerProperty(HOST, "null 수정용", "SEOUL");
++        String id = created.get("id").stringValue();
++
++        HttpResponse<String> nullName = send("PATCH", "/api/v1/properties/" + id, HOST, """
++                {"version":0,"name":null}
++                """);
++        HttpResponse<String> nullDescription = send("PATCH", "/api/v1/properties/" + id, HOST, """
++                {"version":0,"name":"바꿈","description":null}
++                """);
++        HttpResponse<String> omitted = send("PATCH", "/api/v1/properties/" + id, HOST, """
++                {"version":0,"name":"바꿈"}
++                """);
++
++        assertEquals(400, nullName.statusCode(), nullName.body());
++        assertTrue(nullName.body().contains("INVALID_REQUEST"), nullName.body());
++        assertEquals(400, nullDescription.statusCode(), nullDescription.body());
++        assertEquals(200, omitted.statusCode(), omitted.body());
++        JsonNode json = JSON.readTree(omitted.body());
++        assertEquals("바꿈", json.get("name").stringValue());
++        assertEquals("SEOUL", json.get("regionCode").stringValue(), "생략한 필드가 유지되지 않았다");
++    }
++
++    @Test
++    void C13_객실_타입_수정도_strip하고_공백만과_명시적_null은_400이다() throws Exception {
++        // 11 CAT-07 필드표. 숙소 수정과 같은 규칙이다
++        JsonNode property = registerProperty(HOST, "객실 공백 수정용", "SEOUL");
++        String roomTypeId = JSON.readTree(send("POST",
++                "/api/v1/properties/" + property.get("id").stringValue() + "/room-types", HOST,
++                """
++                {"name":"객실","maxOccupancy":4,"description":""}
++                """).body()).get("id").stringValue();
++        String path = "/api/v1/room-types/" + roomTypeId;
++
++        HttpResponse<String> blank = send("PATCH", path, HOST, """
++                {"version":0,"name":"   "}
++                """);
++        HttpResponse<String> nullOccupancy = send("PATCH", path, HOST, """
++                {"version":0,"maxOccupancy":null}
++                """);
++        HttpResponse<String> padded = send("PATCH", path, HOST, """
++                {"version":0,"name":"  새 객실  "}
++                """);
++
++        assertEquals(400, blank.statusCode(), blank.body());
++        assertEquals(400, nullOccupancy.statusCode(), nullOccupancy.body());
++        assertEquals(200, padded.statusCode(), padded.body());
++        assertEquals("새 객실", JSON.readTree(padded.body()).get("name").stringValue());
++    }
++
+     // ---------- CAT-07 ----------
+ 
+     @Test
+@@ -190,11 +296,39 @@ class CatalogUpdateAndListApiTest {
+         assertEquals(404, res.statusCode(), res.body());
+     }
+ 
++    @Test
++    void C14_CAT_07_maxOccupancy_0과_101은_400이고_값과_version이_그대로다() throws Exception {
++        // R1 평가 B-05. I14는 수정 경로에서도 지켜야 하고 상한 100은 11 공통 규칙이다.
++        // 수정 DTO의 하한이나 RoomType.update의 검사를 지우면 이 테스트가 잡는다
++        JsonNode property = registerProperty(HOST, "인원 경계 수정용", "SEOUL");
++        String roomTypeId = JSON.readTree(send("POST",
++                "/api/v1/properties/" + property.get("id").stringValue() + "/room-types", HOST,
++                """
++                {"name":"경계 객실","maxOccupancy":4,"description":""}
++                """).body()).get("id").stringValue();
++        String path = "/api/v1/room-types/" + roomTypeId;
++
++        HttpResponse<String> zero = send("PATCH", path, HOST, """
++                {"version":0,"maxOccupancy":0}
++                """);
++        HttpResponse<String> over = send("PATCH", path, HOST, """
++                {"version":0,"maxOccupancy":101}
++                """);
++
++        assertEquals(400, zero.statusCode(), zero.body());
++        assertTrue(zero.body().contains("INVALID_REQUEST"), zero.body());
++        assertEquals(400, over.statusCode(), over.body());
++        assertTrue(over.body().contains("INVALID_REQUEST"), over.body());
++        JsonNode after = JSON.readTree(send("GET", path, null, null).body());
++        assertEquals(4, after.get("maxOccupancy").asInt(), "거절됐는데 값이 바뀌었다");
++        assertEquals(0, after.get("version").asInt());
++    }
++
+     // ---------- CAT-04와 C7, C8 ----------
+ 
+     @Test
+     void CAT_04_지역_코드로_거른다() throws Exception {
+-        String region = "REGION_" + System.nanoTime();
++        String region = 새_지역("REGION_");
+         registerProperty(HOST, "지역 하나", region);
+         registerProperty(HOST, "지역 둘", region);
+ 
+@@ -227,7 +361,7 @@ class CatalogUpdateAndListApiTest {
+ 
+     @Test
+     void C8_기본_정렬이_id_오름차순이다() throws Exception {
+-        String region = "SORT_" + System.nanoTime();
++        String region = 새_지역("SORT_");
+         for (int i = 0; i < 3; i++) {
+             registerProperty(HOST, "정렬 " + i, region);
+         }
+@@ -243,7 +377,7 @@ class CatalogUpdateAndListApiTest {
+ 
+     @Test
+     void C8_페이지_범위를_넘으면_빈_items다() throws Exception {
+-        String region = "EMPTY_" + System.nanoTime();
++        String region = 새_지역("EMPTY_");
+         registerProperty(HOST, "한 건", region);
+ 
+         JsonNode json = JSON.readTree(send(
+@@ -253,6 +387,87 @@ class CatalogUpdateAndListApiTest {
+         assertEquals(1, json.get("totalElements").asInt());
+     }
+ 
++    // ---------- 등록 지역 코드. C12 (R1 평가 A-02, B-02) ----------
++
++    @Test
++    void C12_미등록_지역_코드로_등록하면_400_INVALID_REQUEST다() throws Exception {
++        // 11 CAT-01 처리 규칙. 등록된 지역 코드를 확인하고 저장한다. 형식은 맞는 값이다
++        String body = """
++                {"name":"미등록 지역","regionCode":"NOWHERE_%d","address":"서울특별시 종로구 예시로 30","description":""}
++                """.formatted(System.nanoTime());
++
++        HttpResponse<String> res = send("POST", "/api/v1/properties", HOST, body);
++
++        assertEquals(400, res.statusCode(), res.body());
++        JsonNode json = JSON.readTree(res.body());
++        assertEquals("INVALID_REQUEST", json.get("code").stringValue());
++        assertEquals("regionCode", json.get("details").get(0).get("field").stringValue());
++    }
++
++    @Test
++    void C12_등록된_fixture_지역_코드로는_등록된다() throws Exception {
++        // 통과 짝. 초기 fixture의 값 하나
++        registerProperty(HOST, "제주 스테이", "JEJU");
++    }
++
++    @Test
++    void C12_미등록_지역_코드로_수정하면_400이고_바뀌지_않는다() throws Exception {
++        JsonNode created = registerProperty(HOST, "지역 수정용", "SEOUL");
++        String id = created.get("id").stringValue();
++        String body = """
++                {"version":0,"regionCode":"NOWHERE_%d"}
++                """.formatted(System.nanoTime());
++
++        HttpResponse<String> res = send("PATCH", "/api/v1/properties/" + id, HOST, body);
++
++        assertEquals(400, res.statusCode(), res.body());
++        assertTrue(res.body().contains("INVALID_REQUEST"), res.body());
++        JsonNode after = JSON.readTree(send("GET", "/api/v1/properties/" + id, null, null).body());
++        assertEquals("SEOUL", after.get("regionCode").stringValue(), "거절됐는데 값이 바뀌었다");
++        assertEquals(0, after.get("version").asInt());
++    }
++
++    @Test
++    void C12_등록된_지역_코드로_수정하면_200이다() throws Exception {
++        JsonNode created = registerProperty(HOST, "지역 수정 통과용", "SEOUL");
++        String id = created.get("id").stringValue();
++
++        HttpResponse<String> res = send("PATCH", "/api/v1/properties/" + id, HOST, """
++                {"version":0,"regionCode":"BUSAN"}
++                """);
++
++        assertEquals(200, res.statusCode(), res.body());
++        assertEquals("BUSAN", JSON.readTree(res.body()).get("regionCode").stringValue());
++    }
++
++    @Test
++    void C12_미등록_지역_코드로_목록을_조회하면_400_INVALID_REQUEST다() throws Exception {
++        // 11 CAT-04 쿼리표. 빈 목록이 아니라 400이다. 미등록 코드로 빈 목록을 주면 없는 지역이
++        // 있는 것처럼 보인다
++        HttpResponse<String> res = send(
++                "GET", "/api/v1/properties?regionCode=NOWHERE_" + System.nanoTime(), null, null);
++
++        assertEquals(400, res.statusCode(), res.body());
++        assertEquals("INVALID_REQUEST", JSON.readTree(res.body()).get("code").stringValue());
++    }
++
++    @Test
++    void C12_목록의_지역_코드는_32자까지_받고_33자와_공백만은_400이다() throws Exception {
++        // 11 CAT-04 쿼리표의 1자 이상 32자 이하. 길이 검사가 등록 검사보다 먼저다
++        String code32 = ("B" + System.nanoTime() + "A".repeat(32)).substring(0, 32);
++        regionRegistry.register(code32);
++
++        assertEquals(200, send("GET", "/api/v1/properties?regionCode=" + code32, null, null)
++                .statusCode());
++        HttpResponse<String> tooLong = send(
++                "GET", "/api/v1/properties?regionCode=" + code32 + "A", null, null);
++        HttpResponse<String> blank = send("GET", "/api/v1/properties?regionCode=%20", null, null);
++
++        assertEquals(400, tooLong.statusCode(), tooLong.body());
++        assertEquals("INVALID_REQUEST", JSON.readTree(tooLong.body()).get("code").stringValue());
++        assertEquals(400, blank.statusCode(), blank.body());
++    }
++
+     // ---------- CAT-05 ----------
+ 
+     @Test
+diff --git a/backend/src/test/java/com/o2o/catalog/domain/RoomTypeTest.java b/backend/src/test/java/com/o2o/catalog/domain/RoomTypeTest.java
+index 3209d70..52966f3 100644
+--- a/backend/src/test/java/com/o2o/catalog/domain/RoomTypeTest.java
++++ b/backend/src/test/java/com/o2o/catalog/domain/RoomTypeTest.java
+@@ -44,6 +44,35 @@ class RoomTypeTest {
+         assertEquals(PROPERTY_ID, roomType.propertyId());
+     }
+ 
++    @Test
++    void update에_0을_넣으면_거절하고_값이_그대로다() {
++        // R1 평가 B-05. I14는 등록과 수정 모두 지킨다(06-4 1-2 updateRoomType의 Invariant)
++        RoomType roomType = RoomType.register(PROPERTY_ID, "스탠다드 더블", 4, "", NOW);
++
++        assertThrows(InvalidOccupancyException.class,
++                () -> roomType.update(0L, null, 0, null, NOW));
++        assertEquals(4, roomType.maxOccupancy());
++    }
++
++    @Test
++    void update에_음수를_넣으면_거절한다() {
++        RoomType roomType = RoomType.register(PROPERTY_ID, "스탠다드 더블", 4, "", NOW);
++
++        assertThrows(InvalidOccupancyException.class,
++                () -> roomType.update(0L, null, -1, null, NOW));
++        assertEquals(4, roomType.maxOccupancy());
++    }
++
++    @Test
++    void update에_양수를_넣으면_바뀐다() {
++        // 통과 짝. 하향도 막지 않는다(11 CAT-07 처리 규칙)
++        RoomType roomType = RoomType.register(PROPERTY_ID, "스탠다드 더블", 4, "", NOW);
++
++        roomType.update(0L, null, 1, null, NOW);
++
++        assertEquals(1, roomType.maxOccupancy());
++    }
++
+     @Test
+     void 상한인_100도_생성한다() {
+         // 11 공통 요청과 응답 규칙이 maxOccupancy를 1 이상 100 이하로 적는다.
+diff --git a/backend/src/test/java/com/o2o/inventory/domain/InventoryAllocationServiceTest.java b/backend/src/test/java/com/o2o/inventory/domain/InventoryAllocationServiceTest.java
+index ef139e5..4f3f8b3 100644
+--- a/backend/src/test/java/com/o2o/inventory/domain/InventoryAllocationServiceTest.java
++++ b/backend/src/test/java/com/o2o/inventory/domain/InventoryAllocationServiceTest.java
+@@ -16,6 +16,7 @@ import com.o2o.catalog.domain.Property;
+ import com.o2o.catalog.domain.RoomType;
+ import com.o2o.inventory.application.InventoryApplicationService;
+ import com.o2o.shared.HostId;
++import com.o2o.shared.RegionRegistry;
+ import com.o2o.shared.RoomTypeId;
+ 
+ import static org.junit.jupiter.api.Assertions.assertEquals;
+@@ -47,6 +48,9 @@ class InventoryAllocationServiceTest {
+     @Autowired
+     private CatalogApplicationService catalogApplicationService;
+ 
++    @Autowired
++    private RegionRegistry regionRegistry;
++
+     @Autowired
+     private DailyInventoryRepository inventoryRepository;
+ 
+@@ -152,6 +156,8 @@ class InventoryAllocationServiceTest {
+ 
+     private RoomTypeId 객실_타입() {
+         String region = "T" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
++        // 등록된 지역 코드만 숙소가 된다(CAT-01). 새로 뽑은 코드는 fixture에 먼저 넣는다
++        regionRegistry.register(region);
+         Property property = catalogApplicationService.registerProperty(
+                 HOST, "N행 테스트 스테이", region, "서울특별시 중구 예시로 1", "");
+         RoomType roomType = catalogApplicationService.registerRoomType(
+diff --git a/backend/src/test/java/com/o2o/promotion/api/PromotionApiTest.java b/backend/src/test/java/com/o2o/promotion/api/PromotionApiTest.java
+index 61caf24..4ffaf69 100644
+--- a/backend/src/test/java/com/o2o/promotion/api/PromotionApiTest.java
++++ b/backend/src/test/java/com/o2o/promotion/api/PromotionApiTest.java
+@@ -11,9 +11,11 @@ import java.util.List;
+ import java.util.UUID;
+ 
+ import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.boot.test.web.server.LocalServerPort;
+ 
++import com.o2o.shared.RegionRegistry;
+ import com.o2o.shared.SeoulDate;
+ 
+ import tools.jackson.databind.JsonNode;
+@@ -49,6 +51,9 @@ class PromotionApiTest {
+     @LocalServerPort
+     private int port;
+ 
++    @Autowired
++    private RegionRegistry regionRegistry;
++
+     /** 서버와 같은 오늘. 서버가 서울 날짜로 판정하므로 여기도 서울 날짜다(11 명세 35행) */
+     private static LocalDate today() {
+         return LocalDate.now(SeoulDate.ZONE);
+@@ -98,6 +103,8 @@ class PromotionApiTest {
+     }
+ 
+     private String 객실_타입(String region, int maxOccupancy) throws Exception {
++        // 등록된 지역 코드만 숙소가 된다(CAT-01). 새로 뽑은 코드는 fixture에 먼저 넣는다
++        regionRegistry.register(region);
+         HttpResponse<String> property = send("POST", "/api/v1/properties", HOST,
+                 "{\"name\":\"프로모션 테스트 스테이\",\"regionCode\":\"" + region
+                         + "\",\"address\":\"서울특별시 중구 예시로 9\",\"description\":\"\"}");
+diff --git a/backend/src/test/java/com/o2o/promotion/application/PromotionApplicationServiceTest.java b/backend/src/test/java/com/o2o/promotion/application/PromotionApplicationServiceTest.java
+index 3a6700d..3d6993d 100644
+--- a/backend/src/test/java/com/o2o/promotion/application/PromotionApplicationServiceTest.java
++++ b/backend/src/test/java/com/o2o/promotion/application/PromotionApplicationServiceTest.java
+@@ -34,6 +34,7 @@ import com.o2o.shared.HostId;
+ import com.o2o.shared.PageQuery;
+ import com.o2o.shared.PageResult;
+ import com.o2o.shared.PromotionId;
++import com.o2o.shared.RegionRegistry;
+ import com.o2o.shared.RoomTypeId;
+ import com.o2o.shared.VersionConflictException;
+ 
+@@ -84,6 +85,9 @@ class PromotionApplicationServiceTest {
+     @Autowired
+     private CatalogApplicationService catalogApplicationService;
+ 
++    @Autowired
++    private RegionRegistry regionRegistry;
++
+     @Autowired
+     private InventoryApplicationService inventoryApplicationService;
+ 
+@@ -316,6 +320,8 @@ class PromotionApplicationServiceTest {
+     }
+ 
+     private RoomTypeId 객실_타입(String region, int maxOccupancy) {
++        // 등록된 지역 코드만 숙소가 된다(CAT-01). 새로 뽑은 코드는 fixture에 먼저 넣는다
++        regionRegistry.register(region);
+         Property property = catalogApplicationService.registerProperty(
+                 HOST, "테스트 스테이", region, "서울특별시 중구 예시로 1", "");
+         RoomType roomType = catalogApplicationService.registerRoomType(
+diff --git a/backend/src/test/java/com/o2o/search/api/SearchApiTest.java b/backend/src/test/java/com/o2o/search/api/SearchApiTest.java
+index f7f311e..be6c700 100644
+--- a/backend/src/test/java/com/o2o/search/api/SearchApiTest.java
++++ b/backend/src/test/java/com/o2o/search/api/SearchApiTest.java
+@@ -9,9 +9,11 @@ import java.time.LocalDate;
+ import java.util.UUID;
+ 
+ import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.boot.test.web.server.LocalServerPort;
+ 
++import com.o2o.shared.RegionRegistry;
+ import com.o2o.shared.SeoulDate;
+ 
+ import tools.jackson.databind.JsonNode;
+@@ -46,6 +48,9 @@ class SearchApiTest {
+     @LocalServerPort
+     private int port;
+ 
++    @Autowired
++    private RegionRegistry regionRegistry;
++
+     /** 서버와 같은 오늘. 서버가 서울 날짜로 판정하므로 여기도 서울 날짜다(11 명세 35행) */
+     private static LocalDate today() {
+         return LocalDate.now(SeoulDate.ZONE);
+@@ -82,6 +87,8 @@ class SearchApiTest {
+     }
+ 
+     private String 숙소(String region) throws Exception {
++        // 등록된 지역 코드만 숙소가 된다(CAT-01). 새로 뽑은 코드는 fixture에 먼저 넣는다
++        regionRegistry.register(region);
+         HttpResponse<String> res = send("POST", "/api/v1/properties", HOST,
+                 "{\"name\":\"검색 테스트 스테이\",\"regionCode\":\"" + region
+                         + "\",\"address\":\"서울특별시 중구 예시로 9\",\"description\":\"\"}");
+diff --git a/backend/src/test/java/com/o2o/shared/SharedErrorResponseApiTest.java b/backend/src/test/java/com/o2o/shared/SharedErrorResponseApiTest.java
+new file mode 100644
+index 0000000..3b6c7a3
+--- /dev/null
++++ b/backend/src/test/java/com/o2o/shared/SharedErrorResponseApiTest.java
+@@ -0,0 +1,125 @@
++package com.o2o.shared;
++
++import java.net.URI;
++import java.net.http.HttpClient;
++import java.net.http.HttpRequest;
++import java.net.http.HttpResponse;
++import java.time.Duration;
++
++import org.junit.jupiter.api.Test;
++import org.springframework.boot.test.context.SpringBootTest;
++import org.springframework.boot.test.context.TestConfiguration;
++import org.springframework.boot.test.web.server.LocalServerPort;
++import org.springframework.context.annotation.Bean;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.RestController;
++
++import tools.jackson.databind.JsonNode;
++import tools.jackson.databind.json.JsonMapper;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertFalse;
++import static org.junit.jupiter.api.Assertions.assertTrue;
++
++/**
++ * 공통 오류 형식의 경계 셋. 설계 근거: 11 에러 응답 표(공통 형식과 상태 코드는 모든 API에
++ * 적용한다. 500 INTERNAL_ERROR는 내부 예외 내용을 응답에 넣지 않는다), 11 공통 요청과 응답
++ * 규칙(잘못된 타입은 400). R1 평가 B-04.
++ *
++ * 예상하지 못한 예외를 내는 컨트롤러는 프로덕션에 없어야 하므로 이 테스트 컨텍스트에만 하나를
++ * 더한다. 그래서 이 클래스는 컨텍스트를 따로 띄운다. 진짜 포트로 치는 이유는 CatalogApiTest와
++ * 같다. 예외가 서블릿 컨테이너까지 어떻게 나가는지는 MockMvc로 보이지 않는다.
++ */
++@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
++class SharedErrorResponseApiTest {
++
++    private static final String SECRET = "내부에서만 보여야 하는 메시지 secret-detail-7f3a";
++    private static final JsonMapper JSON = JsonMapper.builder().build();
++
++    @TestConfiguration
++    static class BoomConfiguration {
++        @Bean
++        BoomController boomController() {
++            return new BoomController();
++        }
++    }
++
++    @RestController
++    static class BoomController {
++        @GetMapping("/test/boom")
++        String boom() {
++            throw new IllegalStateException(SECRET);
++        }
++    }
++
++    private final HttpClient client = HttpClient.newBuilder()
++            .connectTimeout(Duration.ofSeconds(5)).build();
++
++    @LocalServerPort
++    private int port;
++
++    private HttpResponse<String> get(String path) throws Exception {
++        HttpRequest request = HttpRequest.newBuilder()
++                .uri(URI.create("http://127.0.0.1:" + port + path))
++                .timeout(Duration.ofSeconds(10))
++                .GET().build();
++        return client.send(request, HttpResponse.BodyHandlers.ofString());
++    }
++
++    private static void assertCommonShape(JsonNode body) {
++        // 11 에러 응답 절의 네 칸. details는 없으면 빈 배열이다
++        for (String field : new String[] {"code", "message", "traceId", "details"}) {
++            assertTrue(body.has(field), "공통 오류 형식에 " + field + " 칸이 없다: " + body);
++        }
++        assertTrue(body.get("traceId").stringValue().startsWith("trace_"));
++        assertTrue(body.get("details").isArray());
++    }
++
++    @Test
++    void 예상하지_못한_예외는_500_INTERNAL_ERROR이고_내부_내용을_넣지_않는다() throws Exception {
++        HttpResponse<String> res = get("/test/boom");
++
++        assertEquals(500, res.statusCode(), res.body());
++        assertTrue(res.headers().firstValue("Content-Type").orElse("").startsWith("application/json"),
++                res.headers().toString());
++        JsonNode body = JSON.readTree(res.body());
++        assertCommonShape(body);
++        assertEquals("INTERNAL_ERROR", body.get("code").stringValue());
++        assertFalse(res.body().contains("secret-detail"), "예외 메시지가 응답에 새어 나갔다: " + res.body());
++        assertFalse(res.body().contains("IllegalStateException"), "예외 클래스가 응답에 새어 나갔다: " + res.body());
++        assertFalse(res.body().contains("boom"), "스택 정보가 응답에 새어 나갔다: " + res.body());
++    }
++
++    @Test
++    void 쿼리_값의_타입이_틀리면_400_INVALID_REQUEST이고_어느_값인지_알려준다() throws Exception {
++        HttpResponse<String> res = get("/api/v1/properties?page=abc");
++
++        assertEquals(400, res.statusCode(), res.body());
++        JsonNode body = JSON.readTree(res.body());
++        assertCommonShape(body);
++        assertEquals("INVALID_REQUEST", body.get("code").stringValue());
++        assertEquals("page", body.get("details").get(0).get("field").stringValue());
++    }
++
++    @Test
++    void 필수_쿼리_값이_없으면_400_INVALID_REQUEST이고_어느_값인지_알려준다() throws Exception {
++        // SEARCH-01의 regionCode는 필수다. 스프링 기본 본문이 아니라 공통 형식으로 나가야 한다
++        HttpResponse<String> res = get("/api/v1/search/properties");
++
++        assertEquals(400, res.statusCode(), res.body());
++        JsonNode body = JSON.readTree(res.body());
++        assertCommonShape(body);
++        assertEquals("INVALID_REQUEST", body.get("code").stringValue());
++        assertEquals("regionCode", body.get("details").get(0).get("field").stringValue());
++    }
++
++    @Test
++    void 컨텍스트_핸들러의_404는_마지막_자리에_삼켜지지_않는다() throws Exception {
++        // 마지막 자리(500)는 어드바이스 여섯이 전부 지나간 뒤에만 불린다. 카탈로그의 404가
++        // 그대로 나가는 것이 그 순서의 증거다
++        HttpResponse<String> res = get("/api/v1/properties/prop_nothing");
++
++        assertEquals(404, res.statusCode(), res.body());
++        assertEquals("RESOURCE_NOT_FOUND", JSON.readTree(res.body()).get("code").stringValue());
++    }
++}

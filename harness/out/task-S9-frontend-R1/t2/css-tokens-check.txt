@@ -1,0 +1,10 @@
+# 빌드 CSS에 @theme 토큰 유틸리티가 생성됐는지. 2sdt61wye_n1y.css
+bg-devbar: 1
+text-ink-2: 1
+rounded-control: 1
+text-22: 1
+bg-badge-held-bg: 1
+shadow-dropdown: 1
+h-(--h-devbar): 1
+w-(--w-page): 1
+--color-devbar 정의: 1

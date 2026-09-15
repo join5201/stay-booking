@@ -2,7 +2,7 @@
 
 양식: harness/prompts/decision-table.md v4 (2026-09-08)
 최초 작성: 2026-09-14
-최종 갱신: 2026-09-14 (결정 10건 확정. 사용자 발언은 초안대로 10건 확정해라. 반영 진행해라. 반영 인계 표는 반영 뒤 기입)
+최종 갱신: 2026-09-14 (사용자 최종 완료 판단 완료와 지역 fixture 값 열일곱 확정. 사용자 발언은 병합해라. 지역 코드 열일곱 그대로 확정해라. 그 전 같은 날 반영 뒤 인계 표 기입, 그 전 결정 10건 확정)
 
 왜 이 파일이 필요한가: 리포트를 눈으로 읽고 반영하면 자기 결정에 불리한 지적이 조용히 빠진다(HR4). 원본 행을 하나씩 옮겨 두면 g2가 ID 집합과 심각도를 원본과 대조할 수 있다.
 
@@ -17,7 +17,7 @@
 | 평가 라운드 | R1 |
 | 평가 대상 절대경로와 파일 목록 | harness/out/task-S9-catalog-R1/eval-target-files.md |
 | 평가 대상 버전 또는 해시 | sha256:c019bc515f6c68e2. 목록이 가리키는 프로덕션 52개와 테스트 6개의 기준 커밋은 1bdadfe5a78722f1e708d96bafc0f728eddfc4a1(PR 138 병합, main)이고 파일별 sha256은 A와 B 리포트의 읽은 파일 표에 있다. 평가 브랜치 eval/mvp-2026-09-14 |
-| 승인된 작업 계약 절대경로와 버전 | harness/tasks/task-S9-catalog.md sha256:7d6cc521e6df67e6 |
+| 승인된 작업 계약 절대경로와 버전 | harness/tasks/task-S9-catalog.md sha256:a3f7aa98cb4b57cd. 2026-09-14 개정 4(R1 반영을 받은 판)와 10절 지역 fixture 값 확정 행 뒤의 해시다. 개정 4 직후 판은 b35eca9a0afe6e15, 평가와 결정 시점의 판은 7d6cc521e6df67e6이고 그 판과의 차이는 개정 4와 확정 행 하나뿐이다(계약 0-5절과 10절) |
 | A 원본 리포트 절대경로와 버전 또는 해시 | harness/reviews/task-S9-catalog-R1-A.md sha256:b14f84a47634d661 |
 | B 원본 리포트 절대경로와 버전 또는 해시 | harness/reviews/task-S9-catalog-R1-B.md sha256:aaf8326e6c52ca71 |
 | A 원본 지적 수 | 4 |
@@ -87,21 +87,22 @@ A는 치명 1, 보통 2, 확인필요 1이다. B는 치명 1, 보통 3, 확인�
 | 확인 항목 | 기록 |
 |---|---|
 | 확인자와 날짜 | g2 실행은 2026-09-14 Claude Code(개발 세션). 사람 서명 대기 |
-| G2 결과 | 통과. node harness/tools/check.mjs g2 harness/decisions/task-S9-catalog-R1.md --mode pre 검사 84건 통과(2026-09-14) |
+| G2 결과 | 통과. node harness/tools/check.mjs g2 harness/decisions/task-S9-catalog-R1.md --mode pre 검사 84건 통과(2026-09-14 결정 전). 같은 명령 --mode final 검사 86건 통과(2026-09-14 반영 뒤 인계 표 기입 후) |
 | 미완료 사유 | 없음. 사용자가 2026-09-14 결정 10건을 확정했고 기계 검사는 위 결과 |
 
 ## 반영과 최종 확인 인계
 
 | 확인 대상 | 기록 |
 |---|---|
-| 반영본 절대경로와 버전 또는 해시 | 반영 후 작성 |
-| 수용 항목 반영 확인 | 반영 후 작성. 수용 8건의 반영 위치는 이유 열에 적었다. 반영 순서 제안은 A-01(잠금), B-04(공통 핸들러), A-02(지역 fixture. 값은 사용자), A-03(문자열), B-05(테스트) |
-| 미수용 항목 무변경 확인 | 반영 후 작성. 반박 둘(A-04, B-06)이 짚은 컨트롤러 셋과 저장소 메서드 둘은 바꾸지 않는다 |
-| 남은 실제 치명 지적 | S9-R1-A-01, S9-R1-B-01. 수용했고 반영 전이다 |
+| 반영본 절대경로와 버전 또는 해시 | 브랜치 fix/task-s9-catalog-r1-apply. 코드 마지막 커밋 eb1304a(브랜치 시작은 이 결정표의 확정 커밋 e1a9392). backend/ 아래 26개 파일의 sha256은 harness/out/task-S9-catalog-R1/applied/apply-report.md 2절(sha256:f69ad34b8377d2f8). diff 전문은 같은 폴더 apply.diff. 계약은 harness/tasks/task-S9-catalog.md 개정 4 sha256:b35eca9a0afe6e15 |
+| 수용 항목 반영 확인 | 8건 전부 반영했다. 위치는 apply-report 3절. A-01과 B-01은 Property와 RoomType의 @Version과 JPA 어댑터의 saveAndFlush와 공유 핸들러의 409와 C11 둘. A-02와 B-02는 shared/RegionRegistry와 앱 서비스의 등록 여부 확인 셋과 CAT-04 길이 검사와 C12 여섯. A-03과 B-03은 요청 DTO 넷의 setter 클래스(strip, 공백만 400, 명시적 null 400)와 C13 여덟. B-04는 UnexpectedExceptionResolver와 공유 핸들러의 400 둘과 C15 넷. B-05는 RoomTypeTest 셋과 C14 하나. 결정표와 다르게 간 것 셋(500의 자리가 어드바이스가 아니라 resolver, 명시적 null의 방법은 Jackson 3.1.5 실측으로 정함, fixture 열일곱 값은 제안)은 apply-report 4절 |
+| 미수용 항목 무변경 확인 | 반박 둘(A-04, B-06)이 짚은 HostPropertyController와 RoomTypeController와 PropertyRepository와 RoomTypeRepository는 기준 커밋 1bdadfe와 같다. PropertyController는 B-02(수용)의 CAT-04 길이 검사로만 바뀌었고 A-04가 요구한 미정의 Query 필드 거절은 넣지 않았다. 반박 근거 둘은 계약 5절의 R2 허용 입력 행으로 열었다. apply-report 5절 |
+| 남은 실제 치명 지적 | 없음 |
+| 치명 둘이 닫힌 근거 | A-01과 B-01은 @Version과 saveAndFlush로 저장 시점 대조가 됐고 C11 둘이 잡는다. @Version을 떼면 둘 다 실패한다(apply-report 6절 변이 검사) |
 | 오판 정정 완료 항목 | 없음 |
-| 마지막 반영본에 필요한 검증과 결과 | 반영 후 작성. 전체 테스트, g1 code, 계약 fill, 같은 version 동시 PATCH 테스트 둘 |
-| 코드 작업의 직접 실행 근거 | 반영 후 작성 |
+| 마지막 반영본에 필요한 검증과 결과 | 전체 테스트 --rerun-tasks 50클래스 443건 실패 0 오류 0 건너뜀 0(평가 전 419건에 24 추가). g1 code 104건 통과(RegionRegistry.java와 UnexpectedExceptionResolver.java, --artifact junit 50개). 계약 fill 120건 중 12건 실패이고 열두 건 전부 2026-09-09부터 있던 것(새 행은 통과). 같은 version 동시 PATCH 테스트 둘 통과. 변이 검사 셋은 apply-report 6절. g2 --mode final은 아래 G2 결과 행 |
+| 코드 작업의 직접 실행 근거 | harness/out/task-S9-catalog-R1/applied/junit/ 아래 JUnit XML 50개(2026-09-14 21:25 실행, DB o2o_fix_test). 명령과 숫자는 apply-report 6절 |
 | 평가 대상 소스와 테스트의 무변경 확인 | 평가 전후 대조. A와 B가 적은 58개 파일의 sha256이 서로 같고 대상 목록의 앞 16자리와 같다. verify-eval-workspace.mjs의 ws.target-drift가 2026-09-14 14:23에 PASS였고 평가 뒤 git status에 리포트 둘 말고 바뀐 파일이 없다 |
 | 검증 미완료 사항 | 사용자 확정. A의 Gradle 실행이 UP-TO-DATE였던 것은 반영 라운드의 전체 테스트 실행이 대신한다 |
-| 사용자 최종 완료 판단과 날짜 | 미완료. 결정 10건은 2026-09-14 확정됐고 반영 전이다 |
-| 실제 판단 및 확인에 사용한 시간 | 초안 작성 약 40분. 사용자 판단 시간은 미측정 |
+| 사용자 최종 완료 판단과 날짜 | 완료. join5201, 2026-09-14. 발언은 병합해라. 지역 코드 열일곱 그대로 확정해라. PR 145 병합 지시와 함께 A-02 행이 사용자 몫으로 남긴 RegionRegistry 값 목록을 코드의 열일곱(SEOUL, BUSAN, DAEGU, INCHEON, GWANGJU, DAEJEON, ULSAN, SEJONG, GYEONGGI, GANGWON, CHUNGBUK, CHUNGNAM, JEONBUK, JEONNAM, GYEONGBUK, GYEONGNAM, JEJU) 그대로 확정했다 |
+| 실제 판단 및 확인에 사용한 시간 | 초안 작성 약 40분. 사용자 판단 시간은 미측정. 반영은 코드와 테스트 약 57분(확정 커밋 20:26부터 코드 마지막 커밋 21:22), 기록 약 15분 |

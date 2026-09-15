@@ -27,9 +27,14 @@ public class JpaPropertyRepository implements PropertyRepository {
         this.jpaRepository = jpaRepository;
     }
 
+    /**
+     * 저장하면서 바로 flush한다. version의 저장 시점 대조(@Version)가 여기서 일어나게 하기 위해서다.
+     * 커밋까지 미루면 충돌이 트랜잭션 경계 밖에서 터지고 응답과 이벤트가 옛 version을 들고 나간다.
+     * R1 평가 A-01, B-01
+     */
     @Override
     public Property save(Property property) {
-        return jpaRepository.save(property);
+        return jpaRepository.saveAndFlush(property);
     }
 
     @Override
