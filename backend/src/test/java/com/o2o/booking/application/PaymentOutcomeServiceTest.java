@@ -128,6 +128,28 @@ class PaymentOutcomeServiceTest {
     }
 
     @Test
+    void L7_승인_시각이_만료_전이면_처리_시각이_만료_뒤라도_확정이고_환불이_없다() {
+        // R1 평가 B-02 반영. 기준 시점은 처리 시각이 아니라 승인 기록의 서버 시각이다. 승인이 만료 전에
+        // 기록됐으면 구독자가 늦게 돌아도 확정이다. 늦게 도는 P1은 심은 승인과 이벤트를 손으로 만든다
+        Booking booking = fixtures.held(1);
+        PaymentAttempt approved = fixtures.seedApproved(booking);
+        PaymentApproved late = new PaymentApproved(PaymentId.newId(), booking.id().value(), approved.id(),
+                approved.pgTransactionId(), fixtures.charge(booking), 1, approved.completedAt());
+        clock.set(booking.expiresAt().plusSeconds(60));
+
+        outcomeService.onApproved(late);
+
+        Booking after = fixtures.reload(booking.id());
+        assertEquals(BookingStatus.CONFIRMED, after.status());
+        assertEquals(clock.instant(), after.confirmedAt());
+        assertEquals(1, fixtures.soldCount(booking.roomTypeId(), CHECK_IN));
+        assertEquals(0, fixtures.heldCount(booking.roomTypeId(), CHECK_IN));
+        assertNull(paymentService.attemptsOf(booking.id().value()).refund());
+        assertEquals(1, events.confirmedOf(booking.id()));
+        assertEquals(0, events.expiredOf(booking.id()));
+    }
+
+    @Test
     void L7_승인_시각이_expiresAt_1초_전이면_확정이다() {
         // 위 테스트의 짝(T2). 같은 길로 1초 앞은 확정이다
         Booking booking = fixtures.held(1);
