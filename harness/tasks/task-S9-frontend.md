@@ -1,7 +1,7 @@
 # 작업 계약 task-S9-frontend (프론트 화면 전체)
 
 최초 작성: 2026-09-15
-최종 갱신: 2026-09-15 (T3 API 층 끝. 9절 T3 실행 결과 행, 10절. 4절 해시 둘 갱신(예약 R1 반영 뒤 예약 컨트롤러와 백엔드 README). 그 전 같은 날 T2 공통 UI 끝. 6절 스택 행에 Tailwind 4 토큰 자리와 proxy 이름, 9절 실행 환경과 T2 실행 결과 행, 10절. 그 전 같은 날 T1 기반 끝. 9절 실행 환경 행에 package-lock.json 판 기입과 T1 실행 결과 행, 10절 마지막 성공 단계와 실제 사용 시간. 그 전 같은 날 계약 승인. D-1부터 D-7 추천대로 확정. 작업 표 이름 확정, 6절 지역 코드 행, 7절 결정 줄 일곱, 10절. 그 전 같은 날 초안. 인계 문서 HANDOFF.md를 받아 화면과 API 대응표를 옮기고 백엔드 실물과의 차이 여섯을 2-1절에 고정)
+최종 갱신: 2026-09-15 (T4 호스트 1 끝. 9절 T4 실행 결과 행, 10절. 그 전 같은 날 T3 API 층 끝. 9절 T3 실행 결과 행, 10절. 4절 해시 둘 갱신(예약 R1 반영 뒤 예약 컨트롤러와 백엔드 README). 그 전 같은 날 T2 공통 UI 끝. 6절 스택 행에 Tailwind 4 토큰 자리와 proxy 이름, 9절 실행 환경과 T2 실행 결과 행, 10절. 그 전 같은 날 T1 기반 끝. 9절 실행 환경 행에 package-lock.json 판 기입과 T1 실행 결과 행, 10절 마지막 성공 단계와 실제 사용 시간. 그 전 같은 날 계약 승인. D-1부터 D-7 추천대로 확정. 작업 표 이름 확정, 6절 지역 코드 행, 7절 결정 줄 일곱, 10절. 그 전 같은 날 초안. 인계 문서 HANDOFF.md를 받아 화면과 API 대응표를 옮기고 백엔드 실물과의 차이 여섯을 2-1절에 고정)
 양식: harness/prompts/task-contract.md v6
 
 이 계약은 프론트 Task 계열의 첫 계약이다. 백엔드 40단위가 main에 다 올라간 뒤(2026-09-13 PR 138, 커밋 1bdadfe) 사용자가 2026-09-14 Claude Design에 화면 설계를 시켰고(harness/out/claude-design-handoff-2026-09-14/prompt.md와 context.md), 그 결과의 요약본 HANDOFF.md가 2026-09-15 04:54에 왔다. 원문은 같은 폴더 received/ 아래에 받은 그대로 두었다. 이 계약은 그 요약본을 구현 입력으로 옮기되 백엔드 실물과 어긋난 여섯 곳을 명세 값으로 바로잡는다(2-1절). 사용자 결정 셋(2026-09-15 05:0x)이 전제다. 첫째, 데스크톱 전용과 브랜드 색은 사용자가 디자인 세션에서 정한 것이다. 둘째, 화면 설계 파일 다섯(01부터 05 .dc.html)은 없고 요약대로 간다. 셋째, 계약 초안을 진행한다.
@@ -327,18 +327,19 @@ W는 컴포넌트와 훅 테스트(MSW 목), E는 Playwright E2E(백엔드와 DB
 | 계약 테스트 ID | 8-1절 W01부터 W15, E01부터 E06. 10-6 F절의 항목(연속 실행, 취소와 환불과 재고 반환, 실패와 재시도와 TTL 만료와 지연 승인, 중복 클릭과 새로고침) |
 | A와 B 평가 범위 | harness/prompts/eval-criteria-code.md의 축에 D-2의 프론트 축을 더한 것 |
 | 필수 검증을 실행하지 못했을 때 | progress.md에 halted 행과 미실행 사유. 5절 평가 대상 행을 채우지 않고 평가 요청으로 가지 않는다 |
+| T4 실행 결과 (2026-09-15 통과) | npm run typecheck와 lint와 build와 test 넷 다 종료 코드 0. test는 16파일 115건(T4 몫 19건. PropertyForm 10건에 W08의 H2 몫(빈 폼과 글자 수와 요청 없음), 수정 본문 version과 바뀐 필드만, 새로 읽기 합치기, 서버 field 문구, VERSION_CONFLICT 자리. RoomTypePanel 3건에 MSW로 CAT-06과 CAT-08과 CAT-07과 409 뒤 새로 읽기 뒤 오른 version으로 저장. forms와 error-view 5건, 조회 재시도 규칙 1건). build 라우트에 /host/properties와 new와 [propertyId]/edit와 [propertyId]/room-types 넷. 실증: 백엔드 실물(작업 트리 434ab39의 bootRun, catalog와 shared는 main과 같음)과 next start로 H1 목록, H2 등록 201과 화면 검사, H2 수정에서 curl로 먼저 고친 뒤 409와 새로 읽기와 version 2 저장, H3 등록 201과 수정 200과 CAT-09 재조회, 없는 id의 404 전면. 사본은 harness/out/task-S9-frontend-R1/t4/(typecheck.log, lint.log, test.log, build.log, backend-check.txt). 실측에서 고친 것 하나: QueryClient 기본 재시도 셋이 404 전면을 7초 늦춰 app/providers.tsx에 4xx 무재시도 규칙(5xx와 네트워크는 한 번). 읽기 실패는 화면 안 Notice에 다시 시도 버튼이고 화면 위 띠는 쓰기 실패에 쓴다. 새로 읽기는 내가 안 건드린 필드만 새 기준을 따라 남의 수정을 되돌리지 않는다 |
 | T3 실행 결과 (2026-09-15 통과) | npm run typecheck와 lint와 build와 test 넷 다 종료 코드 0. test는 12파일 96건 통과(T3 몫 58건. client.test.ts에 W01 4건, W02 200과 201과 202 셋과 헤더 없음 4건, W03 3건, W04 3건, W05 3건, 쿼리 문자열 1건. errors.test.ts에 placement 셋 28건. hooks/booking.test.tsx에 W09의 T3 몫 4건, hooks/inventory.test.tsx에 W12 2건과 재고 본문 2건, hooks/catalog.test.tsx에 조회와 캐시 4건. 나머지 38건은 T1과 T2). 훅은 32개다. 계약의 서른셋은 인계 문서 표의 INTERNAL-01 행까지 센 수이고 그 행은 훅이 없다. MSW 핸들러 32개(msw/node setupServer, 경로 */api/v1, 요청 기록으로 헤더와 본문 대조), 오류 규칙 23코드에 네트워크와 알 수 없음. 로그와 대조 사본은 harness/out/task-S9-frontend-R1/t3/(typecheck.log, lint.log, test.log, build.log, w-check.txt). 실제 백엔드는 안 띄웠다. 붙는 것은 T4부터 |
 | T2 실행 결과 (2026-09-15 통과) | npm run typecheck와 lint와 build와 test 넷 다 종료 코드 0. test는 7파일 38건 통과(W06 Countdown 4건, W07 지역 코드 대조 3건, W10 여섯 조합과 통과 여섯과 proxy 배선 4건, 쿠키와 서울 시각과 날짜 도우미, T1의 rewrites 5건). build는 라우트 둘이 동적(layout이 요청 쿠키를 읽는다)이고 Proxy 줄이 있다. 실증: next start 3000에 curl로 어긋난 조합 넷이 307과 역할 첫 화면, 맞는 조합 둘이 통과(화면이 없어 404), host_001 쿠키로 / 를 받으면 행위자 선택이 host_001이고 탭이 내 숙소와 Mock 선택이 DEFER, 쿠키 없음이면 public과 내 예약 비활성. 로그와 실증 사본은 harness/out/task-S9-frontend-R1/t2/(typecheck.log, lint.log, test.log, build.log, proxy-check.txt, css-tokens-check.txt). 컴포넌트는 인계 문서 103행의 이름 스물아홉 전부(계약 8절의 스물여섯은 그 줄의 세는 방식 차이이고 목록은 같다)와 TextArea, AppShell, DevActorProvider 셋을 더했다 |
 | T1 실행 결과 (2026-09-15 통과) | npm run typecheck와 lint와 build와 test 넷 다 종료 코드 0. build는 라우트 둘(/, /_not-found) 정적 생성. test는 next.config.test.ts 1파일 5건 통과(BACKEND_URL 기본값과 빈 값과 끝 슬래시, rewrites 규칙). rewrites 실증: next start 3000과 8080의 가짜 백엔드(경로와 헤더를 돌려주는 Node 서버)로 GET /api/v1/properties?regionCode=SEOUL이 200과 같은 경로와 X-Dev-Actor-Id 값으로 돌아옴. 로그와 실증 사본은 harness/out/task-S9-frontend-R1/t1/(typecheck.log, lint.log, test.log, build.log, rewrites-check.txt). 실제 백엔드는 안 띄웠다 |
 
-## 10. 승인과 진행 (2026-09-15 T3 기입. 같은 날 T2 기입과 T1 기입과 승인 기입)
+## 10. 승인과 진행 (2026-09-15 T4 기입. 같은 날 T3과 T2와 T1 기입과 승인 기입)
 
 | 항목 | 기록 |
 |---|---|
 | 작업 계약 승인 | 승인. join5201, 2026-09-15. 발언은 병합해라. 계약 승인하고 D-1부터 D-7 추천대로 확정해라(05:3x). 결정 7건은 전부 가. PR 149 병합은 이 기입 뒤 |
-| 마지막 성공 단계 | T3 API 층(2026-09-15). 그 전 T2 공통 UI와 T1 기반과 계약 승인과 계약 초안(같은 날) |
-| 미해결 사항과 다음 작업 | 다음은 T4 호스트 1(T3 PR 병합 뒤). T4부터 백엔드 실물이 필요하다(9절 실행 환경 행의 Docker MySQL 3307과 backend/.env와 JDK 21). 한 턴에 한 단계. 프론트 평가 축 이슈(D-2)는 하네스 세션 몫이고 T10 전까지. 남은 평가 네 쌍의 반영이 백엔드를 바꾸면 2-1절과 4절 해시 갱신 |
+| 마지막 성공 단계 | T4 호스트 1(2026-09-15). 그 전 T3 API 층과 T2 공통 UI와 T1 기반과 계약 승인과 계약 초안(같은 날) |
+| 미해결 사항과 다음 작업 | 다음은 T5 호스트 2(T4 PR 병합 뒤). 백엔드 실물이 필요하다(9절 실행 환경 행. T4는 o2o-dev 작업 트리의 bootRun을 썼다). 한 턴에 한 단계. 프론트 평가 축 이슈(D-2)는 하네스 세션 몫이고 T10 전까지. 남은 평가 네 쌍의 반영이 백엔드를 바꾸면 2-1절과 4절 해시 갱신 |
 | 최종 산출물과 버전 | 작업 후 기록 |
 | 실제 사용 시간 (계약 초안) | 약 30분. 2026-09-15 04:54 파일 수신부터 05:22 기록 행까지. 대조, 원문 보관, 계약 작성, fill과 g1, 이슈와 PR. 승인 기입 턴은 따로다 |
-| 실제 사용 시간 | T1 기반 약 12분(2026-09-15 18:15 뼈대 생성부터 18:27 기록 행까지. PR 150 병합 10:51은 계약 몫이라 안 센다). T2 공통 UI 약 20분(18:36 PR 152 병합 직후부터 18:56 기록 행까지). T3 API 층 약 23분(19:01 PR 154 병합 직후부터 19:24 기록 행까지). 합계 55분 |
+| 실제 사용 시간 | T1 기반 약 12분(2026-09-15 18:15 뼈대 생성부터 18:27 기록 행까지. PR 150 병합 10:51은 계약 몫이라 안 센다). T2 공통 UI 약 20분(18:36 PR 152 병합 직후부터 18:56 기록 행까지). T3 API 층 약 23분(19:01 PR 154 병합 직후부터 19:24 기록 행까지). T4 호스트 1 약 22분(19:50 PR 159 병합 직후부터 20:12 기록 행까지. 백엔드 기동 포함). 합계 77분 |
 | 최종 완료 판단 | 대기. 사용자 |
