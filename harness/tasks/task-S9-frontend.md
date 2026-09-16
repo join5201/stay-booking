@@ -1,7 +1,7 @@
 # 작업 계약 task-S9-frontend (프론트 화면 전체)
 
 최초 작성: 2026-09-15
-최종 갱신: 2026-09-16 (T5 호스트 2 끝. 9절 T5 실행 결과 행, 10절. 그 전날 T4 호스트 1 끝. 9절 T4 실행 결과 행, 10절. 그 전 같은 날 T3 API 층 끝. 9절 T3 실행 결과 행, 10절. 4절 해시 둘 갱신(예약 R1 반영 뒤 예약 컨트롤러와 백엔드 README). 그 전 같은 날 T2 공통 UI 끝. 6절 스택 행에 Tailwind 4 토큰 자리와 proxy 이름, 9절 실행 환경과 T2 실행 결과 행, 10절. 그 전 같은 날 T1 기반 끝. 9절 실행 환경 행에 package-lock.json 판 기입과 T1 실행 결과 행, 10절 마지막 성공 단계와 실제 사용 시간. 그 전 같은 날 계약 승인. D-1부터 D-7 추천대로 확정. 작업 표 이름 확정, 6절 지역 코드 행, 7절 결정 줄 일곱, 10절. 그 전 같은 날 초안. 인계 문서 HANDOFF.md를 받아 화면과 API 대응표를 옮기고 백엔드 실물과의 차이 여섯을 2-1절에 고정)
+최종 갱신: 2026-09-16 (T5 호스트 2 끝. 9절 T5 실행 결과 행, 10절. 4절 백엔드 README 해시 갱신(재고 R2 보류 PR 163 뒤. 1절부터 4절은 그대로). 그 전날 T4 호스트 1 끝. 9절 T4 실행 결과 행, 10절. 그 전 같은 날 T3 API 층 끝. 9절 T3 실행 결과 행, 10절. 4절 해시 둘 갱신(예약 R1 반영 뒤 예약 컨트롤러와 백엔드 README). 그 전 같은 날 T2 공통 UI 끝. 6절 스택 행에 Tailwind 4 토큰 자리와 proxy 이름, 9절 실행 환경과 T2 실행 결과 행, 10절. 그 전 같은 날 T1 기반 끝. 9절 실행 환경 행에 package-lock.json 판 기입과 T1 실행 결과 행, 10절 마지막 성공 단계와 실제 사용 시간. 그 전 같은 날 계약 승인. D-1부터 D-7 추천대로 확정. 작업 표 이름 확정, 6절 지역 코드 행, 7절 결정 줄 일곱, 10절. 그 전 같은 날 초안. 인계 문서 HANDOFF.md를 받아 화면과 API 대응표를 옮기고 백엔드 실물과의 차이 여섯을 2-1절에 고정)
 양식: harness/prompts/task-contract.md v6
 
 이 계약은 프론트 Task 계열의 첫 계약이다. 백엔드 40단위가 main에 다 올라간 뒤(2026-09-13 PR 138, 커밋 1bdadfe) 사용자가 2026-09-14 Claude Design에 화면 설계를 시켰고(harness/out/claude-design-handoff-2026-09-14/prompt.md와 context.md), 그 결과의 요약본 HANDOFF.md가 2026-09-15 04:54에 왔다. 원문은 같은 폴더 received/ 아래에 받은 그대로 두었다. 이 계약은 그 요약본을 구현 입력으로 옮기되 백엔드 실물과 어긋난 여섯 곳을 명세 값으로 바로잡는다(2-1절). 사용자 결정 셋(2026-09-15 05:0x)이 전제다. 첫째, 데스크톱 전용과 브랜드 색은 사용자가 디자인 세션에서 정한 것이다. 둘째, 화면 설계 파일 다섯(01부터 05 .dc.html)은 없고 요약대로 간다. 셋째, 계약 초안을 진행한다.
@@ -133,7 +133,7 @@ middleware는 쿠키의 역할과 경로 앞부분(/host, /operator, /bookings)�
 | 예약 앱 서비스 | backend/src/main/java/com/o2o/booking/application/BookingApplicationService.java | sha256:d0e71e27a80d056a | 92행 o2o.booking.hold-ttl 키. E2E의 TTL 만료 시험(7절 D-4) |
 | 만료 스케줄러 | backend/src/main/java/com/o2o/booking/infrastructure/BookingExpireScheduler.java | sha256:0cd50fa7fa7e6c7c | 31행 o2o.booking.expire-scan-interval 키 |
 | 백엔드 설정 | backend/src/main/resources/application.properties | sha256:a53c90a2ad96f493 | 7행 fail-on-unknown-properties, 22행 datasource url, 35행 dev 프로파일. 포트 설정이 없어 8080 |
-| 백엔드 실행 안내 | backend/README.md | sha256:52140777032c566c | 1절부터 4절. 판, 준비, 실행, 포트. 2026-09-15 6절 상태 행만 바뀜(PR 157) |
+| 백엔드 실행 안내 | backend/README.md | sha256:3eabf68baf4f5222 | 1절부터 4절. 판, 준비, 실행, 포트. 2026-09-15 6절 상태 행만 바뀜(PR 157). 2026-09-16 6절 재고 행에 R2 보류만 바뀜(PR 163) |
 | 숙소 결정표 | harness/decisions/task-S9-catalog-R1.md | sha256:97d3e84f210bf0ac | A-02 행. 지역 코드 열일곱 확정 |
 | 구현 계획 10-6 | harness/docs/10-6-o2o-harness-implementation-plan.md | sha256:eec97503b53ffff0 | E절 프론트 개발, F절 연결 테스트, 3절 기능별 API와 검증 연결 표 |
 | 적용할 코드 양식 | harness/prompts/dev-ptcf-prompt.v3.md | sha256:4fd959abf491efe0 | 문체, 코드, 금지 절 |
