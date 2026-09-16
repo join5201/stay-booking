@@ -2,12 +2,15 @@ package com.o2o.shared;
 
 import java.util.List;
 
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 /**
  * 컨텍스트를 가리지 않는 오류를 11 에러 응답 표의 코드로 바꾼다.
@@ -15,6 +18,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  *
  * 카탈로그 고유 예외는 여기서 다루지 않는다. shared가 catalog를 참조하면 공유 커널이
  * 한 컨텍스트에 묶인다. 그쪽은 catalog/api의 핸들러가 맡는다.
+ *
+ * 예상하지 못한 예외의 500은 여기 없다. 어드바이스에 Exception 핸들러를 두면 어드바이스
+ * 순서에 따라 다른 컨텍스트의 핸들러를 삼키므로 UnexpectedExceptionResolver가 마지막 순번에서
+ * 받는다(R1 평가 B-04).
  *
  * 8-1절 C9와 C10이 이 클래스를 검사한다.
  */
@@ -65,6 +72,56 @@ public class SharedExceptionHandler {
     public ResponseEntity<ErrorResponse> handleVersionConflict(VersionConflictException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ErrorResponse.of("VERSION_CONFLICT", "수정 버전이 일치하지 않습니다."));
+    }
+
+    /**
+     * 저장 시점의 낙관적 잠금 실패. 두 요청이 같은 version을 읽어 애그리거트의 메모리 대조를
+     * 둘 다 지난 뒤 뒤의 저장이 @Version의 where version = ? 에서 0행이 된 경우다. 스프링이
+     * JPA의 OptimisticLockException을 이 예외 계열로 번역한다. 위와 같은 409 VERSION_CONFLICT다.
+     * R1 평가 A-01, B-01
+     */
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLock(OptimisticLockingFailureException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of("VERSION_CONFLICT", "수정 버전이 일치하지 않습니다."));
+    }
+
+    /**
+     * 쿼리나 경로 값의 타입 오류. page=abc 같은 것이다. 11 공통 요청과 응답 규칙이 잘못된 타입을
+     * 400으로 적는다. 스프링 기본 처리기에 맡기면 공통 Error 모델이 아닌 본문으로 나간다.
+     * R1 평가 B-04
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
+        List<ErrorResponse.ErrorDetail> details = List.of(
+                new ErrorResponse.ErrorDetail(e.getName(), "값의 타입이 올바르지 않다"));
+        return ResponseEntity.badRequest()
+                .body(ErrorResponse.of("INVALID_REQUEST", "요청 값의 타입이 올바르지 않습니다.", details));
+    }
+
+    /**
+     * 필수 쿼리 파라미터 누락. 위와 같은 이유로 공통 Error 모델로 낸다. R1 평가 B-04
+     */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingParameter(
+            MissingServletRequestParameterException e) {
+        List<ErrorResponse.ErrorDetail> details = List.of(
+                new ErrorResponse.ErrorDetail(e.getParameterName(), "필수 값이 없다"));
+        return ResponseEntity.badRequest()
+                .body(ErrorResponse.of("INVALID_REQUEST", "필수 요청 값이 없습니다.", details));
+    }
+
+    /**
+     * 등록되지 않은 지역 코드. 11 CAT-01 처리 규칙과 필드표의 등록된 지역 코드. 형식은 맞지만
+     * RegionRegistry에 없는 값이다. 11 에러 응답 표에 따로 코드가 없어 INVALID_REQUEST로 내고
+     * details에 필드를 적는다. R1 평가 A-02, B-02
+     */
+    @ExceptionHandler(UnregisteredRegionException.class)
+    public ResponseEntity<ErrorResponse> handleUnregisteredRegion(UnregisteredRegionException e) {
+        List<ErrorResponse.ErrorDetail> details = List.of(
+                new ErrorResponse.ErrorDetail("regionCode", "등록되지 않은 지역 코드다"));
+        return ResponseEntity.badRequest()
+                .body(ErrorResponse.of("INVALID_REQUEST", "등록되지 않은 지역 코드입니다.", details));
     }
 
     /**

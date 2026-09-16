@@ -1,0 +1,20 @@
+# task-S9-payment 5단계 결과 요약 (실행 2026-09-13 18:18, 기록 2026-09-13 18:19)
+
+명령: export SPRING_DATASOURCE_URL=jdbc:mysql://127.0.0.1:3307/o2o_payment_test; JAVA_HOME 21; ./backend/gradlew.bat -p backend cleanTest test
+결과: exit 0, BUILD SUCCESSFUL in 1m 8s
+
+junit XML 합계 (backend/build/test-results/test. 이 폴더의 TEST-*.xml 34개가 그 사본):
+{"files":34,"tests":319,"failures":0,"errors":0,"skipped":0}
+기준선 282건에 이번 묶음 37건이 더해졌다. 실패 0.
+
+접속 문자열 (junit XML 시스템 출력에서):
+jdbc:mysql://127.0.0.1:3307/o2o_payment_test
+
+이번 묶음 테스트 (8-1절 Y1부터 Y14):
+com.o2o.payment.domain.PaymentTest                            tests=21 failures=0 errors=0  Y1, Y2, Y3, Y4, Y5, Y6, Y7 도메인 몫
+com.o2o.payment.application.PaymentApplicationServiceTest     tests=7  failures=0 errors=0  Y7 앱 서비스 몫, Y9, Y10, Y14 (MySQL)
+com.o2o.payment.application.PaymentEventTest                  tests=4  failures=0 errors=0  Y8 (발행 페이로드, ApplicationEvents)
+com.o2o.payment.application.PaymentAutoResultTest             tests=5  failures=0 errors=0  Y11, Y12, Y13 (커밋 뒤 도착, 테스트 전용 구독자)
+
+Y10 실행 시간 2.108초. 잠금을 쥔 2초 동안 경쟁 호출이 끝나지 않았다는 뜻이다(앞 묶음 V14 방식).
+새 파일: backend/src/test/java/com/o2o/payment/domain 1, payment/application 3.

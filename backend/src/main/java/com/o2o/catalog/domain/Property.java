@@ -11,6 +11,7 @@ import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 /**
  * 숙소 애그리거트 루트. 설계 근거: 06-2 1절 Property 행, 06-2 6절 카탈로그 CRC.
@@ -52,7 +53,11 @@ public class Property {
     private String description;
 
     // 11 응답 모델 Property가 필수로 적는 필드다. 등록 시 0이고 수정마다 1씩 오른다.
-    // 대조 방식은 2026-09-09 결정으로 낙관적 잠금이다. update가 그 대조를 한다
+    // 대조 방식은 2026-09-09 결정으로 낙관적 잠금이다. update가 요청 값과 읽은 값을 대조하고,
+    // @Version이 저장할 때 DB의 값과 한 번 더 대조한다. 두 요청이 같은 version을 읽고 둘 다
+    // 메모리 대조를 지나도 뒤의 UPDATE는 where version = ? 에서 0행이 되어 실패한다.
+    // 증가는 프레임워크가 flush 때 한다. 손으로 더하지 않는다(R1 평가 A-01, B-01)
+    @Version
     @Column(name = "version", nullable = false)
     private long version;
 
@@ -93,6 +98,8 @@ public class Property {
      * 버전 대조가 여기 있는 근거는 06-4 1-4다. 규칙 검증은 애그리거트가 한다. 그리고
      * 2026-09-09 사용자 결정으로 동시 수정 처리를 낙관적 잠금으로 확정했다. 저장할 때
      * 요청이 들고 온 숫자와 현재 숫자를 대조한다. 계약 2-2절이 그 결정의 정본이다.
+     * 여기의 대조는 읽은 값과의 대조라 순차적인 낡은 요청을 바로 거절하고, 같은 값을 읽은
+     * 동시 요청은 저장 시점의 @Version 대조가 거른다. version을 여기서 올리지 않는다.
      *
      * null은 유지를 뜻한다. 11 CAT-02 필드표가 생략하면 기존 값 유지라고 적는다.
      * 식별자와 소유자와 생성 시각은 바꾸지 않는다. 같은 절의 처리 규칙이다.
@@ -114,7 +121,6 @@ public class Property {
         if (description != null) {
             this.description = description;
         }
-        this.version = this.version + 1;
         this.updatedAt = now;
     }
 

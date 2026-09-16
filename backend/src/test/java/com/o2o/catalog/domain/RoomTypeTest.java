@@ -45,6 +45,35 @@ class RoomTypeTest {
     }
 
     @Test
+    void update에_0을_넣으면_거절하고_값이_그대로다() {
+        // R1 평가 B-05. I14는 등록과 수정 모두 지킨다(06-4 1-2 updateRoomType의 Invariant)
+        RoomType roomType = RoomType.register(PROPERTY_ID, "스탠다드 더블", 4, "", NOW);
+
+        assertThrows(InvalidOccupancyException.class,
+                () -> roomType.update(0L, null, 0, null, NOW));
+        assertEquals(4, roomType.maxOccupancy());
+    }
+
+    @Test
+    void update에_음수를_넣으면_거절한다() {
+        RoomType roomType = RoomType.register(PROPERTY_ID, "스탠다드 더블", 4, "", NOW);
+
+        assertThrows(InvalidOccupancyException.class,
+                () -> roomType.update(0L, null, -1, null, NOW));
+        assertEquals(4, roomType.maxOccupancy());
+    }
+
+    @Test
+    void update에_양수를_넣으면_바뀐다() {
+        // 통과 짝. 하향도 막지 않는다(11 CAT-07 처리 규칙)
+        RoomType roomType = RoomType.register(PROPERTY_ID, "스탠다드 더블", 4, "", NOW);
+
+        roomType.update(0L, null, 1, null, NOW);
+
+        assertEquals(1, roomType.maxOccupancy());
+    }
+
+    @Test
     void 상한인_100도_생성한다() {
         // 11 공통 요청과 응답 규칙이 maxOccupancy를 1 이상 100 이하로 적는다.
         // 상한 검사는 컨트롤러 몫이라 도메인은 100을 그대로 받는다(06-4 1-4)

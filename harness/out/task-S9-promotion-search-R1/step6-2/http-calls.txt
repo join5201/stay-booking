@@ -1,0 +1,125 @@
+# 6-2단계 로컬 HTTP 호출 기록
+# 계약 8절 6-2단계의 완료 조건이다. gradlew bootRun --args='--server.port=8085'로 띄운 실제 서버에 curl로 쳤다.
+# 일시: 2026-09-11 19:22:37 UTC, 서버: http://127.0.0.1:8085, DB: o2o_promo_test (127.0.0.1:3307, SPRING_DATASOURCE_URL로 지정)
+# 대상: SEARCH-01, SEARCH-02, SEARCH-03과 오류 경로 여덟. 셋 다 인증 불필요라 X-Dev-Actor-Id 없이 부른다.
+# 서울 오늘: 2026-09-12 (UTC + 9시간으로 셌다). 준비 지역 코드: SEARCH_DEMO_042237
+# 준비: 숙소 prop_9238f80af9744725a14cf20359a689d2
+# 객실 타입 1 room_2d10402933904f0b9233fe29b681f393 (수용 2, 요금 2026-09-17과 2026-09-18 각 100000, 재고 각 3)
+# 객실 타입 2 room_d8f8a60bc5a94af4a249aed6b47f0060 (수용 4, 요금 각 150000, 재고 2026-09-17는 2, 2026-09-18은 0)
+# 프로모션 promo_7fe378b7918e4682b3b4bcb407840b75 (10%, 오늘부터 30일, 지역 SEARCH_DEMO_042237)
+
+== SEARCH-01 GET /api/v1/search/properties 2박 2명. 200 숙소 하나, 객실 타입 1만 (타입 2는 재고 0인 날). lowestTotalAmount 180000 (할인 10% 반영) ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 565
+Date: Fri, 11 Sep 2026 19:22:39 GMT
+
+{"items":[{"property":{"id":"prop_9238f80af9744725a14cf20359a689d2","hostId":"host_001","name":"검색 데모 스테이","regionCode":"SEARCH_DEMO_042237","address":"서울특별시 중구 예시로 9","description":"","version":0,"createdAt":"2026-09-11T19:22:37.391Z","updatedAt":"2026-09-11T19:22:37.391Z"},"lowestTotalAmount":180000,"currency":"KRW","availableRoomTypes":[{"roomTypeId":"room_2d10402933904f0b9233fe29b681f393","name":"스탠다드","maxOccupancy":2,"availableCount":3,"totalAmount":180000}]}],"page":0,"size":20,"totalElements":1,"totalPages":1}
+
+== V15 SEARCH-01 guestCount 3. 200 빈 items (타입 1은 인원 초과, 타입 2는 재고 0) ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 64
+Date: Fri, 11 Sep 2026 19:22:39 GMT
+
+{"items":[],"page":0,"size":20,"totalElements":0,"totalPages":0}
+
+== SEARCH-01 checkIn 형식 오류. 400 INVALID_DATE_RANGE ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:22:39 GMT
+Connection: close
+
+{"code":"INVALID_DATE_RANGE","message":"날짜 값이 올바르지 않습니다.","traceId":"trace_a85e068e3cdf4c338b8dc04d712232b1","details":[]}
+
+== SEARCH-01 guestCount 0. 400 INVALID_REQUEST ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:22:39 GMT
+Connection: close
+
+{"code":"INVALID_REQUEST","message":"요청 값의 범위가 올바르지 않습니다.","traceId":"trace_f38ed76797a2477794c97855775eb0bd","details":[]}
+
+== SEARCH-02 GET .../availability 타입 1, 2박 2명. 200 available true ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 305
+Date: Fri, 11 Sep 2026 19:22:39 GMT
+
+{"roomTypeId":"room_2d10402933904f0b9233fe29b681f393","checkIn":"2026-09-17","checkOut":"2026-09-19","guestCount":2,"available":true,"availableCount":3,"days":[{"date":"2026-09-17","availableCount":3},{"date":"2026-09-18","availableCount":3}],"missingInventoryDates":[],"missingRateDates":[],"reasons":[]}
+
+== V13 SEARCH-02 타입 2, 2박 2명. 200 available false, reasons INVENTORY_UNAVAILABLE ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 329
+Date: Fri, 11 Sep 2026 19:22:39 GMT
+
+{"roomTypeId":"room_d8f8a60bc5a94af4a249aed6b47f0060","checkIn":"2026-09-17","checkOut":"2026-09-19","guestCount":2,"available":false,"availableCount":0,"days":[{"date":"2026-09-17","availableCount":2},{"date":"2026-09-18","availableCount":0}],"missingInventoryDates":[],"missingRateDates":[],"reasons":["INVENTORY_UNAVAILABLE"]}
+
+== V14 SEARCH-02 타입 1, 4박 (2026-09-19과 2026-09-20은 재고와 요금 없음). 200 days에 null, missingInventoryDates와 missingRateDates ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 492
+Date: Fri, 11 Sep 2026 19:22:39 GMT
+
+{"roomTypeId":"room_2d10402933904f0b9233fe29b681f393","checkIn":"2026-09-17","checkOut":"2026-09-21","guestCount":2,"available":false,"availableCount":0,"days":[{"date":"2026-09-17","availableCount":3},{"date":"2026-09-18","availableCount":3},{"date":"2026-09-19","availableCount":null},{"date":"2026-09-20","availableCount":null}],"missingInventoryDates":["2026-09-19","2026-09-20"],"missingRateDates":["2026-09-19","2026-09-20"],"reasons":["INVENTORY_NOT_CONFIGURED","RATE_NOT_CONFIGURED"]}
+
+== SEARCH-02 checkOut이 checkIn보다 앞. 400 INVALID_DATE_RANGE ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:22:39 GMT
+Connection: close
+
+{"code":"INVALID_DATE_RANGE","message":"날짜 값이 올바르지 않습니다.","traceId":"trace_2a8f8fb184564c49a79a46b162c2a81a","details":[]}
+
+== SEARCH-02 없는 객실 타입. 404 RESOURCE_NOT_FOUND ==
+HTTP/1.1 404 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:22:39 GMT
+
+{"code":"RESOURCE_NOT_FOUND","message":"자원을 찾을 수 없습니다.","traceId":"trace_c317a4b687f449fd9e30e39c357e3d84","details":[]}
+
+== V16 SEARCH-03 GET .../price-quote 타입 1, 2박 2명. 200 price.days 둘, finalAmount 합 180000 = totalAmount ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 563
+Date: Fri, 11 Sep 2026 19:22:39 GMT
+
+{"roomTypeId":"room_2d10402933904f0b9233fe29b681f393","checkIn":"2026-09-17","checkOut":"2026-09-19","guestCount":2,"nights":2,"estimatedAt":"2026-09-11T19:22:39.887Z","price":{"currency":"KRW","baseTotalAmount":200000,"discountTotalAmount":20000,"totalAmount":180000,"appliedPromotion":{"id":"promo_7fe378b7918e4682b3b4bcb407840b75","name":"검색 데모 할인","discountRate":10},"days":[{"date":"2026-09-17","baseAmount":100000,"discountAmount":10000,"finalAmount":90000},{"date":"2026-09-18","baseAmount":100000,"discountAmount":10000,"finalAmount":90000}]}}
+
+== SEARCH-03 guestCount 3 (최대 2). 409 OCCUPANCY_EXCEEDED ==
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:22:40 GMT
+
+{"code":"OCCUPANCY_EXCEEDED","message":"객실 최대 인원을 넘었습니다.","traceId":"trace_53bb6dc4d56f4384bf06ca4b1b3341b3","details":[]}
+
+== SEARCH-03 요금 없는 날짜 포함 (2026-09-19, 2026-09-20). 409 RATE_NOT_CONFIGURED ==
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:22:40 GMT
+
+{"code":"RATE_NOT_CONFIGURED","message":"하나 이상의 숙박 날짜에 요금이 없습니다.","traceId":"trace_4cf3dc1f297f46e981da30a3b058444b","details":[{"field":"checkIn","reason":"2026-09-19 요금 없음"},{"field":"checkIn","reason":"2026-09-20 요금 없음"}]}
+
+== SEARCH-03 과거 checkIn. 400 INVALID_DATE_RANGE ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:22:40 GMT
+Connection: close
+
+{"code":"INVALID_DATE_RANGE","message":"날짜 값이 올바르지 않습니다.","traceId":"trace_d2306164177b431ab22c88bf5e10767d","details":[]}
+
+== SEARCH-03 없는 객실 타입. 404 RESOURCE_NOT_FOUND ==
+HTTP/1.1 404 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:22:40 GMT
+
+{"code":"RESOURCE_NOT_FOUND","message":"자원을 찾을 수 없습니다.","traceId":"trace_ee429088342a453ca4801f0c0a2d4f63","details":[]}

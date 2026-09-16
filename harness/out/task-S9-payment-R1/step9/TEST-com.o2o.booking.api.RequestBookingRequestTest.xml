@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.booking.api.RequestBookingRequestTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-09-13T10:55:10.944Z" hostname="BOOK-QD5U7FFOBT" time="0.006">
+  <properties/>
+  <testcase name="날짜_형식이_틀리면_커맨드로_바꾸지_못한다()" classname="com.o2o.booking.api.RequestBookingRequestTest" time="0.002"/>
+  <testcase name="커맨드로_바꾸면_API_이름이_도메인_이름이_된다()" classname="com.o2o.booking.api.RequestBookingRequestTest" time="0.0"/>
+  <testcase name="K6_키_순서와_공백이_달라도_같은_body다()" classname="com.o2o.booking.api.RequestBookingRequestTest" time="0.001"/>
+  <testcase name="K6_값_하나가_다르면_다른_body다()" classname="com.o2o.booking.api.RequestBookingRequestTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

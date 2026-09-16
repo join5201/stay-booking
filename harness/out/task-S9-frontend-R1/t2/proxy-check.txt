@@ -1,0 +1,27 @@
+# T2 proxy와 layout 실증. next start 3000. 2026-09-15 18:52 KST
+
+## 1. host_001이 /bookings 에 오면 H1으로
+status=307 location=http://localhost:3000/host/properties
+## 2. 쿠키 없음(public)이 /bookings/bk_1 에 오면 G1으로
+status=307 location=http://localhost:3000/
+## 3. guest_001이 /operator/promotions 에 오면 G1으로
+status=307 location=http://localhost:3000/
+## 4. operator_001이 /host/properties 에 오면 O1으로
+status=307 location=http://localhost:3000/operator/promotions
+## 5. host_001이 /host/properties 에 오면 통과(화면은 T4라 아직 404)
+status=404 location=
+## 6. guest_001이 /bookings 에 오면 통과(화면은 T9라 아직 404)
+status=404 location=
+
+## 7. layout이 요청 쿠키를 읽는다. host_001로 / 를 받으면 행위자 선택이 host_001이고 탭이 내 숙소
+selected option: 
+tabs: 내 숙소 
+mock select: 1
+## 8. 쿠키 없음이면 public. 내 예약 탭은 비활성 버튼, Mock 선택 없음
+selected option: 
+disabled tab: 1
+mock select: 0
+
+## 7-2. 선택된 option (React SSR은 selected 속성 순서가 다르다)
+host_001 요청: <option value="host_001" selected="">host_001 (호스트) <option value="DEFER" selected="">DEFER 
+쿠키 없음 요청: <option value="public" selected="">public (공개) 

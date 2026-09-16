@@ -9,7 +9,6 @@ import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -17,6 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import com.o2o.shared.SeoulDate;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -53,8 +54,9 @@ class InventoryQueryApiTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    /** 서버와 같은 오늘. 서버가 서울 날짜로 판정하므로 여기도 서울 날짜다(11 명세 35행) */
     private static LocalDate today() {
-        return LocalDate.now(ZoneOffset.UTC);
+        return LocalDate.now(SeoulDate.ZONE);
     }
 
     private HttpResponse<String> send(String method, String path, String actorId, String body)
@@ -117,6 +119,16 @@ class InventoryQueryApiTest {
                         + "values (?, ?, ?, ?, 0, 0, 0, ?, ?)",
                 "inv_" + UUID.randomUUID().toString().replace("-", ""),
                 roomTypeId, Date.valueOf(date), total, now, now);
+    }
+
+    /** 과거 요금 행을 직접 놓는다. 이유는 위 재고 쪽과 같다 */
+    private void 과거_요금을_직접_놓는다(String roomTypeId, LocalDate date, long amount) {
+        Timestamp now = Timestamp.from(Instant.now());
+        jdbcTemplate.update(
+                "insert into daily_rate (id, room_type_id, stay_date, amount, currency, "
+                        + "version, created_at, updated_at) values (?, ?, ?, ?, 'KRW', 0, ?, ?)",
+                "rate_" + UUID.randomUUID().toString().replace("-", ""),
+                roomTypeId, Date.valueOf(date), amount, now, now);
     }
 
     @Test
@@ -260,6 +272,27 @@ class InventoryQueryApiTest {
         HttpResponse<String> single = send("GET",
                 "/api/v1/room-types/" + roomTypeId + "/inventories/" + past, HOST, null);
         assertEquals(200, single.statusCode(), single.body());
+    }
+
+    @Test
+    void V9_과거_요금_조회도_허용된다() throws Exception {
+        // 재고 쪽의 짝이다. RATE-03과 RATE-04도 과거를 400으로 막지 않는다.
+        // R1 평가 A-03이 요금 조회 둘이 V9에 빠진 것을 짚었다
+        String roomTypeId = roomTypeOf(HOST);
+        LocalDate past = today().minusDays(5);
+        과거_요금을_직접_놓는다(roomTypeId, past, 90_000);
+
+        HttpResponse<String> range = send("GET", "/api/v1/room-types/" + roomTypeId
+                + "/rates?from=" + past + "&to=" + past.plusDays(2), HOST, null);
+        assertEquals(200, range.statusCode(), range.body());
+        JsonNode body = JSON.readTree(range.body());
+        assertEquals(1, body.get("items").size(), range.body());
+        assertEquals(90_000L, body.get("items").get(0).get("amount").asLong());
+
+        HttpResponse<String> single = send("GET",
+                "/api/v1/room-types/" + roomTypeId + "/rates/" + past, HOST, null);
+        assertEquals(200, single.statusCode(), single.body());
+        assertEquals(90_000L, JSON.readTree(single.body()).get("amount").asLong());
     }
 
     @Test

@@ -1,0 +1,29 @@
+T4 호스트 1 백엔드 실물 대조 (2026-09-15 20:05부터 20:09, 서울)
+
+실행 환경
+- 백엔드: o2o-dev 작업 트리(브랜치 chore/answer-format-s-grade 434ab39)에서 JAVA_HOME=C:/Users/user/.jdks/ms-21.0.11 gradlew bootRun. 8080, dev 프로파일.
+  그 브랜치의 catalog와 shared 코드는 origin/main과 diff 0줄(예약 R1 반영 일곱 파일만 다르고 T4 범위 밖).
+  스크래치패드 워크트리에는 backend/.env가 없고 도구 규칙이 그 파일 복사를 막아 작업 트리의 bootRun을 썼다.
+- MySQL: 컨테이너 o2o-catalog-mysql 127.0.0.1:3307, DB o2o_catalog_test(앱 설정 그대로).
+- 프론트: 워크트리 frontend/에서 next build 뒤 next start -p 3000. BACKEND_URL 없음(기본 http://localhost:8080).
+- 브라우저: 앱 안 브라우저 창 1300x900. 개발용 바에서 행위자 host_001 선택(쿠키 dev_actor).
+
+관찰한 요청과 화면 (브라우저 네트워크 기록)
+1. H1 GET /api/v1/host/properties?page=0&size=20 200. 기존 숙소 1건(취소 흐름 스테이) 표에 표시. 이름, 지역 라벨, 주소, 수정 시각(서울), 수정과 객실 타입 링크.
+2. H2 등록 빈 폼 제출: 요청 없음. 이름, 지역, 주소 필드 아래 문구 셋(W08의 H2 몫).
+3. H2 등록 채워서 제출: POST /api/v1/properties 201. 띠 "숙소를 등록했습니다.", H1로 이동, 목록 재조회 200에 새 행 T4 실측 스테이(부산).
+   새 숙소 id prop_5578b4e5769e472ab117bab2ca431de0.
+4. H2 수정 진입: GET /api/v1/properties/prop_5578... 200(fresh). 폼에 값 채워짐.
+5. 화면 밖에서 curl PATCH(version 0, address 변경) 200 → version 1.
+6. H2에서 이름만 바꿔 저장: PATCH 409 VERSION_CONFLICT. Notice "저장하지 못했습니다 ... 새로 읽기" 표시, 저장 버튼 비활성.
+7. 새로 읽기: GET 200. 내가 고친 이름은 남고 주소는 남이 고친 값으로 바뀜. Notice 사라짐.
+8. 다시 저장: PATCH 200, 응답 version 2, name 바뀜, address는 남이 고친 값 유지. H1로 이동, 목록 재조회.
+9. H3 진입(객실 타입 링크): GET /api/v1/properties/prop_5578.../room-types?page=0&size=20 200, 빈 상태 표시. 머리에 내 숙소 / 숙소 이름(CAT-03 캐시).
+10. ?new=1 패널에서 등록: POST /api/v1/properties/prop_5578.../room-types 201. 패널 닫힘, 띠, CAT-09 재조회 200에 새 행(오션 더블 3명).
+    새 객실 타입 id room_7eab33991ede4aa78688f8ae6236e989.
+11. ?edit= 패널 열기: GET /api/v1/room-types/room_7eab... 200(fresh). 최대 인원 3을 4로 저장: PATCH 200, CAT-09 재조회 200에 4명.
+12. /host/properties/prop_none/edit: GET /api/v1/properties/prop_none 404 한 번. 전면 Notice "찾을 수 없습니다"와 내 숙소로 버튼.
+    처음에는 QueryClient 기본 재시도 셋 때문에 404가 네 번 나가고 7초 뒤에야 떴다. app/providers.tsx에 4xx 무재시도 규칙을 넣고 다시 빌드해 확인.
+
+남긴 데이터: 위 숙소와 객실 타입은 o2o_catalog_test에 남아 있다. 이 DB는 백엔드 테스트가 create-drop으로 비운다.
+안 해 본 것: 401 ACTOR_REQUIRED와 403 ACCESS_DENIED의 화면(개발용 바가 유효한 행위자만 고르고 proxy가 역할 어긋남을 먼저 돌려보내 UI로는 안 난다). 단위 테스트의 MSW 401로 갈음.

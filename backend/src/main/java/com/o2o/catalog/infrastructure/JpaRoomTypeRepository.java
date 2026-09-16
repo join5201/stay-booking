@@ -1,5 +1,6 @@
 package com.o2o.catalog.infrastructure;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
@@ -23,9 +24,10 @@ public class JpaRoomTypeRepository implements RoomTypeRepository {
         this.jpaRepository = jpaRepository;
     }
 
+    /** JpaPropertyRepository.save와 같은 이유로 flush까지 한다 */
     @Override
     public RoomType save(RoomType roomType) {
-        return jpaRepository.save(roomType);
+        return jpaRepository.saveAndFlush(roomType);
     }
 
     @Override
@@ -38,5 +40,11 @@ public class JpaRoomTypeRepository implements RoomTypeRepository {
     public PageResult<RoomType> findByPropertyId(PropertyId propertyId, PageQuery pageQuery) {
         return SpringPage.toResult(jpaRepository.findAllByPropertyId(
                 propertyId.value(), SpringPage.toPageable(pageQuery)));
+    }
+
+    /** SEARCH-01. 쪽 없는 숙소 읽기, id 오름차순. 2026-09-12 추가 */
+    @Override
+    public List<RoomType> findAllByPropertyId(PropertyId propertyId) {
+        return jpaRepository.findAllByPropertyId(propertyId.value());
     }
 }

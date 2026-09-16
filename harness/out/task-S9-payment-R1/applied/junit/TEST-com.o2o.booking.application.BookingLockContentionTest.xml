@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.booking.application.BookingLockContentionTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-09-16T08:09:28.605Z" hostname="BOOK-QD5U7FFOBT" time="18.556">
+  <properties/>
+  <testcase name="L26_만료를_먼저_보내고_승인을_이어_보내도_만료_시각의_승인은_EXPIRED와_환불_하나이고_held는_0이다()" classname="com.o2o.booking.application.BookingLockContentionTest" time="4.654"/>
+  <testcase name="L23_승인을_먼저_보내고_만료를_이어_보내도_만료_전_승인은_CONFIRMED_하나이고_held는_0이다()" classname="com.o2o.booking.application.BookingLockContentionTest" time="4.629"/>
+  <testcase name="L23_만료를_먼저_보내고_승인을_이어_보내도_만료_전_승인은_CONFIRMED_하나이고_held는_0이다()" classname="com.o2o.booking.application.BookingLockContentionTest" time="4.631"/>
+  <testcase name="L26_승인을_먼저_보내고_만료를_이어_보내도_만료_시각의_승인은_EXPIRED와_환불_하나이고_held는_0이다()" classname="com.o2o.booking.application.BookingLockContentionTest" time="4.635"/>
+  <system-out><![CDATA[2026-09-16T17:09:28.606+09:00  INFO 42804 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.application.BookingLockContentionTest]: BookingLockContentionTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-16T17:09:28.607+09:00  INFO 42804 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.application.BookingLockContentionTest
+2026-09-16T17:09:28.607+09:00  INFO 42804 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.application.BookingLockContentionTest]: BookingLockContentionTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-16T17:09:28.608+09:00  INFO 42804 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.application.BookingLockContentionTest
+2026-09-16T17:09:33.224+09:00  INFO 42804 --- [pool-9-thread-1] c.o.b.a.BookingExpirationService         : 지연 승인의 유실 처리. 승인 시각이 만료 시각 이상이라 환불하고 만료시킨다. booking=booking_64116dd6c4e14081aabc88848d8721b5 attempt=attempt_3e4f326ea79141b49a2e204d9921b633 approvedAt=2026-10-01T20:10:00Z
+2026-09-16T17:09:33.245+09:00  INFO 42804 --- [pool-9-thread-2] c.o.b.application.PaymentOutcomeService  : 지연 승인. 이미 만료된 예약이라 환불만 한다. booking=booking_64116dd6c4e14081aabc88848d8721b5 attempt=attempt_3e4f326ea79141b49a2e204d9921b633
+2026-09-16T17:09:42.484+09:00  INFO 42804 --- [ool-11-thread-1] c.o.b.a.BookingExpirationService         : 만료 대신 확정. 만료 전 승인 기록이 있다. booking=booking_21e034fc3ece4f158915fa7253b23224 attempt=attempt_9cc2b2e04b6946d18c85da4e467bd8cc approvedAt=2026-10-01T20:00:00Z
+2026-09-16T17:09:42.500+09:00  INFO 42804 --- [ool-11-thread-2] c.o.b.application.PaymentOutcomeService  : 승인 처리 무시. 종착 상태다. booking=booking_21e034fc3ece4f158915fa7253b23224 status=CONFIRMED
+2026-09-16T17:09:47.132+09:00  INFO 42804 --- [ool-12-thread-1] c.o.b.application.PaymentOutcomeService  : 지연 승인. 승인 시각이 만료 시각 이상이라 환불하고 만료시킨다. booking=booking_8635b198304f436ba4961ea0bd1e3cb2 attempt=attempt_8b86a4a2010444a491f765246de9edfd approvedAt=2026-10-01T20:10:00Z
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

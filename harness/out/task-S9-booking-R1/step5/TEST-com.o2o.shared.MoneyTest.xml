@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.shared.MoneyTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-09-11T08:56:04.367Z" hostname="BOOK-QD5U7FFOBT" time="0.001">
+  <properties/>
+  <testcase name="통화가_KRW가_아니면_거절한다()" classname="com.o2o.shared.MoneyTest" time="0.001"/>
+  <testcase name="통화가_KRW면_만든다()" classname="com.o2o.shared.MoneyTest" time="0.0"/>
+  <testcase name="상한을_넘으면_거절한다()" classname="com.o2o.shared.MoneyTest" time="0.0"/>
+  <testcase name="상한값은_만든다()" classname="com.o2o.shared.MoneyTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.inventory.application.InventoryEventTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-09-13T09:52:26.305Z" hostname="BOOK-QD5U7FFOBT" time="2.132">
+  <properties/>
+  <testcase name="재고를_개설하면_InventoryOpened가_난다()" classname="com.o2o.inventory.application.InventoryEventTest" time="0.024"/>
+  <testcase name="거절된_조정은_이벤트를_내지_않는다()" classname="com.o2o.inventory.application.InventoryEventTest" time="0.035"/>
+  <testcase name="요금을_등록하고_조정하면_각각_이벤트가_난다()" classname="com.o2o.inventory.application.InventoryEventTest" time="0.027"/>
+  <testcase name="재고를_조정하면_InventoryAdjusted가_난다()" classname="com.o2o.inventory.application.InventoryEventTest" time="0.018"/>
+  <testcase name="일괄_개설은_날짜마다_InventoryOpened가_난다()" classname="com.o2o.inventory.application.InventoryEventTest" time="0.022"/>
+  <system-out><![CDATA[2026-09-13T18:52:26.315+09:00  INFO 35692 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.inventory.application.InventoryEventTest
+2026-09-13T18:52:26.317+09:00  INFO 35692 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.inventory.application.InventoryEventTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.1)
+
+2026-09-13T18:52:26.348+09:00  INFO 35692 --- [    Test worker] c.o.i.application.InventoryEventTest     : Starting InventoryEventTest using Java 21.0.11 with PID 35692 (started by user in C:\Dev\potenup\99_projects\o2o-dev\backend)
+2026-09-13T18:52:26.348+09:00  INFO 35692 --- [    Test worker] c.o.i.application.InventoryEventTest     : The following 1 profile is active: "dev"
+2026-09-13T18:52:26.616+09:00  INFO 35692 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-09-13T18:52:26.681+09:00  INFO 35692 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 63 ms. Found 9 JPA repository interfaces.
+2026-09-13T18:52:26.755+09:00  INFO 35692 --- [    Test worker] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-09-13T18:52:26.787+09:00  INFO 35692 --- [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-09-13T18:52:26.787+09:00  INFO 35692 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-6 - Starting...
+2026-09-13T18:52:26.818+09:00  INFO 35692 --- [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-6 - Added connection com.mysql.cj.jdbc.ConnectionImpl@886adc3
+2026-09-13T18:52:26.819+09:00  INFO 35692 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-6 - Start completed.
+2026-09-13T18:52:26.822+09:00  INFO 35692 --- [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://127.0.0.1:3307/o2o_payment_test]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 9.7.2
+	Default catalog/schema: o2o_payment_test/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-09-13T18:52:27.126+09:00  INFO 35692 --- [    Test worker] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-09-13T18:52:28.002+09:00  INFO 35692 --- [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-13T18:52:28.221+09:00  WARN 35692 --- [    Test worker] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-09-13T18:52:28.289+09:00  INFO 35692 --- [    Test worker] c.o.i.application.InventoryEventTest     : Started InventoryEventTest in 1.969 seconds (process running for 48.89)
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

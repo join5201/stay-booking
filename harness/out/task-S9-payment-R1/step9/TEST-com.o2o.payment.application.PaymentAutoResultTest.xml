@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.payment.application.PaymentAutoResultTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-09-13T10:55:34.724Z" hostname="BOOK-QD5U7FFOBT" time="1.064">
+  <properties/>
+  <testcase name="Y11_DEFER는_REQUESTED로_남고_결과_이벤트가_없다()" classname="com.o2o.payment.application.PaymentAutoResultTest" time="0.024"/>
+  <testcase name="Y12_롤백된_openAttempt의_PaymentRequested는_어느_구독자에도_닿지_않고_시도가_없다()" classname="com.o2o.payment.application.PaymentAutoResultTest" time="0.042"/>
+  <testcase name="Y11_APPROVE는_뷰가_REQUESTED이고_커밋_뒤_시도가_APPROVED이며_PaymentApproved가_한_번_닿는다()" classname="com.o2o.payment.application.PaymentAutoResultTest" time="0.034"/>
+  <testcase name="Y13_재개_러너는_REQUESTED_APPROVE_시도를_APPROVED로_만들고_다시_불러도_바뀌지_않으며_DEFER는_두지_않는다()" classname="com.o2o.payment.application.PaymentAutoResultTest" time="0.063"/>
+  <testcase name="Y11_DECLINE은_커밋_뒤_시도가_FAILED이고_PaymentFailed가_한_번_닿는다()" classname="com.o2o.payment.application.PaymentAutoResultTest" time="0.038"/>
+  <system-out><![CDATA[2026-09-13T19:55:34.726+09:00  INFO 37604 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.payment.application.PaymentAutoResultTest
+2026-09-13T19:55:34.727+09:00  INFO 37604 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.payment.application.PaymentAutoResultTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.1)
+
+2026-09-13T19:55:34.740+09:00  INFO 37604 --- [    Test worker] c.o.p.application.PaymentAutoResultTest  : Starting PaymentAutoResultTest using Java 21.0.11 with PID 37604 (started by user in C:\Dev\potenup\99_projects\o2o-dev\backend)
+2026-09-13T19:55:34.740+09:00  INFO 37604 --- [    Test worker] c.o.p.application.PaymentAutoResultTest  : The following 1 profile is active: "dev"
+2026-09-13T19:55:34.877+09:00  INFO 37604 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-09-13T19:55:34.907+09:00  INFO 37604 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 29 ms. Found 9 JPA repository interfaces.
+2026-09-13T19:55:34.947+09:00  INFO 37604 --- [    Test worker] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-09-13T19:55:34.967+09:00  INFO 37604 --- [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-09-13T19:55:34.967+09:00  INFO 37604 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-10 - Starting...
+2026-09-13T19:55:34.981+09:00  INFO 37604 --- [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-10 - Added connection com.mysql.cj.jdbc.ConnectionImpl@1005e930
+2026-09-13T19:55:34.982+09:00  INFO 37604 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-10 - Start completed.
+2026-09-13T19:55:34.983+09:00  INFO 37604 --- [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://127.0.0.1:3307/o2o_payment_test]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 9.7.2
+	Default catalog/schema: o2o_payment_test/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: READ_COMMITTED [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-09-13T19:55:35.138+09:00  INFO 37604 --- [    Test worker] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-09-13T19:55:35.456+09:00  INFO 37604 --- [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-13T19:55:35.544+09:00  WARN 37604 --- [    Test worker] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-09-13T19:55:35.574+09:00  INFO 37604 --- [    Test worker] c.o.p.application.PaymentAutoResultTest  : Started PaymentAutoResultTest in 0.845 seconds (process running for 44.1)
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

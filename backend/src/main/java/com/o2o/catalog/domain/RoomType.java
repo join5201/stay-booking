@@ -10,6 +10,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 /**
  * 객실 타입 애그리거트 루트. 설계 근거: 06-2 1절 RoomType 행, 06-2 6절 카탈로그 CRC.
@@ -43,7 +44,9 @@ public class RoomType {
     @Column(name = "description", nullable = false, length = 2000)
     private String description;
 
-    // Property의 같은 필드와 같은 이유다. 11 응답 모델 RoomType이 필수로 적는다
+    // Property의 같은 필드와 같은 이유다. 11 응답 모델 RoomType이 필수로 적는다.
+    // 저장 시점 대조와 증가는 @Version이 한다(R1 평가 B-01이 47행과 94행을 짚었다)
+    @Version
     @Column(name = "version", nullable = false)
     private long version;
 
@@ -87,7 +90,7 @@ public class RoomType {
      * 하향 허용의 근거는 같은 행의 괄호다. 기존 예약에 영향이 없다고 적는다. 11 CAT-07 처리
      * 규칙도 최대 인원 수정은 신규 예약에 적용한다고 적는다. 그래서 내리는 값을 막지 않는다.
      *
-     * 버전 대조는 Property.update와 같다. 계약 2-2절.
+     * 버전 대조는 Property.update와 같다. 계약 2-2절. version을 여기서 올리지 않는다.
      */
     public void update(long expectedVersion, String name, Integer maxOccupancy,
                        String description, Instant now) {
@@ -106,7 +109,6 @@ public class RoomType {
         if (description != null) {
             this.description = description;
         }
-        this.version = this.version + 1;
         this.updatedAt = now;
     }
 
