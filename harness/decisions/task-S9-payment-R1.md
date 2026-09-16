@@ -2,7 +2,7 @@
 
 양식: harness/prompts/decision-table.md v4 (2026-09-08)
 최초 작성: 2026-09-16
-최종 갱신: 2026-09-16 (초안. 결정 8건은 개발 세션이 대조해 적었고 사용자 확정 대기)
+최종 갱신: 2026-09-16 (반영 뒤 인계 표 기입과 계약 해시 갱신. 그 전 같은 날 사용자가 결정 8건을 초안대로 확정. 발언은 초안대로 확정해라. 반영 진행해라. 그 전 초안)
 
 왜 이 파일이 필요한가: 리포트를 눈으로 읽고 반영하면 자기 결정에 불리한 지적이 조용히 빠진다(HR4). 원본 행을 하나씩 옮겨 두면 g2가 ID 집합과 심각도를 원본과 대조할 수 있다.
 
@@ -17,13 +17,13 @@
 | 평가 라운드 | R1 |
 | 평가 대상 절대경로와 파일 목록 | harness/out/task-S9-payment-R1/eval-target-files.md |
 | 평가 대상 버전 또는 해시 | sha256:4afdd900b3dc8f02. 목록 5절(main 기준)이 가리키는 프로덕션 50개와 테스트 7파일 55건과 설정 2개의 기준 커밋은 1bdadfe5a78722f1e708d96bafc0f728eddfc4a1(PR 138 병합, main)이고 파일별 sha256은 목록 5절과 A와 B 리포트의 읽은 파일 표에 있다. 그 59개는 현재 origin/main(635071e)에서도 같다 |
-| 승인된 작업 계약 절대경로와 버전 | harness/tasks/task-S9-payment.md sha256:71a624284e313402 |
+| 승인된 작업 계약 절대경로와 버전 | harness/tasks/task-S9-payment.md sha256:5ebdede6f8b5c8a8. 2026-09-16 개정 6(R1 반영을 받은 판)의 해시다. 평가와 결정 시점의 판은 71a624284e313402 |
 | A 원본 리포트 절대경로와 버전 또는 해시 | harness/reviews/task-S9-payment-R1-A.md sha256:8c70c7fe3c2674de |
 | B 원본 리포트 절대경로와 버전 또는 해시 | harness/reviews/task-S9-payment-R1-B.md sha256:16a5e1e58177fe4a |
 | A 원본 지적 수 | 5 |
 | B 원본 지적 수 | 3 |
 | 결정표 전체 행 수 | 8 |
-| 판단한 사용자 | 초안. join5201 확정 대기. 요청문은 eval-request-A.md sha256:dd55c06ce877934e와 eval-request-B.md sha256:f513785b4c81de9c |
+| 판단한 사용자 | join5201, 2026-09-16. 결정 8건을 초안대로 확정했다. 발언은 초안대로 확정해라. 반영 진행해라. 요청문은 eval-request-A.md sha256:dd55c06ce877934e와 eval-request-B.md sha256:f513785b4c81de9c |
 | 결정 날짜 | 2026-09-16 (초안) |
 
 A는 치명 1, 보통 3, 확인필요 1이다. B는 치명 0, 보통 2, 확인필요 1이다. 합쳐서 치명 1, 보통 5, 확인필요 2다. 초안 결정은 수용 5, 거부 1, 반박 2다.
@@ -86,21 +86,23 @@ A는 치명 1, 보통 3, 확인필요 1이다. B는 치명 0, 보통 2, 확인�
 | 확인 항목 | 기록 |
 |---|---|
 | 확인자와 날짜 | g2 실행은 2026-09-16 Claude Code(개발 세션). 사람 서명 대기 |
-| G2 결과 | PASS. --mode pre 73건 통과(2026-09-16 14:45). version-match는 대상 목록과 계약과 리포트 둘의 네 해시 전부 일치 |
-| 미완료 사유 | 사용자 확정 전이라 결정 열은 초안이다. 기계 검사는 위 결과 |
+| G2 결과 | 통과. node harness/tools/check.mjs g2 harness/decisions/task-S9-payment-R1.md --mode pre 검사 73건 통과(2026-09-16 14:45 결정 전. version-match는 대상 목록과 계약과 리포트 둘의 네 해시 전부 일치). 같은 명령 --mode final은 반영 뒤 인계 표 기입 후 실행했고 결과는 인계 표의 G2 final 행 |
+| 미완료 사유 | 없음. 사용자가 2026-09-16 결정 8건을 확정했고 기계 검사는 위 결과 |
 
 ## 반영과 최종 확인 인계
 
 | 확인 대상 | 기록 |
 |---|---|
-| 반영본 절대경로와 버전 또는 해시 | 반영 후 작성 |
-| 수용 항목 반영 확인 | 반영 후 작성. 수용 5건의 반영 위치는 이유 열에 적었다. 반영 순서 제안은 A-01(경합. 코드와 테스트), A-03(승인 이력 방어선 테스트), B-02(U5 기본키 테스트), B-01(어댑터 단위 테스트), A-02(ApplicationReadyEvent 재발행 테스트) |
-| 미수용 항목 무변경 확인 | 반영 후 작성. 거부 하나(A-04)가 짚은 MockPaymentEventRepository와 MockPaymentEventJpaRepository의 자리는 바꾸지 않는다. 반박 둘(A-05, B-03)은 코드 변경이 없다 |
-| 남은 실제 치명 지적 | 반영 후 작성. 치명 하나(A-01)가 수용이라 반영과 경합 테스트 통과 뒤에 없음으로 적는다 |
+| 반영본 절대경로와 버전 또는 해시 | 브랜치 fix/task-s9-payment-r1-apply. 코드 마지막 커밋 107eae6(브랜치 시작은 이 결정표의 결정 행 커밋 13ff6c0). backend/ 아래 6개 파일의 sha256은 harness/out/task-S9-payment-R1/applied/apply-report.md 2절(sha256:62c171ab883b51ad). diff 전문은 같은 폴더 apply.diff. 계약은 harness/tasks/task-S9-payment.md 개정 6 sha256:5ebdede6f8b5c8a8 |
+| 수용 항목 반영 확인 | 5건 전부 반영했다. 위치는 apply-report 3절. A-01은 JpaMockPaymentEventRepository의 persist와 flush, PaymentApplicationService.recordEvent의 409 매핑, Y24. A-02는 Y25(기동 완료 신호 재발행). A-03은 Y3 셋째 사례(승인 시도가 있는 Payment의 다른 REQUESTED 시도 승인은 AlreadyApproved). B-01은 Y26 둘(어댑터 멱등). B-02는 Y9 U5 사례(같은 id의 둘째 행을 기본키가 거부). 결정표 이유와 다르게 간 것은 A-01의 충돌 뒤 재조회를 빼고 바로 409로 답한 것 하나이고 이유는 apply-report 4절(같은 Payment의 같은 eventId는 잠금이 먼저 거르고 서로 다른 Payment면 body가 언제나 달라 결과가 같다) |
+| 미수용 항목 무변경 확인 | 거부 하나(A-04)가 짚은 MockPaymentEvent와 MockPaymentEventRepository와 반박 둘(A-05, B-03)이 짚은 요청문과 openAttempt 경로와 shared Money는 기준 커밋 1bdadfe와 같다. PaymentApplicationService는 A-01의 recordEvent로만 바뀌었다. B-03의 반박 근거 둘은 계약 5절의 R2 허용 입력 행으로 열었다. apply-report 5절 |
+| 남은 실제 치명 지적 | 없음 |
+| 치명 하나가 닫힌 근거 | A-01은 persist와 flush로 덮어쓰기가 사라지고 기본키 충돌이 409로 나가며 Y24가 잡는다. 저장을 Spring Data의 save로 되돌리면 Y24가 실패하고 패자가 500이다(apply-report 6절 변이 검사 첫 행) |
 | 오판 정정 완료 항목 | 없음 |
-| 마지막 반영본에 필요한 검증과 결과 | 반영 후 작성. Docker Desktop을 켠 뒤 전체 테스트(기준선은 origin/main의 454건), g1 code, 계약 fill, 서로 다른 Payment의 같은 eventId 경합 테스트, 승인 이력 방어선 테스트, U5 기본키 테스트, 어댑터 멱등 테스트, ApplicationReadyEvent 재발행 테스트 |
-| 코드 작업의 직접 실행 근거 | 반영 후 작성 |
+| 마지막 반영본에 필요한 검증과 결과 | 전체 테스트 --rerun-tasks 51클래스 460건 실패 0 오류 0 건너뜀 0(origin/main 454건에 6 추가. 평가 시점 443건과의 차이 11은 예약 R1 반영 몫). g1 code 106건 통과(PaymentApplicationService.java와 JpaMockPaymentEventRepository.java, --artifact junit 51개). 계약 fill 186건 중 1건 실패이고 그 한 건은 164행 예약 계약 해시가 2026-09-15 예약 개정 4로 낡은 것(반영 전부터, 새 행은 통과). 서로 다른 Payment의 같은 eventId 경합 테스트, 승인 이력 방어선 테스트, U5 기본키 테스트, 어댑터 멱등 테스트, 기동 완료 신호 재발행 테스트 전부 통과. 변이 검사 넷은 apply-report 6절. g2 --mode final은 아래 G2 final 행 |
+| 코드 작업의 직접 실행 근거 | harness/out/task-S9-payment-R1/applied/junit/ 아래 JUnit XML 51개(2026-09-16 17:08부터 17:10 실행, DB o2o_fix_test). 명령과 숫자는 apply-report 6절 |
 | 평가 대상 소스와 테스트의 무변경 확인 | 평가 전후 대조. 대상 59개의 sha256이 목록 5절의 앞 16자리와 같고 기준 커밋 1bdadfe와 평가 시각의 트리 434ab39와 현재 origin/main 635071e에서 같다(git diff --stat이 비어 있음). verify-eval-workspace.mjs가 o2o-dev와 o2o-payment에서 10건 PASS였고 평가 뒤 git status에 리포트 말고 바뀐 파일이 없다 |
-| 검증 미완료 사항 | 사용자 확정. A-01의 경합 재현은 이 초안에서 하지 않았다(Docker Desktop 엔진이 꺼져 있었고 정적 대조로 판단했다). 반영 라운드의 경합 테스트가 그것을 한다 |
-| 사용자 최종 완료 판단과 날짜 | 미완료. 초안이고 반영 전이다 |
-| 실제 판단 및 확인에 사용한 시간 | 초안 작성 약 55분(리포트 읽기와 검사 넷과 Codex 작업 기록 대조 약 20분, 지적 8건 코드 대조 약 25분, 표 생성과 g2 약 10분). 사용자 판단 시간은 미측정 |
+| 검증 미완료 사항 | 없음. 초안에서 미뤘던 A-01의 경합 재현은 Y24와 변이 검사 첫 행이 했다 |
+| 사용자 최종 완료 판단과 날짜 | 미완료. 반영은 끝났고 사용자 완료 판단과 PR 병합 대기 |
+| G2 final | 통과. node harness/tools/check.mjs g2 harness/decisions/task-S9-payment-R1.md --mode final 검사 75건 통과(2026-09-16 17:2x 인계 표 기입 후). fatal-remaining과 applied-recorded 포함 |
+| 실제 판단 및 확인에 사용한 시간 | 초안 작성 약 55분(리포트 읽기와 검사 넷과 Codex 작업 기록 대조 약 20분, 지적 8건 코드 대조 약 25분, 표 생성과 g2 약 10분). 사용자 판단 시간은 미측정. 반영은 같은 대화의 두 실행분에 걸쳤다. 첫 실행분이 A-01 코드와 Y24와 Y26 초안 약 16분(14:50부터 15:06), 다시 열린 실행분이 초안 검사와 나머지 테스트 셋과 변이 검사 넷과 전체 테스트 약 25분(16:55부터 17:20), 기록 약 25분 |
