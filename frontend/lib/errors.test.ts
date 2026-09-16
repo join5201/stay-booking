@@ -1,6 +1,34 @@
 import { describe, expect, it } from "vitest";
 import { ApiError, NetworkError } from "./api/client";
-import { fieldErrorsOf, messageOf, placementOf, retryAfterSecOf, retryPolicyOf } from "./errors";
+import { KNOWN_CODES, fieldErrorsOf, messageOf, placementOf, retryAfterSecOf, retryPolicyOf } from "./errors";
+
+// T10 전수 점검. harness/out/claude-design-handoff-2026-09-14/context.md 8절 표의 코드 행 23개(HTTP 순서 그대로).
+// 표에는 이 밖에 응답 헤더 행 둘(Idempotency-Replayed, Retry-After)이 있고 그 둘은 lib/api/client.ts가 다룬다
+const CONTEXT_SECTION_8_CODES = [
+  "INVALID_REQUEST",
+  "INVALID_DATE_RANGE",
+  "IDEMPOTENCY_KEY_REQUIRED",
+  "ACTOR_REQUIRED",
+  "ACCESS_DENIED",
+  "RESOURCE_NOT_FOUND",
+  "VERSION_CONFLICT",
+  "RESOURCE_ALREADY_EXISTS",
+  "INVENTORY_BELOW_COMMITTED",
+  "INVENTORY_UNAVAILABLE",
+  "INVENTORY_NOT_CONFIGURED",
+  "RATE_NOT_CONFIGURED",
+  "OCCUPANCY_EXCEEDED",
+  "PRICE_CHANGED",
+  "IDEMPOTENCY_KEY_REUSED",
+  "REQUEST_IN_PROGRESS",
+  "BOOKING_STATE_CONFLICT",
+  "BOOKING_EXPIRED",
+  "PAYMENT_IN_PROGRESS",
+  "PAYMENT_ATTEMPTS_EXHAUSTED",
+  "CANCELLATION_NOT_ALLOWED",
+  "TEMPORARY_FAILURE",
+  "INTERNAL_ERROR",
+];
 
 function apiError(code: string, status = 400, details: { field: string; reason: string }[] = [], retryAfterSec: number | null = null) {
   return new ApiError({ status, code, message: `서버 문구 ${code}`, traceId: "t", details, retryAfterSec });
@@ -78,5 +106,20 @@ describe("문구", () => {
     ]);
     expect(fieldErrorsOf(error)).toEqual({ name: "이름은 1자 이상", totalCount: "0 이상" });
     expect(fieldErrorsOf(new NetworkError(null))).toEqual({});
+  });
+});
+
+describe("T10 전수 점검. context.md 8절 코드 전부가 세 자리 중 하나에 있다", () => {
+  it("8절 코드 23개마다 규칙이 있고, 규칙에 8절 밖 코드가 없다", () => {
+    expect(CONTEXT_SECTION_8_CODES).toHaveLength(23);
+    expect([...KNOWN_CODES].sort()).toEqual([...CONTEXT_SECTION_8_CODES].sort());
+  });
+
+  it.each(CONTEXT_SECTION_8_CODES)("%s는 field나 notice나 banner이고 문구가 일반 문구가 아니다", (code) => {
+    const error = apiError(code, code === "INTERNAL_ERROR" ? 500 : code === "TEMPORARY_FAILURE" ? 503 : 409);
+    expect(["field", "notice", "banner"]).toContain(placementOf(error));
+    expect(["same-key", "new-key", "none"]).toContain(retryPolicyOf(error));
+    expect(messageOf(error)).not.toBe("알 수 없는 오류입니다.");
+    expect(messageOf(error)).not.toContain("서버 문구");
   });
 });
