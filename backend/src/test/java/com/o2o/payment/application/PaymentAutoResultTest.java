@@ -1,21 +1,28 @@
 package com.o2o.payment.application;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.o2o.BackendApplication;
 import com.o2o.payment.CommittedPaymentEvents;
+import com.o2o.payment.domain.MockEventResult;
 import com.o2o.payment.domain.MockMode;
+import com.o2o.payment.domain.MockPaymentEventRepository;
 import com.o2o.payment.domain.Payment;
 import com.o2o.payment.domain.PaymentApproved;
 import com.o2o.payment.domain.PaymentAttempt;
@@ -28,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Y11과 Y12와 Y13. 설계 근거: 계약 7절 D-1(요청은 트랜잭션 안, 자동 결과는 커밋 뒤 어댑터가
+ * Y11과 Y12와 Y13과 Y25. 설계 근거: 계약 7절 D-1(요청은 트랜잭션 안, 자동 결과는 커밋 뒤 어댑터가
  * REQUIRES_NEW로), layers.md 3-3 E1과 E2(구독자는 AFTER_COMMIT. 첫 구독자가 생기는 묶음은 롤백된
  * 요청의 이벤트가 구독자에 닿지 않는 테스트를 필수로), T26과 11 결제 접수와 환불 절의 재시작
  * 문장, 08-3 결정 6.
@@ -74,6 +81,12 @@ class PaymentAutoResultTest {
 
     @Autowired
     private PlatformTransactionManager transactionManager;
+
+    @Autowired
+    private MockPaymentEventRepository eventRepository;
+
+    @Autowired
+    private ConfigurableApplicationContext context;
 
     private static String newBookingId() {
         return "bk_test_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
@@ -212,6 +225,34 @@ class PaymentAutoResultTest {
         assertEquals("REQUESTED", attemptOf(deferBooking, deferAttemptId).status());
         assertEquals(approvedBefore, recorder.approved.size());
         assertEquals(1, recorder.approvedOf(autoAttemptId));
+    }
+
+    /**
+     * Y25. S9-R1-A-02. Y13은 재개 논리를 직접 불러 봤고, 여기는 그 논리를 기동 완료 신호에 매단
+     * 한 줄(러너의 ApplicationReadyEvent 구독)을 본다. 계약 7절 D-1의 결정 가와 T26의 재시작 몫이다.
+     *
+     * 방법. REQUESTED이고 mockMode APPROVE인 시도를 심은 뒤 떠 있는 이 컨텍스트에 기동 완료
+     * 신호를 다시 낸다. 앱 안의 그 신호 구독자는 러너 하나다. 컨텍스트를 새로 띄우면 create-drop이
+     * 심은 행을 지우고, 프로세스 재기동은 테스트 밖이라 신호만 다시 낸다.
+     */
+    @Test
+    void Y25_기동_완료_신호가_오면_러너가_REQUESTED_APPROVE_시도를_APPROVED로_재개한다() {
+        String bookingId = newBookingId();
+        String attemptId = new TransactionTemplate(transactionManager)
+                .execute(status -> seedRequested(bookingId, MockMode.APPROVE));
+        assertEquals("REQUESTED", attemptOf(bookingId, attemptId).status());
+        assertEquals(0, recorder.approvedOf(attemptId));
+        assertTrue(eventRepository.findByEventId("auto_" + attemptId).isEmpty());
+
+        context.publishEvent(new ApplicationReadyEvent(new SpringApplication(BackendApplication.class),
+                new String[0], context, Duration.ZERO));
+
+        PaymentAttemptView resumed = attemptOf(bookingId, attemptId);
+        assertEquals("APPROVED", resumed.status());
+        assertEquals(FIXED_NOW, resumed.completedAt());
+        assertEquals(1, recorder.approvedOf(attemptId));
+        assertEquals(MockEventResult.Result.PROCESSED,
+                eventRepository.findByEventId("auto_" + attemptId).orElseThrow().result());
     }
 
     /** T6. 서비스를 거치지 않고 REQUESTED 시도를 심는다. 거래 번호는 Mock PG 대신 손으로 붙인다 */
