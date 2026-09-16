@@ -1,9 +1,9 @@
 # task-S9-frontend 평가 대상 파일 목록
 
 최초 작성: 2026-09-16
-최종 갱신: 2026-09-16 (T10 마무리에서 기입)
+최종 갱신: 2026-09-16 (평가 라운드 준비에서 재생성. 기준 커밋을 8530a82로 옮기고 frontend/README.md 한 행이 바뀜. 그 앞서 같은 날 T10 마무리에서 기입)
 
-계약 5절 평가 대상 코드 행이 가리키는 목록이다. 기준 커밋은 0a1f109(0a1f1092c63237acd2ac7d632a782a70b8b61f61. 브랜치 feat/task-s9-frontend-t10의 마지막 코드 커밋. 그 뒤의 커밋은 결과 사본과 계약과 기록뿐이다). 파일 단위 버전은 sha256 앞 16자리다(CLAUDE.md 1절. 커밋 해시는 파일 단위 버전이 아니다). git ls-files frontend 결과 148개 전부이고 추적 제외 파일(.next, node_modules, playwright-report, test-results, .env)은 없다.
+계약 5절 평가 대상 코드 행이 가리키는 목록이다. 기준 커밋은 8530a82(8530a828ec1af1e6dab03fc870661129c5e3e2b6. 브랜치 docs/eval-criteria-frontend-axis-186의 frontend/README.md test:e2e 줄 수정 커밋. T10의 기준 커밋 0a1f109와 견줘 frontend/ 아래 차이는 그 한 파일뿐이다). 파일 단위 버전은 sha256 앞 16자리다(CLAUDE.md 1절. 커밋 해시는 파일 단위 버전이 아니다). git ls-files frontend 결과 중 평가자 규칙 파일 frontend/AGENTS.md(2026-09-16 신설. 평가 대상이 아니다)를 뺀 148개 전부이고 추적 제외 파일(.next, node_modules, playwright-report, test-results, .env)은 없다.
 
 | 성격 | 개수 | 읽을 범위 |
 |---|---|---|
@@ -20,7 +20,7 @@
 | 경로 | 성격 | 줄 수 | sha256 |
 |---|---|---|---|
 | frontend/.gitignore | 설정 | 46 | sha256:2dc9e1d911366890 |
-| frontend/README.md | 설정 | 39 | sha256:e358b94658acf7c0 |
+| frontend/README.md | 설정 | 39 | sha256:3ca86064f7a93ca6 |
 | frontend/app/bookings/[bookingId]/page.tsx | 화면(라우트) | 12 | sha256:b75ed2ed8babd0da |
 | frontend/app/bookings/[bookingId]/pay/page.tsx | 화면(라우트) | 15 | sha256:a4e6e38c942852c8 |
 | frontend/app/bookings/page.tsx | 화면(라우트) | 24 | sha256:b33e8968135fa685 |
