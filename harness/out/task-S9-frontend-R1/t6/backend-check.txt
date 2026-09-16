@@ -1,0 +1,24 @@
+task-S9-frontend T6 운영자(O1, O2) 백엔드 실물 확인. 2026-09-16 14:49부터 14:54
+
+환경
+- 백엔드: o2o-dev 작업 트리의 backend에서 gradlew bootRun(dev 프로필, 8080). DB는 o2o-catalog-mysql 컨테이너(3307, o2o_catalog_test).
+- 프론트: wt-front/frontend의 next build 결과를 next start -p 3000. 앱 안 브라우저, 개발용 바에서 행위자 operator_001.
+- 화면 밖 요청은 curl(운영자 operator_001, 게스트 guest_001). 요청 본문은 화면에서 못 보므로 응답의 필드와 version으로 읽었다.
+
+관찰 순서
+1. /operator/promotions 진입: GET PROMO-04 ?page=0&size=20 → 200, items 비어 있음. 빈 상태 카드와 프로모션 등록 버튼.
+2. 프로모션 등록 → /operator/promotions/new. 빈 폼 제출: 이름과 캠페인 시작과 캠페인 끝의 필수 문구 셋. 요청 없음.
+3. 이름, 할인율 15, 최소 박수 2, 캠페인 2026-10-01부터 2026-11-01, 숙박 시작 2026-10-01만 넣고 제출: 숙박 기간은 시작과 끝을 둘 다 넣거나 둘 다 비웁니다 문구. 요청 없음(W08의 O2 몫).
+4. 숙박 끝 2026-12-01, 지역 선택 상자로 부산과 제주 추가(칩 둘, 2 / 100). 제출: POST PROMO-01 → 201. 응답 regionCodes BUSAN과 JEJU, enabled true, version 0. 목록으로 돌아가 행 하나(15%, 2026-10-01 부터 2026-11-01 전까지, 2박, 사용 중).
+5. 필터 꺼짐: GET ?page=0&size=20&enabled=false → 200, 빈 상태. 필터 사용 중: GET ?page=0&size=20&enabled=true → 200, 행 하나.
+6. 수정 링크 → /operator/promotions/{id}/edit. GET PROMO-03 → 200. 폼이 채워짐. 안 바꾸고 저장: 바뀐 내용이 없습니다 문구, 요청 없음.
+7. 이름만 바꿔 저장: PATCH PROMO-02 → 200, 응답 version 1, 이름만 바뀜. 목록으로 이동. 목록 GET 다시 읽음.
+8. 다시 수정 진입. 이름 입력칸에 새 값을 넣어 둔 채 머리의 사용 끄기 → 확인 시트(제목 프로모션 사용 끄기). 시트 뜨는 동안 요청 없음. 시트의 사용 끄기 → PATCH → 200, 응답 enabled false, version 2, 이름은 서버 값 그대로(P11. enabled와 version만 갔다). 머리가 꺼짐과 사용 켜기로 바뀌고 띠 프로모션을 껐습니다. 이름 입력칸의 내 값은 남음.
+9. 화면 밖 curl PATCH {version 2, minNights 3} → 200 version 3. 화면에서 저장(기준 version 2) → PATCH 409 VERSION_CONFLICT. Notice 문구와 새로 읽기 버튼. 저장 비활성. 최소 박수 칸은 아직 2.
+10. 새로 읽기 → GET PROMO-03 → 200. 최소 박수 3으로 바뀌고 이름은 내 값 그대로. 저장 활성. 저장 → PATCH → 200 version 4, 이름 바뀜. 목록의 행이 3박, 꺼짐.
+11. /operator/promotions/promo_none/edit → GET 404 RESOURCE_NOT_FOUND → 전면 Notice 찾을 수 없습니다와 프로모션 목록으로 버튼.
+12. 화면 밖 curl GET PROMO-04를 guest_001로 → 403 ACCESS_DENIED. 프론트 /operator/promotions를 guest 쿠키로 → 307(미들웨어가 역할 첫 화면으로). O1의 403 Notice 자체는 단위 테스트로만 봤다.
+
+남긴 것
+- 화면이 보낸 PATCH 본문은 브라우저 도구가 요청 본문을 안 보여 줘 응답으로 유추했다. 본문 구성(version과 바뀐 필드만, 사용 끄기는 enabled와 version만)은 단위 테스트가 본다.
+- 목록 진입 시 GET PROMO-04가 두 번 간 경우가 있다. 창 포커스 재조회(TanStack 기본)로 보이며 T5에서 본 것과 같다.
