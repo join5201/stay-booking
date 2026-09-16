@@ -1,0 +1,33 @@
+# task-S9-booking-lifecycle 5단계 결과 요약 (실행 2026-09-13 21:40)
+
+명령: JAVA_HOME 21; ./backend/gradlew.bat -p backend test (워크트리 o2o-dev, 브랜치 feat/task-s9-booking-lifecycle, 테스트 커밋 72b14dc, bcdc493, dcbd8e1, c8dc438)
+결과: exit 0, BUILD SUCCESSFUL (첫 실행은 394건 중 1건 실패. 원인은 테스트 자체의 빠진 호출이었고 아래 관찰 둘째에 적었다. 고친 뒤 재실행이 이 결과다)
+
+junit XML 합계 (backend/build/test-results/test):
+{"files":45,"tests":394,"failures":0,"errors":0,"skipped":0}
+4-4단계 337건에서 57건 늘었다. 기존 337건은 그대로 통과다.
+
+접속 문자열: jdbc:mysql://127.0.0.1:3307/o2o_catalog_test (테스트 설정 기본값). 스케줄러는 테스트 설정에서 꺼져 있어(o2o.booking.expire-scheduler.enabled=false) T1 테스트는 runOnce와 expireIfDue를 직접 부른다.
+
+새 테스트 57건과 8-1절 대응:
+| 파일 | 건수 | 8-1 항목 |
+|---|---|---|
+| booking/domain/BookingTransitionTest | 12 | L1, L2, L3 |
+| inventory/domain/InventoryAllocationServiceTest | 5 | L4 |
+| booking/infrastructure/PricingPriceQuoteAdapterTest | 5 | L5 |
+| booking/application/BookingPaymentServiceTest | 9 | L6 |
+| booking/application/PaymentOutcomeServiceTest | 10 | L7, L8 |
+| booking/application/ExpireDueBookingsTest | 4 | L9 |
+| booking/application/CancelBookingTest | 6 | L10, L11 |
+| booking/application/BookingLifecycleEventTest | 4 | L12 |
+| booking/application/ApprovalLossRecoveryTest | 2 | L13 |
+
+지원 파일 일곱(booking 테스트 루트): MutableClock(@Primary. 만료 시각과 서울 날짜를 돌린다), CommittedBookingEvents(@TransactionalEventListener 기록기), BookingFixtures(객실과 재고와 HELD 예약 생성, 수량 조회, 결제 이력 T6 시딩), TestHookException, FailingOnceInventoryAllocationService와 FailingOncePaymentOutcomeService(운영 빈의 @Primary 하위 클래스. releaseSold와 onApproved를 한 번만 깨뜨린다. 운영 코드 변경 없음), BookingLifecycleTestConfiguration(@TestConfiguration. 같은 @Import를 쓰는 테스트가 컨텍스트 하나를 공유한다).
+
+방식: 전부 실제 MySQL(T3). 테스트 트랜잭션을 걸지 않아 AFTER_COMMIT 구독자와 REQUIRES_NEW 정책이 실제로 돈다. 테스트마다 객실 유형과 지역 코드를 새로 만들어 데이터가 겹치지 않는다. 확정은 결제 APPROVE의 자동 결과와 운영 구독자의 실제 길로 만들고, 승인 시점을 통제할 때는 DEFER 시도에 INTERNAL-01 이벤트를 직접 넣는다. 확정 우선(L9)과 소진(L6)처럼 이번 묶음 코드로 만들 수 없는 상태는 결제 집합체에 직접 심는다(T6).
+
+관찰:
+1. ERROR 로그 20줄. 19줄은 PaymentApprovedAdapter의 결제 승인 처리 실패 로그다. 18줄은 4-4단계와 같은 결제 테스트 셋의 Booking 없는 bookingId이고, 1줄은 L13이 훅으로 P1을 깨뜨린 그 순간의 로그라 L13의 증거다. 나머지 1줄은 결제 API 테스트(MockPaymentEventApiTest의 PolicyFailureOnce)가 내는 500이고 이 묶음 밖이다.
+2. 첫 실행의 실패 1건: ExpireDueBookingsTest의 스킵 셋 테스트가 만료 전에 스킵된 예약을 시계를 돌린 뒤 다시 처리하지 않고 EXPIRED를 기대했다. 운영 코드는 맞고 테스트의 빠진 호출이었다. 그 예약을 시계 뒤에 다시 처리해 EXPIRED가 되는 짝(T1)으로 고쳤다.
+3. L13에서 P1 롤백 뒤 같은 이벤트를 다시 넣으면 결제가 DUPLICATE로 답해 PaymentApproved가 다시 나오지 않음을 확인했다. 그래서 유실 복구는 재전달이 아니라 T1 스캔의 확정 우선(D-1 나)이 맡고, 그 길이 이번 테스트로 닿았다.
+4. 계약 8절 5단계 완료 기준(8-1 전부 초록, 기존 테스트 유지)을 충족한다. 6단계의 L14부터 L18은 API가 생긴 뒤 본다.

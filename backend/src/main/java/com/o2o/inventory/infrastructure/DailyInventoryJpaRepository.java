@@ -43,4 +43,14 @@ public interface DailyInventoryJpaRepository extends JpaRepository<DailyInventor
     List<DailyInventory> findRange(@Param("roomTypeId") String roomTypeId,
                                    @Param("from") LocalDate from,
                                    @Param("to") LocalDate toExclusive);
+
+    // HoldInventory. findRange에 잠금만 더한 것이다. order by가 잠그는 순서를 정한다.
+    // MySQL은 이 질의가 유니크 인덱스(room_type_id, stay_date)를 타며 만나는 순서대로
+    // 행 잠금을 건다. 08-3 결정 3의 날짜 오름차순이 그 순서다
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select i from DailyInventory i where i.roomTypeId = :roomTypeId "
+            + "and i.stayDate >= :from and i.stayDate < :to order by i.stayDate")
+    List<DailyInventory> findRangeForUpdate(@Param("roomTypeId") String roomTypeId,
+                                            @Param("from") LocalDate from,
+                                            @Param("to") LocalDate toExclusive);
 }

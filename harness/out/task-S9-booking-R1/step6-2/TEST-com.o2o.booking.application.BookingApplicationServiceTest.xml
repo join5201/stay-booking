@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.booking.application.BookingApplicationServiceTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-09-11T19:08:52.212Z" hostname="BOOK-QD5U7FFOBT" time="2.131">
+  <properties/>
+  <testcase name="K8_숙박_날짜_중_하루에_재고_행이_없으면_거절하고_선점도_예약도_없다()" classname="com.o2o.booking.application.BookingApplicationServiceTest" time="0.104"/>
+  <testcase name="K8_숙박_날짜_중_하루에_요금이_없으면_거절하고_선점도_예약도_없다()" classname="com.o2o.booking.application.BookingApplicationServiceTest" time="0.06"/>
+  <testcase name="요청하면_HELD_예약이_저장되고_숙박_날짜마다_선점이_1_오른다()" classname="com.o2o.booking.application.BookingApplicationServiceTest" time="0.104"/>
+  <testcase name="K10_예상_총액이_요금_합과_다르면_거절하고_선점도_예약도_없다()" classname="com.o2o.booking.application.BookingApplicationServiceTest" time="0.085"/>
+  <testcase name="K9_없는_객실_타입은_없음_예외다()" classname="com.o2o.booking.application.BookingApplicationServiceTest" time="0.007"/>
+  <testcase name="K11_예약_뒤_요금을_바꿔도_스냅샷이_그대로다()" classname="com.o2o.booking.application.BookingApplicationServiceTest" time="0.143"/>
+  <testcase name="K7_3박_중_가운데_날_재고가_0이면_어느_날짜도_선점이_안_오르고_예약이_없다()" classname="com.o2o.booking.application.BookingApplicationServiceTest" time="0.122"/>
+  <testcase name="K9_인원이_최대_인원을_넘으면_거절한다()" classname="com.o2o.booking.application.BookingApplicationServiceTest" time="0.051"/>
+  <system-out><![CDATA[2026-09-12T04:08:52.246+09:00  INFO 45352 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.application.BookingApplicationServiceTest
+2026-09-12T04:08:52.253+09:00  INFO 45352 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.application.BookingApplicationServiceTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.1)
+
+2026-09-12T04:08:52.293+09:00  INFO 45352 --- [    Test worker] c.o.b.a.BookingApplicationServiceTest    : Starting BookingApplicationServiceTest using Java 21.0.11 with PID 45352 (started by user in C:\Dev\potenup\99_projects\o2o-dev\backend)
+2026-09-12T04:08:52.293+09:00  INFO 45352 --- [    Test worker] c.o.b.a.BookingApplicationServiceTest    : No active profile set, falling back to 1 default profile: "default"
+2026-09-12T04:08:52.623+09:00  INFO 45352 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-09-12T04:08:52.685+09:00  INFO 45352 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 60 ms. Found 6 JPA repository interfaces.
+2026-09-12T04:08:52.773+09:00  INFO 45352 --- [    Test worker] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-09-12T04:08:52.820+09:00  INFO 45352 --- [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-09-12T04:08:52.823+09:00  INFO 45352 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Starting...
+2026-09-12T04:08:52.848+09:00  INFO 45352 --- [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-3 - Added connection com.mysql.cj.jdbc.ConnectionImpl@75723fe1
+2026-09-12T04:08:52.848+09:00  INFO 45352 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Start completed.
+2026-09-12T04:08:52.853+09:00  INFO 45352 --- [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://127.0.0.1:3307/o2o_catalog_test]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 9.7.2
+	Default catalog/schema: o2o_catalog_test/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-09-12T04:08:53.085+09:00  INFO 45352 --- [    Test worker] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-09-12T04:08:53.365+09:00  INFO 45352 --- [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-12T04:08:53.540+09:00  WARN 45352 --- [    Test worker] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-09-12T04:08:53.657+09:00  INFO 45352 --- [    Test worker] c.o.b.a.BookingApplicationServiceTest    : Started BookingApplicationServiceTest in 1.397 seconds (process running for 26.574)
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

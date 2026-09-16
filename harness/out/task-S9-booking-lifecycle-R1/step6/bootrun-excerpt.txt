@@ -1,0 +1,8 @@
+# 6단계 bootRun 로그 발췌 (2026-09-13 22:16 KST 기동, hold-ttl PT2M)
+# 명령: JAVA_HOME 21; ./backend/gradlew.bat -p backend bootRun --args='--o2o.booking.hold-ttl=PT2M'. 스케줄러는 기본값(켜짐, 1초 주기). ERROR 0건. 아래는 기동 두 줄과 예약 E를 만료시킨 스캔 한 줄이다.
+
+2026-09-13T22:16:53.207+09:00  INFO 63012 --- [backend] [           main] com.o2o.BackendApplication               : The following 1 profile is active: "dev"
+2026-09-13T22:17:00.811+09:00  INFO 63012 --- [backend] [           main] com.o2o.BackendApplication               : Started BackendApplication in 8.099 seconds (process running for 8.549)
+2026-09-13T22:20:11.154+09:00  INFO 63012 --- [backend] [   scheduling-1] c.o.b.application.ExpireDueBookings      : TTL 만료 한 바퀴. Summary[scanned=1, expired=1, confirmed=0, skipped=0, failed=0]
+
+# 예약 E의 expiresAt 2026-09-13T13:20:10.723Z, 스캔 22:20:11.154 KST(13:20:11.154Z), GET의 expiredAt 13:20:11.111Z. 만료 시각 뒤 첫 주기에 잡혔다.

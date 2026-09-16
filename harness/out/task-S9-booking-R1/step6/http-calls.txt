@@ -1,0 +1,158 @@
+# 6단계 로컬 HTTP 호출 기록
+# 계약 8절 6단계의 완료 조건이다. gradlew bootRun으로 띄운 실제 서버에 curl로 쳤다.
+# 일시: 2026-09-11 19:06:04 UTC, 서버: http://127.0.0.1:8080, DB: o2o_catalog_test (127.0.0.1:3307)
+# 대상: BOOK-01과 오류 경로 열둘. 준비로 CAT-01, CAT-05, INV-01, INV-02, RATE-01을 쓰고 확인으로 INV-03과 INV-04를 쓴다
+# 날짜는 서울 오늘(2026-09-12)에서 센다. 본문에 한글이 있는 요청은 UTF-8 파일로 보낸다.
+# 준비: 숙소 prop_fec7900b38374fa484264facedc70dfb, 객실 타입 room_67ea44bc01e345a4802365ecb1f706d7 (최대 인원 2). 재고 2026-09-22부터 2026-09-24까지 총량 2(INV-02), 요금 100000 x 3일(RATE-01), 2026-09-25는 재고만(INV-01)
+
+== BOOK-01 POST /api/v1/bookings (GUEST guest_001, Idempotency-Key call-key-1789153566-001) 2박 인원 2 총액 200000 ==
+HTTP/1.1 201 
+Location: /api/v1/bookings/booking_b70f9352d381401989a08bc5980a30f9
+Content-Type: application/json
+Content-Length: 911
+Date: Fri, 11 Sep 2026 19:06:06 GMT
+
+{"id":"booking_b70f9352d381401989a08bc5980a30f9","guestId":"guest_001","propertyId":"prop_fec7900b38374fa484264facedc70dfb","roomTypeId":"room_67ea44bc01e345a4802365ecb1f706d7","checkIn":"2026-09-22","checkOut":"2026-09-24","guestCount":2,"status":"HELD","expiresAt":"2026-09-11T19:16:06.409Z","expirationReason":null,"priceSnapshot":{"currency":"KRW","baseTotalAmount":200000,"discountTotalAmount":0,"totalAmount":200000,"appliedPromotion":null,"days":[{"date":"2026-09-22","baseAmount":100000,"discountAmount":0,"finalAmount":100000},{"date":"2026-09-23","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":0,"approvedAttemptId":null,"attempts":[],"refund":null},"cancellationReason":null,"createdAt":"2026-09-11T19:06:06.409Z","updatedAt":"2026-09-11T19:06:06.409Z","confirmedAt":null,"canceledAt":null,"expiredAt":null,"serverNow":"2026-09-11T19:06:06.416Z","version":0}
+
+== T10 같은 키 같은 body 재전송. 201과 같은 id, Idempotency-Replayed: true ==
+HTTP/1.1 201 
+Location: /api/v1/bookings/booking_b70f9352d381401989a08bc5980a30f9
+Idempotency-Replayed: true
+Content-Type: application/json
+Content-Length: 911
+Date: Fri, 11 Sep 2026 19:06:06 GMT
+
+{"id":"booking_b70f9352d381401989a08bc5980a30f9","guestId":"guest_001","propertyId":"prop_fec7900b38374fa484264facedc70dfb","roomTypeId":"room_67ea44bc01e345a4802365ecb1f706d7","checkIn":"2026-09-22","checkOut":"2026-09-24","guestCount":2,"status":"HELD","expiresAt":"2026-09-11T19:16:06.409Z","expirationReason":null,"priceSnapshot":{"currency":"KRW","baseTotalAmount":200000,"discountTotalAmount":0,"totalAmount":200000,"appliedPromotion":null,"days":[{"date":"2026-09-22","baseAmount":100000,"discountAmount":0,"finalAmount":100000},{"date":"2026-09-23","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":0,"approvedAttemptId":null,"attempts":[],"refund":null},"cancellationReason":null,"createdAt":"2026-09-11T19:06:06.409Z","updatedAt":"2026-09-11T19:06:06.409Z","confirmedAt":null,"canceledAt":null,"expiredAt":null,"serverNow":"2026-09-11T19:06:06.416Z","version":0}
+
+== T11 같은 키 다른 body(인원 1). 409 IDEMPOTENCY_KEY_REUSED ==
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:06 GMT
+
+{"code":"IDEMPOTENCY_KEY_REUSED","message":"같은 멱등키로 다른 요청을 보낼 수 없습니다.","traceId":"trace_44efea736d6e455b843599323ffec8a1","details":[]}
+
+== 멱등키 없음. 400 IDEMPOTENCY_KEY_REQUIRED ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:06 GMT
+Connection: close
+
+{"code":"IDEMPOTENCY_KEY_REQUIRED","message":"Idempotency-Key 헤더가 없거나 형식이 올바르지 않습니다.","traceId":"trace_fd04a91e865a4e33ac6d2cd0c6eef167","details":[]}
+
+== 멱등키 7자. 400 IDEMPOTENCY_KEY_REQUIRED ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:06 GMT
+Connection: close
+
+{"code":"IDEMPOTENCY_KEY_REQUIRED","message":"Idempotency-Key 헤더가 없거나 형식이 올바르지 않습니다.","traceId":"trace_d4c23da4d77642f4add572ced48474b4","details":[]}
+
+== T12 예상 총액 100000(서버 200000). 409 PRICE_CHANGED ==
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:07 GMT
+
+{"code":"PRICE_CHANGED","message":"금액이 바뀌었습니다. 다시 조회한 금액으로 요청하세요.","traceId":"trace_39e9176cd1764e44bfc2c35ae6b8d1e4","details":[]}
+
+== 멱등 규칙 7. 같은 손님이 거절된 키로 고친 body 재요청. 201(거절은 캐시되지 않았다). 이 손님의 두 번째 객실 ==
+HTTP/1.1 201 
+Location: /api/v1/bookings/booking_3a6883fdc2e24585b3709d9debe61ef7
+Content-Type: application/json
+Content-Length: 911
+Date: Fri, 11 Sep 2026 19:06:07 GMT
+
+{"id":"booking_3a6883fdc2e24585b3709d9debe61ef7","guestId":"guest_001","propertyId":"prop_fec7900b38374fa484264facedc70dfb","roomTypeId":"room_67ea44bc01e345a4802365ecb1f706d7","checkIn":"2026-09-22","checkOut":"2026-09-24","guestCount":2,"status":"HELD","expiresAt":"2026-09-11T19:16:07.151Z","expirationReason":null,"priceSnapshot":{"currency":"KRW","baseTotalAmount":200000,"discountTotalAmount":0,"totalAmount":200000,"appliedPromotion":null,"days":[{"date":"2026-09-22","baseAmount":100000,"discountAmount":0,"finalAmount":100000},{"date":"2026-09-23","baseAmount":100000,"discountAmount":0,"finalAmount":100000}]},"payment":{"attemptCount":0,"approvedAttemptId":null,"attempts":[],"refund":null},"cancellationReason":null,"createdAt":"2026-09-11T19:06:07.151Z","updatedAt":"2026-09-11T19:06:07.151Z","confirmedAt":null,"canceledAt":null,"expiredAt":null,"serverNow":"2026-09-11T19:06:07.159Z","version":0}
+
+== A5 인원 3(최대 2). 409 OCCUPANCY_EXCEEDED ==
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:07 GMT
+
+{"code":"OCCUPANCY_EXCEEDED","message":"객실 최대 인원을 넘었습니다.","traceId":"trace_ea013acd3d3844b386a665100b516be7","details":[]}
+
+== T08 객실 둘이 다 선점돼 가용 0. guest_002의 요청은 409 INVENTORY_UNAVAILABLE ==
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:07 GMT
+
+{"code":"INVENTORY_UNAVAILABLE","message":"선점 가능한 재고가 없는 날짜가 있습니다.","traceId":"trace_f0eacc211b81491c96c9bcbc864cc004","details":[]}
+
+== T07 2026-09-25에 재고만 있고 요금 없음. 409 RATE_NOT_CONFIGURED ==
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:07 GMT
+
+{"code":"RATE_NOT_CONFIGURED","message":"요금이 등록되지 않은 날짜가 있습니다.","traceId":"trace_353581038883428fb5646c685d7b6027","details":[]}
+
+== T07 2026-09-26에 재고 행 없음. 409 INVENTORY_NOT_CONFIGURED ==
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:08 GMT
+
+{"code":"INVENTORY_NOT_CONFIGURED","message":"재고가 등록되지 않은 날짜가 있습니다.","traceId":"trace_20cb6b0d6b194143bc04072528dbd313","details":[]}
+
+== 없는 객실 타입. 404 RESOURCE_NOT_FOUND ==
+HTTP/1.1 404 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:08 GMT
+
+{"code":"RESOURCE_NOT_FOUND","message":"자원을 찾을 수 없습니다.","traceId":"trace_ca0b874d2d574c418c927bb621343b9e","details":[]}
+
+== checkOut이 checkIn과 같음. 400 INVALID_DATE_RANGE ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:08 GMT
+Connection: close
+
+{"code":"INVALID_DATE_RANGE","message":"날짜 값이 올바르지 않습니다.","traceId":"trace_802ce5260b7a47039fd9895a5e2e91cf","details":[]}
+
+== 인원 0. 400 INVALID_REQUEST ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:08 GMT
+Connection: close
+
+{"code":"INVALID_REQUEST","message":"요청 값이 올바르지 않습니다.","traceId":"trace_236735f19c92448bbe782959049f5abd","details":[{"field":"guestCount","reason":"1 이상이어야 합니다"}]}
+
+== 행위자 없음. 401 ACTOR_REQUIRED ==
+HTTP/1.1 401 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:09 GMT
+
+{"code":"ACTOR_REQUIRED","message":"필요한 개발 행위자가 없거나 미등록입니다.","traceId":"trace_56004f9da4d944ffb3b1f6b9fe3f4f66","details":[]}
+
+== HOST가 예약 요청. 403 ACCESS_DENIED ==
+HTTP/1.1 403 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:09 GMT
+
+{"code":"ACCESS_DENIED","message":"이 작업에 필요한 역할이 아닙니다.","traceId":"trace_89353c5266ab4cb4b5556bf561f34f20","details":[]}
+
+== T04 INV-03 PATCH 2026-09-22 총량 2에서 1로(선점 2). 409 INVENTORY_BELOW_COMMITTED ==
+HTTP/1.1 409 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Fri, 11 Sep 2026 19:06:09 GMT
+
+{"code":"INVENTORY_BELOW_COMMITTED","message":"선점과 판매 수의 합보다 적게 수정할 수 없습니다.","traceId":"trace_ea7dd20cf2474c7a8265987b9382d1b0","details":[]}
+
+== INV-04 GET 재고 범위. heldCount 2가 보인다 ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 567
+Date: Fri, 11 Sep 2026 19:06:09 GMT
+
+{"roomTypeId":"room_67ea44bc01e345a4802365ecb1f706d7","from":"2026-09-22","to":"2026-09-25","items":[{"roomTypeId":"room_67ea44bc01e345a4802365ecb1f706d7","date":"2026-09-22","totalCount":2,"heldCount":2,"soldCount":0,"availableCount":0,"version":0},{"roomTypeId":"room_67ea44bc01e345a4802365ecb1f706d7","date":"2026-09-23","totalCount":2,"heldCount":2,"soldCount":0,"availableCount":0,"version":0},{"roomTypeId":"room_67ea44bc01e345a4802365ecb1f706d7","date":"2026-09-24","totalCount":2,"heldCount":0,"soldCount":0,"availableCount":2,"version":0}],"missingDates":[]}

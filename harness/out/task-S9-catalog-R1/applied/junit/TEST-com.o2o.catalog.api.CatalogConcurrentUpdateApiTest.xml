@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.catalog.api.CatalogConcurrentUpdateApiTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-09-14T12:24:34.421Z" hostname="BOOK-QD5U7FFOBT" time="4.257">
+  <properties/>
+  <testcase name="C11_같은_version의_동시_객실_타입_수정도_뒤에_저장하는_쪽이_409다()" classname="com.o2o.catalog.api.CatalogConcurrentUpdateApiTest" time="2.13"/>
+  <testcase name="C11_같은_version의_동시_숙소_수정은_뒤에_저장하는_쪽이_409다()" classname="com.o2o.catalog.api.CatalogConcurrentUpdateApiTest" time="2.107"/>
+  <system-out><![CDATA[2026-09-14T21:24:34.423+09:00  INFO 35280 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.catalog.api.CatalogConcurrentUpdateApiTest]: CatalogConcurrentUpdateApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-14T21:24:34.425+09:00  INFO 35280 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.catalog.api.CatalogConcurrentUpdateApiTest
+2026-09-14T21:24:34.427+09:00  INFO 35280 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.catalog.api.CatalogConcurrentUpdateApiTest]: CatalogConcurrentUpdateApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-14T21:24:34.427+09:00  INFO 35280 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.catalog.api.CatalogConcurrentUpdateApiTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

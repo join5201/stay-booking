@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.booking.api.BookingQueryApiTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-09-11T19:08:50.806Z" hostname="BOOK-QD5U7FFOBT" time="1.39">
+  <properties/>
+  <testcase name="K24_page와_size의_기본값과_범위와_범위_밖_page가_맞다()" classname="com.o2o.booking.api.BookingQueryApiTest" time="0.238"/>
+  <testcase name="K24_status로_거르고_허용_밖_값은_400이다()" classname="com.o2o.booking.api.BookingQueryApiTest" time="0.144"/>
+  <testcase name="K24_본인_예약만_createdAt_내림차순으로_낸다()" classname="com.o2o.booking.api.BookingQueryApiTest" time="0.234"/>
+  <testcase name="K24_createdAt이_같으면_id_내림차순이다()" classname="com.o2o.booking.api.BookingQueryApiTest" time="0.275"/>
+  <testcase name="K25_상세도_행위자를_본다()" classname="com.o2o.booking.api.BookingQueryApiTest" time="0.127"/>
+  <testcase name="K25_남의_예약과_없는_id는_자원_정보_없이_404다()" classname="com.o2o.booking.api.BookingQueryApiTest" time="0.167"/>
+  <testcase name="K25_본인_예약은_200과_serverNow와_함께_온다()" classname="com.o2o.booking.api.BookingQueryApiTest" time="0.149"/>
+  <testcase name="K24_목록도_행위자를_본다()" classname="com.o2o.booking.api.BookingQueryApiTest" time="0.014"/>
+  <system-out><![CDATA[2026-09-12T04:08:50.809+09:00  INFO 45352 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.api.BookingQueryApiTest]: BookingQueryApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-12T04:08:50.812+09:00  INFO 45352 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.api.BookingQueryApiTest
+2026-09-12T04:08:50.813+09:00  INFO 45352 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.api.BookingQueryApiTest]: BookingQueryApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-12T04:08:50.815+09:00  INFO 45352 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.api.BookingQueryApiTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -7,8 +7,11 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+
+import com.o2o.shared.RegionRegistry;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -44,6 +47,9 @@ class CatalogApiTest {
 
     @LocalServerPort
     private int port;
+
+    @Autowired
+    private RegionRegistry regionRegistry;
 
     private HttpResponse<String> send(String method, String path, String actorId, String body)
             throws Exception {
@@ -349,6 +355,9 @@ class CatalogApiTest {
 
     @Test
     void 지역_코드는_32자까지_받고_33자는_거절한다() throws Exception {
+        // 길이 경계를 보는 테스트라 32자 코드를 등록된 지역으로 만들어 둔다(R1 평가 B-02).
+        // 미등록 코드의 400은 CatalogUpdateAndListApiTest의 CAT-01 미등록 테스트가 본다
+        regionRegistry.register("A".repeat(32));
         String ok = propertyBody("지역 경계", "A".repeat(32), "주소", "");
         String tooLong = propertyBody("지역 경계", "A".repeat(33), "주소", "");
 
@@ -387,6 +396,73 @@ class CatalogApiTest {
 
         assertEquals(201, send("POST", path, HOST, ok).statusCode());
         assertEquals(400, send("POST", path, HOST, tooMany).statusCode());
+    }
+
+    // ---------- 공백과 명시적 null. C13 (R1 평가 A-03, B-03) ----------
+
+    @Test
+    void C13_이름은_앞뒤_공백을_뗀_값으로_저장하고_뗀_길이로_잰다() throws Exception {
+        // 11 CAT-01 필드표. name은 공백 제거 후 1~100자
+        HttpResponse<String> padded = send("POST", "/api/v1/properties", HOST,
+                propertyBody("  서울 스테이  ", "SEOUL", "주소", ""));
+
+        assertEquals(201, padded.statusCode(), padded.body());
+        assertEquals("서울 스테이", JSON.readTree(padded.body()).get("name").stringValue(),
+                "앞뒤 공백이 그대로 저장됐다");
+        // 앞뒤 공백을 빼면 100자인 입력은 원문 길이 104자로 거절되면 안 된다(B-03)
+        HttpResponse<String> hundred = send("POST", "/api/v1/properties", HOST,
+                propertyBody("  " + "가".repeat(100) + "  ", "SEOUL", "주소", ""));
+        assertEquals(201, hundred.statusCode(), hundred.body());
+        assertEquals(100, JSON.readTree(hundred.body()).get("name").stringValue().length());
+    }
+
+    @Test
+    void C13_이름이_공백만이면_400이고_어느_필드인지_알려준다() throws Exception {
+        HttpResponse<String> res = send("POST", "/api/v1/properties", HOST,
+                propertyBody("   ", "SEOUL", "주소", ""));
+
+        assertEquals(400, res.statusCode(), res.body());
+        JsonNode json = JSON.readTree(res.body());
+        assertEquals("INVALID_REQUEST", json.get("code").stringValue());
+        assertEquals("name", json.get("details").get(0).get("field").stringValue());
+    }
+
+    @Test
+    void C13_description의_명시적_null은_400이고_생략은_빈_문자열이다() throws Exception {
+        // 11 공통 요청과 응답 규칙. 허용하지 않은 null은 400이고 CAT-01 필드표는 생략 시 빈 문자열
+        HttpResponse<String> explicitNull = send("POST", "/api/v1/properties", HOST, """
+                {"name":"null 확인","regionCode":"SEOUL","address":"주소","description":null}
+                """);
+        HttpResponse<String> omitted = send("POST", "/api/v1/properties", HOST, """
+                {"name":"생략 확인","regionCode":"SEOUL","address":"주소"}
+                """);
+
+        assertEquals(400, explicitNull.statusCode(), explicitNull.body());
+        assertTrue(explicitNull.body().contains("INVALID_REQUEST"), explicitNull.body());
+        assertEquals(201, omitted.statusCode(), omitted.body());
+        assertEquals("", JSON.readTree(omitted.body()).get("description").stringValue());
+    }
+
+    @Test
+    void C13_객실_타입_등록도_이름을_strip하고_공백만과_명시적_null은_400이다() throws Exception {
+        // 11 CAT-06 필드표. 숙소와 같은 규칙이다
+        String propertyId = registerProperty("객실 공백용");
+        String path = "/api/v1/properties/" + propertyId + "/room-types";
+
+        HttpResponse<String> padded = send("POST", path, HOST, """
+                {"name":"  스탠다드  ","maxOccupancy":2,"description":""}
+                """);
+        HttpResponse<String> blank = send("POST", path, HOST, """
+                {"name":"   ","maxOccupancy":2,"description":""}
+                """);
+        HttpResponse<String> explicitNull = send("POST", path, HOST, """
+                {"name":"null 객실","maxOccupancy":2,"description":null}
+                """);
+
+        assertEquals(201, padded.statusCode(), padded.body());
+        assertEquals("스탠다드", JSON.readTree(padded.body()).get("name").stringValue());
+        assertEquals(400, blank.statusCode(), blank.body());
+        assertEquals(400, explicitNull.statusCode(), explicitNull.body());
     }
 
     @Test

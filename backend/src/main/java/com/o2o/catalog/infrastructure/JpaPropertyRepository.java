@@ -1,5 +1,6 @@
 package com.o2o.catalog.infrastructure;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
@@ -26,9 +27,14 @@ public class JpaPropertyRepository implements PropertyRepository {
         this.jpaRepository = jpaRepository;
     }
 
+    /**
+     * 저장하면서 바로 flush한다. version의 저장 시점 대조(@Version)가 여기서 일어나게 하기 위해서다.
+     * 커밋까지 미루면 충돌이 트랜잭션 경계 밖에서 터지고 응답과 이벤트가 옛 version을 들고 나간다.
+     * R1 평가 A-01, B-01
+     */
     @Override
     public Property save(Property property) {
-        return jpaRepository.save(property);
+        return jpaRepository.saveAndFlush(property);
     }
 
     @Override
@@ -59,5 +65,11 @@ public class JpaPropertyRepository implements PropertyRepository {
     public PageResult<Property> findByHostId(HostId hostId, PageQuery pageQuery) {
         return SpringPage.toResult(
                 jpaRepository.findAllByHostId(hostId.value(), SpringPage.toPageable(pageQuery)));
+    }
+
+    /** SEARCH-01. 쪽 없는 지역 읽기, id 오름차순. 2026-09-12 추가 */
+    @Override
+    public List<Property> findAllByRegionCode(String regionCode) {
+        return jpaRepository.findAllByRegionCode(regionCode);
     }
 }

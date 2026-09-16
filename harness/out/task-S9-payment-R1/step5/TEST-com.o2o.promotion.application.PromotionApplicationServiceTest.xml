@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.promotion.application.PromotionApplicationServiceTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-09-13T09:18:28.793Z" hostname="BOOK-QD5U7FFOBT" time="2.481">
+  <properties/>
+  <testcase name="등록하면_조회로_같은_값을_읽는다()" classname="com.o2o.promotion.application.PromotionApplicationServiceTest" time="0.024"/>
+  <testcase name="없는_ID를_수정하면_거절한다()" classname="com.o2o.promotion.application.PromotionApplicationServiceTest" time="0.012"/>
+  <testcase name="체크인이_오늘보다_앞이면_거절하고_오늘이면_통과한다()" classname="com.o2o.promotion.application.PromotionApplicationServiceTest" time="0.035"/>
+  <testcase name="인원이_최대_인원을_넘으면_거절하고_같으면_통과한다()" classname="com.o2o.promotion.application.PromotionApplicationServiceTest" time="0.031"/>
+  <testcase name="조건이_맞는_프로모션을_후보로_내고_할인액이_큰_하나를_선택한다()" classname="com.o2o.promotion.application.PromotionApplicationServiceTest" time="0.049"/>
+  <testcase name="없는_객실_타입이면_거절한다()" classname="com.o2o.promotion.application.PromotionApplicationServiceTest" time="0.009"/>
+  <testcase name="없는_ID를_조회하면_거절한다()" classname="com.o2o.promotion.application.PromotionApplicationServiceTest" time="0.009"/>
+  <testcase name="캠페인_종료일이_오늘이면_후보에서_빠지고_시작일이_오늘이면_든다()" classname="com.o2o.promotion.application.PromotionApplicationServiceTest" time="0.059"/>
+  <testcase name="후보가_없으면_빈_목록과_null이다()" classname="com.o2o.promotion.application.PromotionApplicationServiceTest" time="0.039"/>
+  <testcase name="요금_없는_날짜가_있으면_그_날짜_목록과_함께_거절한다()" classname="com.o2o.promotion.application.PromotionApplicationServiceTest" time="0.022"/>
+  <testcase name="지난_버전으로_수정하면_거절하고_최근_변경이_남는다()" classname="com.o2o.promotion.application.PromotionApplicationServiceTest" time="0.022"/>
+  <testcase name="목록은_enabled로_거르고_생략하면_전체다()" classname="com.o2o.promotion.application.PromotionApplicationServiceTest" time="0.031"/>
+  <testcase name="생략한_필드를_유지하고_합친_최종_상태에서_날짜_순서를_본다()" classname="com.o2o.promotion.application.PromotionApplicationServiceTest" time="0.016"/>
+  <system-out><![CDATA[2026-09-13T18:18:28.811+09:00  INFO 37088 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.promotion.application.PromotionApplicationServiceTest
+2026-09-13T18:18:28.811+09:00  INFO 37088 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.promotion.application.PromotionApplicationServiceTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.1)
+
+2026-09-13T18:18:28.836+09:00  INFO 37088 --- [    Test worker] c.o.p.a.PromotionApplicationServiceTest  : Starting PromotionApplicationServiceTest using Java 21.0.11 with PID 37088 (started by user in C:\Dev\potenup\99_projects\o2o-dev\backend)
+2026-09-13T18:18:28.836+09:00  INFO 37088 --- [    Test worker] c.o.p.a.PromotionApplicationServiceTest  : No active profile set, falling back to 1 default profile: "default"
+2026-09-13T18:18:29.070+09:00  INFO 37088 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-09-13T18:18:29.120+09:00  INFO 37088 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 48 ms. Found 9 JPA repository interfaces.
+2026-09-13T18:18:29.232+09:00  INFO 37088 --- [    Test worker] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-09-13T18:18:29.286+09:00  INFO 37088 --- [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-09-13T18:18:29.286+09:00  INFO 37088 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-10 - Starting...
+2026-09-13T18:18:29.312+09:00  INFO 37088 --- [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-10 - Added connection com.mysql.cj.jdbc.ConnectionImpl@276bb456
+2026-09-13T18:18:29.312+09:00  INFO 37088 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-10 - Start completed.
+2026-09-13T18:18:29.316+09:00  INFO 37088 --- [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://127.0.0.1:3307/o2o_payment_test]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 9.7.2
+	Default catalog/schema: o2o_payment_test/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-09-13T18:18:29.574+09:00  INFO 37088 --- [    Test worker] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-09-13T18:18:30.666+09:00  INFO 37088 --- [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-13T18:18:30.836+09:00  WARN 37088 --- [    Test worker] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-09-13T18:18:30.890+09:00  INFO 37088 --- [    Test worker] c.o.p.a.PromotionApplicationServiceTest  : Started PromotionApplicationServiceTest in 2.069 seconds (process running for 59.37)
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

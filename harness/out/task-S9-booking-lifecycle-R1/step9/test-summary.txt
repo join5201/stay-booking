@@ -1,0 +1,28 @@
+# task-S9-booking-lifecycle 9단계 결과 요약 (실행 2026-09-13 22:56, 사본 23:12)
+
+명령: JAVA_HOME 21; ./backend/gradlew.bat -p backend test --rerun (워크트리 o2o-dev, 브랜치 feat/task-s9-booking-lifecycle, 마지막 backend 커밋 892223f)
+결과: exit 0, BUILD SUCCESSFUL in 1m 49s
+
+이 폴더의 XML 48개는 6-2단계의 초록 실행(22:56) 그대로다. 9단계는 코드를 바꾸지 않아 다시 돌리지 않았다. 그 실행 뒤 실제 서버(bootRun)를 띄워 6-2단계 기록을 남기고 내렸으며 build/test-results는 그 사이 바뀌지 않았다.
+
+junit XML 합계:
+{"files":48,"tests":419,"failures":0,"errors":0,"skipped":0}
+기준선 337건(결제 PR 133 병합 시점의 main)에서 82건 늘었다. 기준선 337건은 그대로 통과다(1차 BookingQueryApiTest K24 한 건은 검사 의도를 유지한 채 필터 검사로 바꿨다. 6단계 요약).
+
+g1 code: 이 묶음의 테스트 파일 12개를 각자의 XML로 검사. 12개 PASS, 검사 72건 통과, 테스트 82건.
+| 파일 | 건수 | 8-1 |
+|---|---|---|
+| booking/domain/BookingTransitionTest | 12 | L1, L2, L3 |
+| inventory/domain/InventoryAllocationServiceTest | 5 | L4 |
+| booking/infrastructure/PricingPriceQuoteAdapterTest | 5 | L5 |
+| booking/application/BookingPaymentServiceTest | 9 | L6 |
+| booking/application/PaymentOutcomeServiceTest | 10 | L7, L8 |
+| booking/application/ExpireDueBookingsTest | 4 | L9 |
+| booking/application/CancelBookingTest | 6 | L10, L11 |
+| booking/application/BookingLifecycleEventTest | 4 | L12 |
+| booking/application/ApprovalLossRecoveryTest | 2 | L13 |
+| booking/api/BookingPaymentApiTest | 14 | L14, L15, L16, L17, L18 |
+| booking/api/BookingCancelApiTest | 9 | L19, L20, L21, L22 |
+| booking/application/BookingLockContentionTest | 2 | L23 |
+
+실제 서버 기록: step6/http-calls.txt(397줄. PAY-01, PAY-02, 스케줄러 TTL 만료)와 step6-2/http-calls.txt(451줄. BOOK-04, T22, T29).

@@ -3,7 +3,6 @@ package com.o2o.inventory.application;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -36,6 +35,7 @@ import com.o2o.inventory.domain.RateRegistered;
 import com.o2o.shared.HostId;
 import com.o2o.shared.Money;
 import com.o2o.shared.RoomTypeId;
+import com.o2o.shared.SeoulDate;
 
 /**
  * 설계 근거: 06-2 6절 재고와 요금 CRC의 InventoryApplicationService 책임 세 행.
@@ -261,9 +261,9 @@ public class InventoryApplicationService {
         }
     }
 
-    /** 서버의 오늘. 11 명세가 오늘 이상을 요구하고 그 오늘의 기준은 UTC다(11 공통 절) */
+    /** 서버의 오늘. 11 명세 198행과 259행이 오늘 이상을 요구하고 그 오늘은 서울 날짜다(11 명세 35행) */
     private LocalDate today() {
-        return LocalDate.ofInstant(Instant.now(clock), ZoneOffset.UTC);
+        return SeoulDate.today(clock);
     }
 
     private void requireNotPast(LocalDate stayDate, LocalDate today) {

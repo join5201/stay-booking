@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.booking.api.BookingApiTest" tests="17" skipped="0" failures="0" errors="0" timestamp="2026-09-13T09:17:44.103Z" hostname="BOOK-QD5U7FFOBT" time="14.107">
+  <properties/>
+  <testcase name="K23_체크아웃_날짜에는_재고와_요금이_없어도_201이다()" classname="com.o2o.booking.api.BookingApiTest" time="1.004"/>
+  <testcase name="K15_같은_키_같은_body_재전송은_같은_응답과_Idempotency_Replayed이고_선점이_더_안_오른다()" classname="com.o2o.booking.api.BookingApiTest" time="0.336"/>
+  <testcase name="K23_재고_행_없는_날짜는_409_INVENTORY_NOT_CONFIGURED다()" classname="com.o2o.booking.api.BookingApiTest" time="0.277"/>
+  <testcase name="K14_멱등키가_없거나_형식이_틀리면_400_IDEMPOTENCY_KEY_REQUIRED다()" classname="com.o2o.booking.api.BookingApiTest" time="0.269"/>
+  <testcase name="K17_처리_중인_같은_키는_409_REQUEST_IN_PROGRESS이고_잠금이_풀리면_첫_요청은_201이다()" classname="com.o2o.booking.api.BookingApiTest" time="2.28"/>
+  <testcase name="K23_요금_없는_날짜는_409_RATE_NOT_CONFIGURED다()" classname="com.o2o.booking.api.BookingApiTest" time="0.263"/>
+  <testcase name="K23_최대_인원_초과는_409_OCCUPANCY_EXCEEDED다()" classname="com.o2o.booking.api.BookingApiTest" time="0.181"/>
+  <testcase name="K13_예약을_요청하면_201과_Location과_Booking_20개_필드가_온다()" classname="com.o2o.booking.api.BookingApiTest" time="0.244"/>
+  <testcase name="K20_필드_값이_범위를_벗어나거나_미정의_필드가_있으면_400_INVALID_REQUEST다()" classname="com.o2o.booking.api.BookingApiTest" time="0.122"/>
+  <testcase name="K20_날짜_순서와_30박과_과거와_형식은_400_INVALID_DATE_RANGE이고_서울_오늘은_통과한다()" classname="com.o2o.booking.api.BookingApiTest" time="2.051"/>
+  <testcase name="K22_선점된_날짜의_총량을_선점_아래로_내리면_409_INVENTORY_BELOW_COMMITTED다()" classname="com.o2o.booking.api.BookingApiTest" time="0.181"/>
+  <testcase name="K21_행위자가_없으면_401이고_HOST가_예약하면_403이다()" classname="com.o2o.booking.api.BookingApiTest" time="0.111"/>
+  <testcase name="K16_키_순서만_다른_body는_같은_body라_재전송이다()" classname="com.o2o.booking.api.BookingApiTest" time="0.138"/>
+  <testcase name="K16_같은_키_다른_body는_409_IDEMPOTENCY_KEY_REUSED다()" classname="com.o2o.booking.api.BookingApiTest" time="0.182"/>
+  <testcase name="K19_마지막_객실_하나에_두_손님이_동시에_요청하면_하나만_201이다()" classname="com.o2o.booking.api.BookingApiTest" time="3.218"/>
+  <testcase name="K18_거절된_요청은_캐시되지_않고_같은_키로_고친_body가_201이다()" classname="com.o2o.booking.api.BookingApiTest" time="0.247"/>
+  <testcase name="K23_없는_객실_타입은_404_RESOURCE_NOT_FOUND다()" classname="com.o2o.booking.api.BookingApiTest" time="0.068"/>
+  <system-out><![CDATA[2026-09-13T18:17:44.107+09:00  INFO 37088 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.api.BookingApiTest]: BookingApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-13T18:17:44.149+09:00  INFO 37088 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.api.BookingApiTest
+2026-09-13T18:17:44.149+09:00  INFO 37088 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.api.BookingApiTest]: BookingApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-13T18:17:44.149+09:00  INFO 37088 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.api.BookingApiTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.1)
+
+2026-09-13T18:17:44.282+09:00  INFO 37088 --- [    Test worker] com.o2o.booking.api.BookingApiTest       : Starting BookingApiTest using Java 21.0.11 with PID 37088 (started by user in C:\Dev\potenup\99_projects\o2o-dev\backend)
+2026-09-13T18:17:44.282+09:00  INFO 37088 --- [    Test worker] com.o2o.booking.api.BookingApiTest       : No active profile set, falling back to 1 default profile: "default"
+2026-09-13T18:17:44.604+09:00  INFO 37088 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-09-13T18:17:44.670+09:00  INFO 37088 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 60 ms. Found 9 JPA repository interfaces.
+2026-09-13T18:17:44.964+09:00  INFO 37088 --- [    Test worker] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 0 (http)
+2026-09-13T18:17:44.998+09:00  INFO 37088 --- [    Test worker] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-09-13T18:17:44.999+09:00  INFO 37088 --- [    Test worker] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.24]
+2026-09-13T18:17:45.086+09:00  INFO 37088 --- [    Test worker] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 804 ms
+2026-09-13T18:17:45.249+09:00  INFO 37088 --- [    Test worker] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-09-13T18:17:45.284+09:00  INFO 37088 --- [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-09-13T18:17:45.295+09:00  INFO 37088 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2026-09-13T18:17:45.327+09:00  INFO 37088 --- [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection com.mysql.cj.jdbc.ConnectionImpl@3447daf1
+2026-09-13T18:17:45.327+09:00  INFO 37088 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+2026-09-13T18:17:45.332+09:00  INFO 37088 --- [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://127.0.0.1:3307/o2o_payment_test]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 9.7.2
+	Default catalog/schema: o2o_payment_test/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-09-13T18:17:45.640+09:00  INFO 37088 --- [    Test worker] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-09-13T18:17:46.603+09:00  INFO 37088 --- [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-13T18:17:46.854+09:00  WARN 37088 --- [    Test worker] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-09-13T18:17:46.944+09:00  INFO 37088 --- [    Test worker] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 53353 (http) with context path '/'
+2026-09-13T18:17:46.960+09:00  INFO 37088 --- [    Test worker] com.o2o.booking.api.BookingApiTest       : Started BookingApiTest in 2.718 seconds (process running for 15.442)
+2026-09-13T18:17:47.101+09:00  INFO 37088 --- [o-auto-1-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-09-13T18:17:47.101+09:00  INFO 37088 --- [o-auto-1-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-09-13T18:17:47.101+09:00  INFO 37088 --- [o-auto-1-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 0 ms
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

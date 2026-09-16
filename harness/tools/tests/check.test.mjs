@@ -26,7 +26,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { fill, g1, g2, answer, sweep, numbers, state, stateRows, supersededSet, settings, ruleBody, scopeKind, skipReason } from '../check.mjs';
+import { fill, g1, g2, answer, sweep, numbers, state, stateRows, supersededSet, settings, ruleBody, scopeKind, skipReason, union, unionFiles, unionMarks } from '../check.mjs';
 import { touchedNames } from '../numbers-gate.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -531,6 +531,32 @@ test('scopeKind. 경로 앞자리가 파일 성격을 정한다', () => {
 // 테스트는 임시 폴더에 fixture를 쓴다. 그 파일이 성격을 얻으면 기존 73건이 달라진다
 test('scopeKind. 저장소 밖 파일은 성격이 없다', () => {
   assert.equal(scopeKind(path.join(TMP, 'x.md')), null);
+});
+
+// README는 어디에 있든 디렉터리 색인이다. 앞자리로만 성격을 정하면 harness/docs와
+// harness/prompts 아래 둘만 면제되고 같은 성격인 나머지 열 개가 종료 문장에서 실패한다.
+test('scopeKind. README는 앞자리보다 이름이 세다', () => {
+  assert.equal(scopeKind(path.join(ROOT, 'README.md')), 'index');
+  assert.equal(scopeKind(path.join(ROOT, 'document/README.md')), 'index');
+  assert.equal(scopeKind(path.join(ROOT, 'harness/docs/README.md')), 'index');
+  assert.equal(scopeKind(path.join(ROOT, 'backend/README.md')), 'index');
+});
+
+// 부모 경로는 점 두 개 뒤에 구분자가 온다. 점 두 개로 시작하는 폴더 이름은 저장소 안이다.
+// 구분자를 안 보면 그런 폴더의 README가 저장소 밖으로 분류돼 면제를 못 받는다 (PR 77 리뷰 지적)
+test('scopeKind. 점 두 개로 시작하는 폴더는 저장소 밖이 아니다', () => {
+  assert.equal(scopeKind(path.join(ROOT, '..fixtures/README.md')), 'index');
+  assert.equal(scopeKind(path.join(ROOT, '..dot/README.md')), 'index');
+});
+
+// 이름이 README로 끝나기만 하면 안 된다. 앞에 슬래시가 있어야 파일 이름이다
+test('scopeKind. README로 끝나는 다른 이름은 색인이 아니다', () => {
+  assert.equal(scopeKind(path.join(ROOT, 'document/NOT-README.md')), 'step');
+});
+
+test('skipReason. 색인의 종료 문장만 범위 밖이다', () => {
+  assert.ok(skipReason(path.join(ROOT, 'harness/state/README.md'), 'doc.end-sentence'));
+  assert.equal(skipReason(path.join(ROOT, 'harness/state/README.md'), 'doc.date-created'), null);
 });
 
 test('skipReason. 하네스 문서의 종료 문장만 범위 밖이다', () => {
@@ -1055,4 +1081,102 @@ test('settings. JSON이 깨졌으면 종료 코드 2', () => {
   fs.writeFileSync(p, '{ 깨진 ');
   const r = run(() => settings(p));
   assert.equal(r.code, 2);
+});
+
+// ---------- union 병합 흔적 (2026-09-11. 이슈 119) ----------
+// 왜 필요한가: merge=union은 양쪽이 같은 구간을 건드리면 두 판을 다 남긴다. 그 흔적을
+// 네 번 사람이 눈으로 찾았다. 행은 harness/state/README.md의 열두 칸 형식에서 만든다.
+
+const U_HEAD = [
+  '| 날짜시각 | Task | 라운드 | 단계 | 결과 | 실패 원인 | 교훈 | 다음 작업 | 실제 시간 | 증거 | 안 해 본 것 | 대체 |',
+  '|---|---|---|---|---|---|---|---|---|---|---|---|',
+];
+const U_ROW_A = '| 2026-09-11 10:00 | H1 | 해당 없음 | 준비 | applied. 초안 | 없음 | 없음 | H1 승인 | 미측정 | 없음 | 없음 | 없음 |';
+const U_ROW_B = '| 2026-09-11 10:00 | H2 | 해당 없음 | 준비 | drafted. 같은 분에 다른 세션 | 없음 | 없음 | H2 승인 | 미측정 | 없음 | 없음 | 없음 |';
+const U_NINE = '| 2026-09-11 09:00 | H0 | 해당 없음 | 준비 | done. 아홉 칸 행 | 없음 | 없음 | H1 | 미측정 |';
+const U_GROWN = U_NINE + ' 없음 | 없음 | 없음 |';
+
+// 임시 저장소 모양을 만든다. .gitattributes와 그것이 가리키는 기록 파일 하나
+function unionRepo(rows, attr = 'state/log.md merge=union') {
+  const dir = fs.mkdtempSync(path.join(TMP, 'union-'));
+  fs.mkdirSync(path.join(dir, 'state'));
+  fs.writeFileSync(path.join(dir, '.gitattributes'), `# 줄바꿈\n* text=auto eol=lf\n${attr}\n`);
+  fs.writeFileSync(path.join(dir, 'state', 'log.md'), `# 기록\n\n${[...U_HEAD, ...rows].join('\n')}\n`);
+  return path.join(dir, '.gitattributes');
+}
+
+test('unionFiles. 주석과 다른 속성은 빼고 merge=union만 뽑는다', () => {
+  const files = unionFiles('# 설명\n* text=auto eol=lf\n*.png binary\na/b.md merge=union\nc.md merge=union # 꼬리 주석\n');
+  assert.deepEqual(files, ['a/b.md', 'c.md']);
+});
+
+test('union 통과. 날짜시각이 같고 내용이 다른 행 둘은 정상이다', () => {
+  const r = run(() => union(unionRepo([U_ROW_A, U_ROW_B])));
+  assert.equal(r.code, 0, r.out);
+  assert.match(r.out, /union 파일 1개/);
+});
+
+// 기록 파일은 제목 줄과 빈 줄 뒤에 머리글이 3행, 구분선이 4행이라 첫 행이 5행이다
+test('union 실패. 같은 행이 두 번', () => {
+  const r = run(() => union(unionRepo([U_ROW_A, U_ROW_B, U_ROW_A])));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /\[union\.dup-row\] +7 +state\/log\.md 7행이 5행과 같다/);
+});
+
+test('union 실패. 칸을 붙여 고친 행의 옛 판이 접두로 남았다', () => {
+  const r = run(() => union(unionRepo([U_NINE, U_ROW_A, U_GROWN])));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /\[union\.prefix-row\] +5 +state\/log\.md 5행이 7행의 접두다/);
+});
+
+test('union 실패. 옛 판의 칸을 고쳐서 접두가 아니면 칸 수로 잡는다', () => {
+  const edited = U_NINE.replace('done. 아홉 칸 행', 'done. 고친 칸');
+  const r = run(() => union(unionRepo([edited, U_GROWN])));
+  assert.equal(r.code, 1);
+  assert.doesNotMatch(r.out, /union\.prefix-row\] +\d/);
+  assert.match(r.out, /\[union\.table-cells\] +5 +state\/log\.md 5행이 9칸이다. 머리글 3행은 12칸/);
+});
+
+test('union 통과. 펜스 안의 표 흉내는 세지 않는다', () => {
+  const r = run(() => union(unionRepo([U_ROW_A, '', '```', U_ROW_A, U_ROW_A, '```'])));
+  assert.equal(r.code, 0, r.out);
+});
+
+test('union 실패. 선언한 파일이 없다', () => {
+  const r = run(() => union(unionRepo([U_ROW_A], 'state/log.md merge=union\nstate/없음.md merge=union')));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /\[union\.exists\] +0 +state\/없음\.md 파일이 없다/);
+});
+
+test('union 통과. 글롭 패턴과 앞 슬래시도 읽는다', () => {
+  const r = run(() => union(unionRepo([U_ROW_A, U_ROW_B], '/state/*.md merge=union')));
+  assert.equal(r.code, 0, r.out);
+  assert.match(r.out, /union 파일 1개/);
+});
+
+test('union 실패. 글롭 패턴에 맞는 파일이 없다', () => {
+  const r = run(() => union(unionRepo([U_ROW_A], 'state/log.md merge=union\nstate/없음-*.md merge=union')));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /\[union\.exists\] +0 +state\/없음-\*\.md 에 맞는 파일이 없다/);
+});
+
+test('union. merge=union 선언이 없으면 사용법 오류다', () => {
+  const r = run(() => union(unionRepo([U_ROW_A], '*.png binary')));
+  assert.equal(r.code, 2);
+});
+
+test('unionMarks. 같은 행과 접두 행을 줄 번호 순으로 낸다', () => {
+  const text = [...U_HEAD, U_NINE, U_ROW_A, U_ROW_A, U_GROWN].join('\n');
+  assert.deepEqual(unionMarks(text), [
+    { kind: 'prefix', line: 3, other: 6 },
+    { kind: 'dup', line: 5, other: 4 },
+  ]);
+});
+
+test('union. 지금의 .gitattributes가 통과한다. progress.md의 칸 수만 범위 밖이다', () => {
+  const r = run(() => union(path.join(ROOT, '.gitattributes')));
+  assert.equal(r.code, 0, r.out);
+  assert.match(r.out, /union 파일 3개/);
+  assert.match(r.out, /범위 밖 1건/);
+  assert.match(r.out, /union\.table-cells +harness\/state\/progress\.md/);
 });

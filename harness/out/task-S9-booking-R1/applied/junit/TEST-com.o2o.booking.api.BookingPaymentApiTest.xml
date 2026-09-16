@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.booking.api.BookingPaymentApiTest" tests="15" skipped="0" failures="0" errors="0" timestamp="2026-09-15T09:53:57.383Z" hostname="BOOK-QD5U7FFOBT" time="7.401">
+  <properties/>
+  <testcase name="L17_DEFER는_REQUESTED로_남고_INTERNAL_01로_승인을_넣으면_CONFIRMED다()" classname="com.o2o.booking.api.BookingPaymentApiTest" time="0.239"/>
+  <testcase name="L17_DECLINE_뒤_GET이_HELD와_FAILED와_MOCK_DECLINED이고_DECLINE_셋이면_EXPIRED_PAYMENT_FAILED와_held_0이다()" classname="com.o2o.booking.api.BookingPaymentApiTest" time="0.316"/>
+  <testcase name="L18_시도_목록은_200과_3개_필드이고_attemptNumber_오름차순이며_시도_없으면_0과_빈_배열이다()" classname="com.o2o.booking.api.BookingPaymentApiTest" time="0.2"/>
+  <testcase name="L15_멱등키가_없으면_400이고_형식_밖_body는_400이며_행위자_없음은_401_HOST는_403이다()" classname="com.o2o.booking.api.BookingPaymentApiTest" time="0.116"/>
+  <testcase name="L18_시도_목록의_행위자_없음은_401_HOST는_403_남의_예약과_없는_예약은_404다()" classname="com.o2o.booking.api.BookingPaymentApiTest" time="0.117"/>
+  <testcase name="L15_DEFER_시도가_진행_중이면_새_키는_409_PAYMENT_IN_PROGRESS다()" classname="com.o2o.booking.api.BookingPaymentApiTest" time="0.174"/>
+  <testcase name="L14_같은_키_재전송은_최초_응답과_Idempotency_Replayed이고_시도_수가_그대로이며_다른_body는_409다()" classname="com.o2o.booking.api.BookingPaymentApiTest" time="0.273"/>
+  <testcase name="L16_APPROVE_흐름_PAY_01_뒤_GET_상세가_CONFIRMED이고_payment가_채워지며_held_0_sold_1이다()" classname="com.o2o.booking.api.BookingPaymentApiTest" time="0.193"/>
+  <testcase name="L15_DECLINE_셋_뒤_넷째는_BOOKING_EXPIRED가_먼저이고_실패_셋을_심은_HELD는_409_PAYMENT_ATTEMPTS_EXHAUSTED다()" classname="com.o2o.booking.api.BookingPaymentApiTest" time="0.665"/>
+  <testcase name="L14_결제를_요청하면_202와_Location과_PaymentAttempt_11개_필드가_오고_mockMode_생략은_APPROVE다()" classname="com.o2o.booking.api.BookingPaymentApiTest" time="0.333"/>
+  <testcase name="L15_CONFIRMED에_새_키로_결제를_요청하면_409_BOOKING_STATE_CONFLICT다()" classname="com.o2o.booking.api.BookingPaymentApiTest" time="0.158"/>
+  <testcase name="L24_처리_중인_같은_키에_다른_body는_409_IDEMPOTENCY_KEY_REUSED다()" classname="com.o2o.booking.api.BookingPaymentApiTest" time="2.136"/>
+  <testcase name="L15_남의_예약과_없는_예약은_404이고_본문이_같다()" classname="com.o2o.booking.api.BookingPaymentApiTest" time="0.123"/>
+  <testcase name="L14_처리_중인_같은_키는_409_REQUEST_IN_PROGRESS이고_잠금이_풀리면_첫_요청은_202다()" classname="com.o2o.booking.api.BookingPaymentApiTest" time="2.138"/>
+  <testcase name="L15_만료_시각_지난_HELD는_409_BOOKING_EXPIRED이고_응답_뒤_GET이_EXPIRED와_held_반환이며_이미_EXPIRED도_409다()" classname="com.o2o.booking.api.BookingPaymentApiTest" time="0.17"/>
+  <system-out><![CDATA[2026-09-15T18:53:57.386+09:00  INFO 30504 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.api.BookingPaymentApiTest]: BookingPaymentApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-15T18:53:57.387+09:00  INFO 30504 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.api.BookingPaymentApiTest
+2026-09-15T18:53:57.388+09:00  INFO 30504 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.api.BookingPaymentApiTest]: BookingPaymentApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-15T18:53:57.389+09:00  INFO 30504 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.api.BookingPaymentApiTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

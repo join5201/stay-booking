@@ -23,6 +23,7 @@ import com.o2o.inventory.domain.DailyInventoryRepository;
 import com.o2o.inventory.domain.DuplicateInventoryException;
 import com.o2o.inventory.domain.DuplicateRateException;
 import com.o2o.inventory.domain.InventoryBelowOccupiedException;
+import com.o2o.inventory.domain.PastStayDateException;
 import com.o2o.shared.HostId;
 import com.o2o.shared.RoomTypeId;
 
@@ -32,7 +33,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * V1과 V4. 설계 근거: 계약 8-1절, 06-4 1-2 adjust와 openInventory와 registerRate, T04.
+ * V1과 V4와 V13. 설계 근거: 계약 8-1절, 06-4 1-2 adjust와 openInventory와 registerRate, T04,
+ * 11 명세 35행.
  *
  * 실제 MySQL에 붙는다. 메모리 저장소로 대신하지 않는 근거는 eval-criteria-code.md의 테스트
  * 격리와 재현성 축이다. V4가 확인하는 유일성은 DB 책임이고(06-4 1-4) 진짜 DB에서만 확인된다.
@@ -45,12 +47,20 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  *
  * 시각을 고정한다. 같은 축이 시간 제어를 요구하고, 앱 서비스의 과거 날짜 검사가 서버의
  * 오늘을 기준으로 하기 때문이다. 고정하지 않으면 며칠 뒤에 이 테스트가 다른 것을 검사한다.
+ *
+ * 고정 시각을 UTC 20시로 둔 이유. 그 순간 UTC 날짜는 10월 1일이고 서울 날짜는 10월 2일
+ * 05시다. 11 명세 35행이 숙박 날짜를 Asia/Seoul 기준으로 적으므로 오늘은 10월 2일이어야
+ * 하고 10월 1일은 과거다. UTC로 자르면 10월 1일이 오늘로 통한다. R1 평가 A-01과 B-01이
+ * 짚은 자리이고 V13이 그 경계를 본다. Clock의 zone을 일부러 UTC로 둔다. 서비스가 Clock의
+ * zone으로 날짜를 자르면 V13이 잡는다.
  */
 @SpringBootTest
 @Transactional
 class InventoryApplicationServiceTest {
 
-    private static final Instant FIXED_NOW = Instant.parse("2026-10-01T00:00:00Z");
+    private static final Instant FIXED_NOW = Instant.parse("2026-10-01T20:00:00Z");
+    private static final LocalDate UTC_TODAY = LocalDate.parse("2026-10-01");
+    private static final LocalDate SEOUL_TODAY = LocalDate.parse("2026-10-02");
     private static final HostId HOST = HostId.of("host_001");
     private static final LocalDate STAY_DATE = LocalDate.parse("2026-10-10");
 
@@ -166,6 +176,30 @@ class InventoryApplicationServiceTest {
         assertThrows(RoomTypeNotFoundException.class,
                 () -> inventoryApplicationService.registerRate(
                         HOST, RoomTypeId.of("room_없는것"), STAY_DATE, 100_000));
+    }
+
+    @Test
+    void V13_오늘은_UTC가_아니라_서울_날짜다() {
+        // A-01과 B-01. 고정 시각 UTC 10월 1일 20시는 서울 10월 2일 05시다. 서울 기준으로
+        // 10월 1일은 어제라 등록이 거부돼야 한다. UTC로 자르면 오늘로 통해서 이 테스트가 깨진다
+        RoomTypeId roomTypeId = 내_객실_타입();
+
+        assertThrows(PastStayDateException.class,
+                () -> inventoryApplicationService.openInventory(HOST, roomTypeId, UTC_TODAY, 5));
+        assertThrows(PastStayDateException.class,
+                () -> inventoryApplicationService.registerRate(HOST, roomTypeId, UTC_TODAY, 100_000));
+    }
+
+    @Test
+    void V13_서울_오늘은_등록된다() {
+        // 거절 케이스의 짝이다. 서울 날짜로 오늘인 10월 2일은 오늘 이상이라 허용 값이다.
+        // 이 짝이 없으면 오늘까지 막는 가드도 위 테스트를 통과한다(backend/CLAUDE.md T1)
+        RoomTypeId roomTypeId = 내_객실_타입();
+
+        DailyInventory opened = inventoryApplicationService.openInventory(
+                HOST, roomTypeId, SEOUL_TODAY, 5);
+
+        assertEquals(SEOUL_TODAY, opened.stayDate());
     }
 
     private RoomTypeId 내_객실_타입() {

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.DatabaseConnectionTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-09-11T05:25:33.001Z" hostname="BOOK-QD5U7FFOBT" time="0.012">
+  <properties/>
+  <testcase name="springContextStartsAndConnectsToMysql()" classname="com.o2o.DatabaseConnectionTest" time="0.003"/>
+  <system-out><![CDATA[2026-09-11T14:25:33.005+09:00  INFO 55596 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.DatabaseConnectionTest]: DatabaseConnectionTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-11T14:25:33.007+09:00  INFO 55596 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.DatabaseConnectionTest
+2026-09-11T14:25:33.008+09:00  INFO 55596 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.DatabaseConnectionTest]: DatabaseConnectionTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-11T14:25:33.009+09:00  INFO 55596 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.DatabaseConnectionTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
