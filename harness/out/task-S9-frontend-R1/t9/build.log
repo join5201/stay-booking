@@ -1,0 +1,43 @@
+
+> frontend@0.1.0 build
+> next build
+
+▲ Next.js 16.3.5 (Turbopack)
+✓ Running next.config.ts took 33ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 1009ms
+  Running TypeScript ...
+  Finished TypeScript in 3.0s ...
+  Collecting page data using 19 workers ...
+  Generating static pages using 19 workers (0/8) ...
+  Generating static pages using 19 workers (2/8) 
+  Generating static pages using 19 workers (4/8) 
+  Generating static pages using 19 workers (6/8) 
+✓ Generating static pages using 19 workers (8/8) in 715ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /bookings
+├ ƒ /bookings/[bookingId]
+├ ƒ /bookings/[bookingId]/pay
+├ ƒ /host/properties
+├ ƒ /host/properties/[propertyId]/edit
+├ ƒ /host/properties/[propertyId]/room-types
+├ ƒ /host/properties/new
+├ ƒ /host/room-types/[roomTypeId]/inventories
+├ ƒ /host/room-types/[roomTypeId]/rates
+├ ƒ /operator/promotions
+├ ƒ /operator/promotions/[promotionId]/edit
+├ ƒ /operator/promotions/new
+├ ƒ /properties/[propertyId]
+├ ƒ /room-types/[roomTypeId]
+└ ƒ /room-types/[roomTypeId]/book
+
+
+ƒ Proxy (Middleware)
+
+ƒ  (Dynamic)  server-rendered on demand
+
