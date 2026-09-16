@@ -1,7 +1,7 @@
 # frontend
 
 최초 작성: 2026-09-15
-최종 갱신: 2026-09-15 (T2 공통 UI. 토큰, 컴포넌트, layout, proxy. 그 전 같은 날 T1 기반)
+최종 갱신: 2026-09-16 (test:e2e 줄을 T10 뒤 실제대로. 그 전 2026-09-15 T2 공통 UI와 T1 기반)
 
 O2O 숙박 예약 MVP의 화면이다. 로컬 개발과 검증까지만 다룬다. 작업 계약은 harness/tasks/task-S9-frontend.md이고 화면과 API 대응표는 그 2절이다.
 
@@ -26,7 +26,7 @@ O2O 숙박 예약 MVP의 화면이다. 로컬 개발과 검증까지만 다룬�
 | npm run lint | eslint. 오류 0이어야 한다 |
 | npm run build | 프로덕션 빌드. 실패 0이어야 한다 |
 | npm run test | Vitest(jsdom) 단위와 컴포넌트와 훅 테스트. 설정은 vitest.config.mts |
-| npm run test:e2e | Playwright E2E. 설정과 시험은 T10에서 붙는다 |
+| npm run test:e2e | Playwright E2E 여섯(계약 8-1절 E01부터 E06). 백엔드가 o2o_web_test DB와 hold-ttl 20초로, 프론트가 next start 3000으로 떠 있어야 한다. 주소는 E2E_BASE_URL(기본 3000)과 E2E_BACKEND_URL(기본 8080). 시험 코드는 rewrites를 지나 백엔드를 부르고 INTERNAL-01만 백엔드 주소로 직접 부른다(e2e/support.ts 머리) |
 
 ## 3. 폴더
 
