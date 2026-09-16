@@ -57,4 +57,32 @@ describe("Countdown (W06)", () => {
     act(() => vi.advanceTimersByTime(120_000));
     expect(onZero).toHaveBeenCalledTimes(2);
   });
+
+  // E04가 잡은 것. 0에서 다시 읽은 응답이 아직 HELD이고 이미 0이면 곧바로가 아니라 1초 뒤에 한 번 더
+  it("받았을 때부터 0인 응답은 1초 뒤에 onZero를 한 번만 부른다", () => {
+    const onZero = vi.fn();
+    render(<Countdown expiresAt={EXPIRES_AT} serverNow={EXPIRES_AT} onZero={onZero} />);
+    expect(screen.getByText("00:00")).toBeTruthy();
+    expect(onZero).not.toHaveBeenCalled();
+
+    act(() => vi.advanceTimersByTime(999));
+    expect(onZero).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(1));
+    expect(onZero).toHaveBeenCalledTimes(1);
+
+    act(() => vi.advanceTimersByTime(30_000));
+    expect(onZero).toHaveBeenCalledTimes(1);
+  });
+
+  it("받았을 때부터 0인 응답이 1초 안에 새 응답으로 바뀌면 부르지 않는다", () => {
+    const onZero = vi.fn();
+    const { rerender } = render(<Countdown expiresAt={EXPIRES_AT} serverNow={EXPIRES_AT} onZero={onZero} />);
+    act(() => vi.advanceTimersByTime(500));
+    rerender(<Countdown expiresAt={EXPIRES_AT} serverNow="2026-09-15T10:09:00Z" onZero={onZero} />);
+    expect(screen.getByText("01:00")).toBeTruthy();
+    act(() => vi.advanceTimersByTime(59_000));
+    expect(onZero).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(1000));
+    expect(onZero).toHaveBeenCalledTimes(1);
+  });
 });

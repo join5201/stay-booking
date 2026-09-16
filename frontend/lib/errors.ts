@@ -43,6 +43,9 @@ const RULES: Record<string, Rule> = {
   INTERNAL_ERROR: { placement: "banner", retry: "same-key", message: "일시적인 오류입니다. 다시 시도하세요." },
 };
 
+// 규칙이 있는 코드 전부. T10 전수 점검 테스트가 context.md 8절 목록과 맞춘다
+export const KNOWN_CODES: readonly string[] = Object.keys(RULES);
+
 const NETWORK: Rule = { placement: "banner", retry: "same-key", message: "일시적인 오류입니다. 연결을 확인하고 다시 시도하세요." };
 const UNKNOWN: Rule = { placement: "banner", retry: "new-key", message: "알 수 없는 오류입니다." };
 

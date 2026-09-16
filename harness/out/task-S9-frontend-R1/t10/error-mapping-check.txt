@@ -1,0 +1,37 @@
+task-S9-frontend T10 오류 매핑 전수 점검. 2026-09-16
+
+대상: harness/out/claude-design-handoff-2026-09-14/context.md 8절 표의 코드 행 전부와 frontend/lib/errors.ts RULES.
+8절 표의 코드 행 23개(표에는 코드 행 23개와 응답 헤더 둘 Idempotency-Replayed, Retry-After가 있다. 계약 8절의 25개는 코드 23개에 헤더 둘을 더한 셈이다). RULES 23개.
+빠진 코드 0개. 8절에 없는 규칙 0개.
+자리별: field 4, notice 14, banner 5.
+
+| HTTP | code | 8절 화면 반응 후보 | 자리 | 다시 시도 | 문구 |
+|---|---|---|---|---|---|
+| 400 | INVALID_REQUEST | 폼 필드 오류. 서버에 보내기 전에 9절 규칙으로 막는 것이 먼저 | field | none | 입력값을 확인하세요. |
+| 400 | INVALID_DATE_RANGE | 날짜 선택기 오류 | field | none | 날짜를 확인하세요. |
+| 400 | IDEMPOTENCY_KEY_REQUIRED | 프론트 결함. 사용자에게는 일반 오류 | banner | new-key | 요청 처리에 문제가 있습니다. 다시 시도하세요. |
+| 401 | ACTOR_REQUIRED | 행위자 전환 컨트롤로 안내 | notice | none | 행위자가 필요합니다. 위의 개발용 바에서 행위자를 고르세요. |
+| 403 | ACCESS_DENIED | 이 역할로는 할 수 없다고 안내 | notice | none | 이 역할로는 할 수 없습니다. |
+| 404 | RESOURCE_NOT_FOUND | 없는 페이지. 남의 것인지는 말하지 않는다 | notice | none | 찾을 수 없습니다. |
+| 409 | VERSION_CONFLICT | 다른 곳에서 바뀌었으니 새로 읽어 오라고 안내. 새로 읽기 버튼 | notice | none | 다른 곳에서 먼저 수정되어 저장하지 못했습니다. 새로 읽은 뒤 다시 저장하세요. |
+| 409 | RESOURCE_ALREADY_EXISTS | 이미 있으니 수정으로 가라고 안내 | notice | none | 이미 있습니다. 수정으로 이어 갑니다. |
+| 409 | INVENTORY_BELOW_COMMITTED | 최소 가능 값을 보여 준다 | field | none | 선점과 판매 합 아래로 줄일 수 없습니다. |
+| 409 | INVENTORY_UNAVAILABLE | 예약 불가. 날짜 바꾸기 안내 | notice | none | 그사이 객실이 마감됐습니다. |
+| 409 | INVENTORY_NOT_CONFIGURED | 예약 불가. 게스트에게는 판매하지 않는 날짜로 표시 | notice | none | 판매하지 않는 날짜가 있습니다. |
+| 409 | RATE_NOT_CONFIGURED | 같음 | notice | none | 요금이 없는 날짜가 있습니다. |
+| 409 | OCCUPANCY_EXCEEDED | 인원 줄이기 안내 | field | none | 객실 최대 인원을 넘었습니다. 인원을 줄이세요. |
+| 409 | PRICE_CHANGED | 예약이 만들어지지 않았다. 금액을 다시 조회해 보여 주고 다시 확인 | notice | new-key | 금액이 바뀌어 예약을 만들지 않았습니다. 새 금액으로 다시 확인하세요. |
+| 409 | IDEMPOTENCY_KEY_REUSED | 프론트 결함. 일반 오류 | banner | new-key | 요청 처리에 문제가 있습니다. 다시 시도하세요. |
+| 409 | REQUEST_IN_PROGRESS | 잠시 뒤 다시. Retry-After 헤더가 있으면 그 초 뒤 | banner | same-key | 같은 요청을 처리 중입니다. 잠시 뒤 다시 시도하세요. |
+| 409 | BOOKING_STATE_CONFLICT | 예약 상세를 다시 읽어 상태를 보여 준다 | notice | none | 지금 상태에서는 할 수 없는 동작입니다. 예약 상태를 다시 읽었습니다. |
+| 409 | BOOKING_EXPIRED | 만료 안내. 새 예약으로 | notice | none | 예약이 만료됐습니다. 새 예약으로 진행하세요. |
+| 409 | PAYMENT_IN_PROGRESS | 처리 중 표시 유지 | notice | none | 앞선 결제가 처리 중입니다. 잠시 뒤 새로 고침하세요. |
+| 409 | PAYMENT_ATTEMPTS_EXHAUSTED | 재시도 버튼 없음 | notice | none | 결제 시도 3회를 다 썼습니다. |
+| 409 | CANCELLATION_NOT_ALLOWED | 취소 버튼 비활성과 이유 | notice | none | 취소할 수 있는 날짜가 지났습니다. |
+| 503 | TEMPORARY_FAILURE | 잠시 뒤 다시 | banner | same-key | 일시적인 오류입니다. 다시 시도하세요. |
+| 500 | INTERNAL_ERROR | 일반 오류. 내부 내용은 응답에 없다 | banner | same-key | 일시적인 오류입니다. 다시 시도하세요. |
+
+코드 밖 둘: 네트워크 오류는 banner, same-key, 일시적인 오류입니다. 연결을 확인하고 다시 시도하세요. 규칙에 없는 코드는 5xx면 INTERNAL_ERROR 규칙, 그 밖은 banner, new-key, 알 수 없는 오류입니다.
+응답 헤더 둘: Idempotency-Replayed는 성공으로 취급(lib/api/client.ts와 훅). Retry-After는 ApiError.retryAfterSec로 읽어 banner의 초 카운트(lib/error-view.ts).
+
+점검 방법: 이 표는 harness 밖 스크립트가 두 파일을 읽어 만들었고, 같은 대조를 frontend/lib/errors.test.ts의 T10 전수 점검이 KNOWN_CODES로 고정한다.
