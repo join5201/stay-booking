@@ -36,7 +36,7 @@
 | 입력 팩 | harness/project-sync/o2o-review-input-pack.md | sha256:1608942c0815f911 | 전문 |
 | 평가 기준 | harness/prompts/eval-criteria-code.md | sha256:bf11b34c286c52f2 | 축, 심각도, 출력 스키마. 2절의 프론트 전용 축 여섯이 이번에 처음 쓰인다 |
 | 작업 계약 | harness/tasks/task-S9-frontend.md | 자기 해시 없음 | 전문. 2절 대응표와 2-1절 여섯 행과 6절과 8-1절이 판정의 근거다 |
-| 11 API 명세 | document/11-o2o-api-spec.md | sha256:3f2613a77b649903 | 공통 절, API 32개 절, 응답 모델 |
+| 11 API 명세 | document/11-o2o-api-spec.md | sha256:9822c14edc59223f | 공통 절, API 32개 절, 응답 모델 |
 | 인계 문서 | harness/out/claude-design-handoff-2026-09-14/received/HANDOFF.md | sha256:76d665f6ac36a9db | 전문. 화면 요구의 원천. 계약 2-1절 여섯 곳은 계약이 우선한다 |
 | 인계 컨텍스트 | harness/out/claude-design-handoff-2026-09-14/context.md | sha256:0919a1aad3b72d9e | 1절 표(보장 다섯과 화면에 미치는 뜻)와 4절부터 13절 |
 | 오류 본문 | backend/src/main/java/com/o2o/shared/ErrorResponse.java | sha256:c62440297db7ef67 | 전문 |
