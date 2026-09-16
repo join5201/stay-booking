@@ -156,16 +156,17 @@ describe("G5 결제", () => {
   });
 
   it("W14. 남은 시간이 0에 닿으면 BOOK-03을 한 번 다시 읽고 EXPIRED TTL_EXPIRED 카드", async () => {
-    // 첫 응답은 남은 시간 0인 HELD. 0초에서 다시 읽은 응답이 만료
+    // 첫 응답은 남은 시간 1초인 HELD. 0에 닿아 다시 읽은 응답이 만료
     let reads = 0;
     server.use(
       http.get("*/api/v1/bookings/:id", () => {
         reads += 1;
-        return HttpResponse.json(reads === 1 ? { ...heldBooking, expiresAt: heldBooking.serverNow } : { ...heldBooking, status: "EXPIRED", expirationReason: "TTL_EXPIRED", expiredAt: heldBooking.serverNow });
+        return HttpResponse.json(reads === 1 ? { ...heldBooking, expiresAt: new Date(Date.parse(heldBooking.serverNow) + 1000).toISOString() } : { ...heldBooking, status: "EXPIRED", expirationReason: "TTL_EXPIRED", expiredAt: heldBooking.serverNow });
       }),
     );
     renderPay();
-    await screen.findByText("남은 시간 안에 결제하지 않아 예약이 만료됐습니다.");
+    await screen.findByText("00:01");
+    await screen.findByText("남은 시간 안에 결제하지 않아 예약이 만료됐습니다.", {}, { timeout: 3000 });
     expect(reads).toBe(2);
     expect(screen.getByText("만료")).toBeTruthy();
     expect(screen.queryByText("남은 시간")).toBeNull();

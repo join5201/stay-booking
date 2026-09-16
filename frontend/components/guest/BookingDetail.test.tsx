@@ -100,11 +100,13 @@ describe("G7 예약 상세", () => {
     server.use(
       http.get("*/api/v1/bookings/:id", () => {
         reads += 1;
-        return HttpResponse.json(reads === 1 ? { ...heldBooking, expiresAt: heldBooking.serverNow } : { ...heldBooking, status: "EXPIRED", expirationReason: "TTL_EXPIRED", expiredAt: SERVER_NOW });
+        // 첫 응답은 남은 시간 1초. 0에 닿아 다시 읽은 응답이 만료
+        return HttpResponse.json(reads === 1 ? { ...heldBooking, expiresAt: new Date(Date.parse(heldBooking.serverNow) + 1000).toISOString() } : { ...heldBooking, status: "EXPIRED", expirationReason: "TTL_EXPIRED", expiredAt: SERVER_NOW });
       }),
     );
     renderDetail();
-    await screen.findByText("남은 시간 안에 결제하지 않아 예약이 만료됐습니다.");
+    await screen.findByText("00:01");
+    await screen.findByText("남은 시간 안에 결제하지 않아 예약이 만료됐습니다.", {}, { timeout: 3000 });
     expect(reads).toBe(2);
     expect(screen.getByText("만료")).toBeTruthy();
     expect(screen.queryByText("남은 시간")).toBeNull();

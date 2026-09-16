@@ -12,6 +12,10 @@ export interface CountdownProps {
   className?: string;
 }
 
+// 응답이 이미 0인데 아직 HELD면 서버의 만료 처리가 덜 끝난 것이다(만료 스캔 주기). 바로 다시 읽으면 응답마다 한 번이 곧바로 되풀이된다(E04에서 1초에 열아홉 번).
+// 그 응답만은 이만큼 기다렸다가 한 번 더 읽는다
+export const ZERO_RETRY_MS = 1000;
+
 // 새 응답(expiresAt, serverNow)마다 통째로 다시 만들어 그 값부터 다시 센다
 export function Countdown(props: CountdownProps) {
   return <CountdownClock key={`${props.expiresAt}|${props.serverNow}`} {...props} />;
@@ -37,10 +41,16 @@ function CountdownClock({ expiresAt, serverNow, onZero, className = "" }: Countd
     onZeroRef.current = onZero;
   }, [onZero]);
 
-  // 한 응답에 한 번만
+  // 한 응답에 한 번만. 받았을 때부터 0이었던 응답은 ZERO_RETRY_MS 뒤에
   useEffect(() => {
-    if (zero) onZeroRef.current?.();
-  }, [zero]);
+    if (!zero) return;
+    if (total > 0) {
+      onZeroRef.current?.();
+      return;
+    }
+    const id = setTimeout(() => onZeroRef.current?.(), ZERO_RETRY_MS);
+    return () => clearTimeout(id);
+  }, [zero, total]);
 
   return (
     <span aria-live="polite" className={`tabular-nums ${className}`}>
