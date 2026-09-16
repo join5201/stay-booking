@@ -1,0 +1,17 @@
+
+> frontend@0.1.0 test
+> vitest run
+
+
+ RUN  v5.0.1 C:/Users/user/AppData/Local/Temp/claude/C--Dev-potenup-99-projects-o2o-dev/5724dd38-3bac-4921-9dec-80b14107b361/scratchpad/wt-front/frontend
+
+
+ Test Files  26 passed (26)
+      Tests  177 passed (177)
+   Start at  15:16:08
+   Duration  8.00s (environment 65%, import 19%, tests 9%, transform 6%)
+
+Environment  jsdom was created 26 times · 85.07s total, 65% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
