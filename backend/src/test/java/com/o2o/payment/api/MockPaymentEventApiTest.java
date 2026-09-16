@@ -8,7 +8,9 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -22,6 +24,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -41,6 +44,7 @@ import com.o2o.payment.domain.PaymentAttempt;
 import com.o2o.payment.domain.PaymentAttemptId;
 import com.o2o.payment.domain.PaymentRepository;
 import com.o2o.payment.domain.RefundReason;
+import com.o2o.payment.infrastructure.JpaMockPaymentEventRepository;
 import com.o2o.shared.ApiTime;
 import com.o2o.shared.Money;
 
@@ -96,6 +100,54 @@ class MockPaymentEventApiTest {
         }
     }
 
+    /**
+     * Y24. 전역 eventId 경합을 결정적으로 만드는 테스트 전용 데코레이터. 무장하면 findByEventId가
+     * 없음을 돌려준 뒤 문(barrier)에서 두 요청을 멈춘다. 둘 다 기록 없음을 본 뒤 함께 저장으로
+     * 가야 서로 다른 Payment의 같은 eventId가 같은 순간 INSERT에 부딪히는 상황이 재현된다. 무장하지
+     * 않으면 그대로 위임한다. 실제 저장(persist와 flush)은 위임 대상이 한다.
+     */
+    static class RacingEventRepository implements MockPaymentEventRepository {
+
+        private final MockPaymentEventRepository delegate;
+        private volatile CyclicBarrier gate;
+        private volatile String gateEventId;
+
+        RacingEventRepository(MockPaymentEventRepository delegate) {
+            this.delegate = delegate;
+        }
+
+        void arm(String eventId) {
+            this.gateEventId = eventId;
+            this.gate = new CyclicBarrier(2);
+        }
+
+        void disarm() {
+            this.gate = null;
+            this.gateEventId = null;
+        }
+
+        @Override
+        public MockPaymentEvent save(MockPaymentEvent event) {
+            return delegate.save(event);
+        }
+
+        @Override
+        public Optional<MockPaymentEvent> findByEventId(String eventId) {
+            Optional<MockPaymentEvent> found = delegate.findByEventId(eventId);
+            CyclicBarrier b = gate;
+            if (b != null && eventId.equals(gateEventId) && found.isEmpty()) {
+                try {
+                    b.await(5, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } catch (Exception ignored) {
+                    // 문이 깨지거나 시간이 초과되면 그냥 진행한다. 안전망이다
+                }
+            }
+            return found;
+        }
+    }
+
     @TestConfiguration
     static class ApiTestConfiguration {
 
@@ -107,6 +159,12 @@ class MockPaymentEventApiTest {
         @Bean
         PolicyFailureOnce policyFailureOnce() {
             return new PolicyFailureOnce();
+        }
+
+        @Bean
+        @Primary
+        RacingEventRepository racingEventRepository(JpaMockPaymentEventRepository real) {
+            return new RacingEventRepository(real);
         }
     }
 
@@ -124,6 +182,9 @@ class MockPaymentEventApiTest {
 
     @Autowired
     private MockPaymentEventRepository eventRepository;
+
+    @Autowired
+    private RacingEventRepository racingRepository;
 
     @Autowired
     private CommittedPaymentEvents committed;
@@ -612,6 +673,60 @@ class MockPaymentEventApiTest {
         List<String> results = List.of(a.get("result").asString(), b.get("result").asString());
         assertTrue(results.contains("PROCESSED") && results.contains("DUPLICATE"), results.toString());
         assertEquals(a.get("processedAt"), b.get("processedAt"));
+    }
+
+    // ---------- Y24 ----------
+
+    /**
+     * S9-R1-A-01. 서로 다른 Payment의 시도 둘에 같은 eventId가 같은 순간 온다. 각자 자기 루트만
+     * 잠가 줄을 서지 못하므로 규칙 2의 유일성은 이벤트 기록의 기본키가 지켜야 한다. persist와 flush로
+     * 한쪽은 PROCESSED, 다른 쪽은 기본키 충돌로 409 MOCK_EVENT_CONFLICT다. paymentAttemptId가 달라
+     * body가 다르므로 규칙 2의 충돌이 맞다. 진 쪽은 롤백되어 시도가 REQUESTED 그대로다.
+     *
+     * 데코레이터가 둘을 findByEventId 뒤에서 멈춰 둘 다 없음을 본 뒤 함께 저장으로 가게 한다.
+     * Y22는 같은 Payment 한 건의 경합이라 이 전역 경로를 지나지 않는다.
+     */
+    @Test
+    void Y24_서로_다른_Payment에_같은_eventId가_동시에_오면_하나는_PROCESSED_다른_하나는_409_MOCK_EVENT_CONFLICT다()
+            throws Exception {
+        PaymentAttemptView attemptA = deferredAttempt();
+        PaymentAttemptView attemptB = deferredAttempt();
+        String eventId = newEventId();
+        String bodyA = JSON.writeValueAsString(body(eventId, attemptA, "APPROVED"));
+        String bodyB = JSON.writeValueAsString(body(eventId, attemptB, "APPROVED"));
+
+        racingRepository.arm(eventId);
+        ExecutorService racers = Executors.newFixedThreadPool(2);
+        List<HttpResponse<String>> responses;
+        try {
+            Future<HttpResponse<String>> a = racers.submit(() -> deliver(MOCK, bodyA));
+            Future<HttpResponse<String>> b = racers.submit(() -> deliver(MOCK, bodyB));
+            responses = List.of(a.get(30, TimeUnit.SECONDS), b.get(30, TimeUnit.SECONDS));
+        } finally {
+            racers.shutdownNow();
+            racingRepository.disarm();
+        }
+
+        HttpResponse<String> first = responses.get(0);
+        HttpResponse<String> second = responses.get(1);
+        List<Integer> codes = List.of(first.statusCode(), second.statusCode());
+        assertTrue(codes.contains(200) && codes.contains(409), first.body() + " / " + second.body());
+
+        HttpResponse<String> won = first.statusCode() == 200 ? first : second;
+        HttpResponse<String> lost = first.statusCode() == 200 ? second : first;
+        String winnerAttemptId = JSON.readTree(won.body()).get("paymentAttemptId").asString();
+        assertResult(won, eventId, winnerAttemptId, "PROCESSED");
+        assertError(lost, 409, "MOCK_EVENT_CONFLICT");
+
+        // 기록은 그 eventId로 하나다(규칙 2의 유일성). 승자의 시도만 APPROVED, 패자는 REQUESTED
+        assertEquals(MockEventResult.Result.PROCESSED,
+                eventRepository.findByEventId(eventId).orElseThrow().result());
+        PaymentAttemptView winner = winnerAttemptId.equals(attemptA.id()) ? attemptA : attemptB;
+        PaymentAttemptView loser = winnerAttemptId.equals(attemptA.id()) ? attemptB : attemptA;
+        assertEquals("APPROVED", stored(winner).status());
+        assertEquals("REQUESTED", stored(loser).status());
+        assertEquals(1, committed.approvedOf(winner.id()));
+        assertEquals(0, committed.approvedOf(loser.id()));
     }
 
     // ---------- Y23 (dev 쪽) ----------

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.booking.application.ExpireDueBookingsTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-09-16T08:09:48.859Z" hostname="BOOK-QD5U7FFOBT" time="0.866">
+  <properties/>
+  <testcase name="L9_배치_크기보다_많으면_오래된_것부터_배치만큼만_처리한다()" classname="com.o2o.booking.application.ExpireDueBookingsTest" time="0.271"/>
+  <testcase name="L9_만료_시각_지난_HELD는_TTL_EXPIRED가_되고_held가_줄며_지나지_않은_HELD는_그대로다()" classname="com.o2o.booking.application.ExpireDueBookingsTest" time="0.145"/>
+  <testcase name="L9_만료_시각이_지났지만_승인_시도가_있으면_만료_대신_확정하고_commit한다()" classname="com.o2o.booking.application.ExpireDueBookingsTest" time="0.137"/>
+  <testcase name="L9_이미_CONFIRMED거나_아직_만료_전이거나_없는_예약은_스킵이다()" classname="com.o2o.booking.application.ExpireDueBookingsTest" time="0.216"/>
+  <testcase name="L9_만료_시각_이상의_승인_기록이_있으면_만료_대신_확정하지_않고_환불하고_만료시킨다()" classname="com.o2o.booking.application.ExpireDueBookingsTest" time="0.09"/>
+  <system-out><![CDATA[2026-09-16T17:09:48.860+09:00  INFO 42804 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.application.ExpireDueBookingsTest]: ExpireDueBookingsTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-16T17:09:48.862+09:00  INFO 42804 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.application.ExpireDueBookingsTest
+2026-09-16T17:09:48.863+09:00  INFO 42804 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.application.ExpireDueBookingsTest]: ExpireDueBookingsTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-16T17:09:48.863+09:00  INFO 42804 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.application.ExpireDueBookingsTest
+2026-09-16T17:09:48.934+09:00  INFO 42804 --- [    Test worker] c.o.b.application.ExpireDueBookings      : TTL 만료 한 바퀴. Summary[scanned=6, expired=6, confirmed=0, skipped=0, failed=0]
+2026-09-16T17:09:49.099+09:00  INFO 42804 --- [    Test worker] c.o.b.application.ExpireDueBookings      : TTL 만료 한 바퀴. Summary[scanned=2, expired=2, confirmed=0, skipped=0, failed=0]
+2026-09-16T17:09:49.129+09:00  INFO 42804 --- [    Test worker] c.o.b.application.ExpireDueBookings      : TTL 만료 한 바퀴. Summary[scanned=1, expired=1, confirmed=0, skipped=0, failed=0]
+2026-09-16T17:09:49.262+09:00  INFO 42804 --- [    Test worker] c.o.b.application.ExpireDueBookings      : TTL 만료 한 바퀴. Summary[scanned=1, expired=1, confirmed=0, skipped=0, failed=0]
+2026-09-16T17:09:49.382+09:00  INFO 42804 --- [    Test worker] c.o.b.a.BookingExpirationService         : 만료 대신 확정. 만료 전 승인 기록이 있다. booking=booking_59cfd88df6fe4a28be29e7589fc2928c attempt=attempt_69424b6b08054e4c96b1df419add69d1 approvedAt=2026-10-01T20:00:00Z
+2026-09-16T17:09:49.695+09:00  INFO 42804 --- [    Test worker] c.o.b.a.BookingExpirationService         : 지연 승인의 유실 처리. 승인 시각이 만료 시각 이상이라 환불하고 만료시킨다. booking=booking_c56ebe9bc68340878cf28089905cf161 attempt=attempt_3376d494a1e041e1bc0a28310af08943 approvedAt=2026-10-01T20:10:00Z
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

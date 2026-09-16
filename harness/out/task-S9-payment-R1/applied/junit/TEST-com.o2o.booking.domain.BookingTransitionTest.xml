@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.booking.domain.BookingTransitionTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-09-16T08:09:50.830Z" hostname="BOOK-QD5U7FFOBT" time="0.005">
+  <properties/>
+  <testcase name="L3_CANCELED에_재취소는_변화_없이_false다()" classname="com.o2o.booking.domain.BookingTransitionTest" time="0.0"/>
+  <testcase name="L2_만료_시각이_되면_TTL_EXPIRED로_만료되고_expiredAt과_version_1이다()" classname="com.o2o.booking.domain.BookingTransitionTest" time="0.001"/>
+  <testcase name="L2_결제_실패_셋이면_PAYMENT_FAILED로_만료되고_둘이면_거부한다()" classname="com.o2o.booking.domain.BookingTransitionTest" time="0.0"/>
+  <testcase name="L1_EXPIRED와_CANCELED는_확정할_수_없다()" classname="com.o2o.booking.domain.BookingTransitionTest" time="0.0"/>
+  <testcase name="L2_만료_시각_1초_전에는_TTL_만료를_거부하고_상태가_그대로다()" classname="com.o2o.booking.domain.BookingTransitionTest" time="0.001"/>
+  <testcase name="L3_사유_null은_빈_문자열이고_300자는_통과하며_301자는_거절한다()" classname="com.o2o.booking.domain.BookingTransitionTest" time="0.0"/>
+  <testcase name="L3_CONFIRMED를_취소하면_CANCELED이고_사유와_canceledAt과_version_2다()" classname="com.o2o.booking.domain.BookingTransitionTest" time="0.0"/>
+  <testcase name="L2_CONFIRMED와_CANCELED는_만료할_수_없다()" classname="com.o2o.booking.domain.BookingTransitionTest" time="0.001"/>
+  <testcase name="L1_CONFIRMED에_재확정은_변화_없이_false다()" classname="com.o2o.booking.domain.BookingTransitionTest" time="0.0"/>
+  <testcase name="L1_HELD를_확정하면_CONFIRMED이고_confirmedAt과_version_1이며_전이가_일어났다()" classname="com.o2o.booking.domain.BookingTransitionTest" time="0.0"/>
+  <testcase name="L2_EXPIRED에_재만료는_두_방법_다_변화_없이_false다()" classname="com.o2o.booking.domain.BookingTransitionTest" time="0.0"/>
+  <testcase name="L3_HELD와_EXPIRED는_취소할_수_없다()" classname="com.o2o.booking.domain.BookingTransitionTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

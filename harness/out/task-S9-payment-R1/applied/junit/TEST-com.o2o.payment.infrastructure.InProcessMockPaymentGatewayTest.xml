@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.payment.infrastructure.InProcessMockPaymentGatewayTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-09-16T08:08:43.582Z" hostname="BOOK-QD5U7FFOBT" time="0.066">
+  <properties/>
+  <testcase name="Y26_같은_attemptId의_refund는_두_번_불러도_업무_효과가_하나이고_예외가_없다()" classname="com.o2o.payment.infrastructure.InProcessMockPaymentGatewayTest" time="0.033"/>
+  <testcase name="Y26_같은_attemptId의_request는_같은_거래_번호이고_다른_attemptId는_다르다()" classname="com.o2o.payment.infrastructure.InProcessMockPaymentGatewayTest" time="0.009"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

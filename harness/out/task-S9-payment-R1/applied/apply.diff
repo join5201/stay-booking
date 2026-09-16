@@ -1,0 +1,561 @@
+diff --git a/backend/src/main/java/com/o2o/payment/application/PaymentApplicationService.java b/backend/src/main/java/com/o2o/payment/application/PaymentApplicationService.java
+index d929c9a..97e5f99 100644
+--- a/backend/src/main/java/com/o2o/payment/application/PaymentApplicationService.java
++++ b/backend/src/main/java/com/o2o/payment/application/PaymentApplicationService.java
+@@ -7,6 +7,7 @@ import java.util.Objects;
+ import java.util.Optional;
+ 
+ import org.springframework.context.ApplicationEventPublisher;
++import org.springframework.dao.DataIntegrityViolationException;
+ import org.springframework.stereotype.Service;
+ import org.springframework.transaction.annotation.Isolation;
+ import org.springframework.transaction.annotation.Propagation;
+@@ -230,8 +231,8 @@ public class PaymentApplicationService {
+             // 규칙 3과 8. 새 이벤트를 다시 발행하지 않는다. 기록은 남겨 같은 eventId 재전달이
+             // 규칙 2로 답하게 한다. processedAt은 최초 처리의 시각이다(11 응답 모델 MockEventResult)
+             Instant firstProcessedAt = attempt.completedAt();
+-            eventRepository.save(MockPaymentEvent.duplicate(command.eventId(), attemptId, bodyHash,
+-                    firstProcessedAt));
++            recordEvent(MockPaymentEvent.duplicate(command.eventId(), attemptId, bodyHash,
++                    firstProcessedAt), command.eventId());
+             return MockEventResult.duplicate(command.eventId(), attemptId, firstProcessedAt);
+         }
+ 
+@@ -243,10 +244,27 @@ public class PaymentApplicationService {
+         }
+ 
+         // 12와 13. 이벤트 기록을 시도 결과와 같은 트랜잭션에 저장하고 커밋한다(규칙 7의 결제 부분)
+-        eventRepository.save(MockPaymentEvent.processed(command.eventId(), attemptId, bodyHash, now));
++        recordEvent(MockPaymentEvent.processed(command.eventId(), attemptId, bodyHash, now),
++                command.eventId());
+         return MockEventResult.processed(command.eventId(), attemptId, now);
+     }
+ 
++    /**
++     * 이벤트 기록 저장(규칙 2와 7의 결제 부분). 리포지토리는 persist로 넣고 flush에서 기본키
++     * 충돌을 드러낸다(S9-R1-A-01). 여기 오는 충돌은 서로 다른 Payment가 같은 eventId를 같은
++     * 순간 넣은 것뿐이다. 같은 Payment의 같은 eventId는 루트 잠금이 규칙 2 조회에서 먼저
++     * 걸러 이 저장에 닿지 않는다(Y22). 서로 다른 Payment면 paymentAttemptId가 달라 body가
++     * 언제나 다르므로 규칙 2의 MOCK_EVENT_CONFLICT다(Y24). 예외로 트랜잭션이 롤백되어 진 쪽의
++     * 시도 전이는 남지 않는다.
++     */
++    private void recordEvent(MockPaymentEvent event, String eventId) {
++        try {
++            eventRepository.save(event);
++        } catch (DataIntegrityViolationException conflict) {
++            throw new MockEventConflictException(eventId);
++        }
++    }
++
+     private static PaymentAttempt attemptOf(Payment payment, PaymentAttemptId attemptId) {
+         return payment.attempt(attemptId)
+                 .orElseThrow(() -> new UnknownAttemptException(attemptId));
+diff --git a/backend/src/main/java/com/o2o/payment/infrastructure/JpaMockPaymentEventRepository.java b/backend/src/main/java/com/o2o/payment/infrastructure/JpaMockPaymentEventRepository.java
+index bbc1ffe..96e7858 100644
+--- a/backend/src/main/java/com/o2o/payment/infrastructure/JpaMockPaymentEventRepository.java
++++ b/backend/src/main/java/com/o2o/payment/infrastructure/JpaMockPaymentEventRepository.java
+@@ -7,22 +7,37 @@ import org.springframework.stereotype.Repository;
+ import com.o2o.payment.domain.MockPaymentEvent;
+ import com.o2o.payment.domain.MockPaymentEventRepository;
+ 
++import jakarta.persistence.EntityManager;
++import jakarta.persistence.PersistenceContext;
++
+ /**
+  * domain이 선언한 MockPaymentEventRepository의 구현. 설계 근거: 11 INTERNAL-01 규칙 2, 06-4 1-4.
+  * JpaPaymentRepository와 같은 구조다(layers.md 3-1).
++ *
++ * 저장은 persist로 한다(S9-R1-A-01). 배정 기본키에 @Version이 없어 Spring Data의 save는 merge라
++ * 그 키의 행을 SELECT한 뒤 있으면 UPDATE한다. 서로 다른 Payment의 시도가 같은 eventId를 같은
++ * 순간 넣으면 각자 자기 루트만 잠가 줄을 서지 못하고, 먼저 커밋한 쪽의 기록을 뒤엣것이 덮어
++ * 둘 다 PROCESSED가 되어 규칙 2(같은 eventId는 유일, 다른 body면 충돌)가 깨진다. persist는 순수
++ * INSERT라 덮어쓰지 않고 같은 기본키를 flush에서 막는다. flush로 그 충돌을 저장 시점에 드러내
++ * 앱 서비스가 규칙 2의 MOCK_EVENT_CONFLICT로 답하게 한다.
+  */
+ @Repository
+ public class JpaMockPaymentEventRepository implements MockPaymentEventRepository {
+ 
+     private final MockPaymentEventJpaRepository jpaRepository;
+ 
++    @PersistenceContext
++    private EntityManager entityManager;
++
+     public JpaMockPaymentEventRepository(MockPaymentEventJpaRepository jpaRepository) {
+         this.jpaRepository = jpaRepository;
+     }
+ 
+     @Override
+     public MockPaymentEvent save(MockPaymentEvent event) {
+-        return jpaRepository.save(event);
++        entityManager.persist(event);
++        entityManager.flush();
++        return event;
+     }
+ 
+     @Override
+diff --git a/backend/src/test/java/com/o2o/payment/api/MockPaymentEventApiTest.java b/backend/src/test/java/com/o2o/payment/api/MockPaymentEventApiTest.java
+index ef2de5a..ef2b887 100644
+--- a/backend/src/test/java/com/o2o/payment/api/MockPaymentEventApiTest.java
++++ b/backend/src/test/java/com/o2o/payment/api/MockPaymentEventApiTest.java
+@@ -8,7 +8,9 @@ import java.time.Duration;
+ import java.util.LinkedHashMap;
+ import java.util.List;
+ import java.util.Map;
++import java.util.Optional;
+ import java.util.UUID;
++import java.util.concurrent.CyclicBarrier;
+ import java.util.concurrent.ExecutorService;
+ import java.util.concurrent.Executors;
+ import java.util.concurrent.Future;
+@@ -22,6 +24,7 @@ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.boot.test.context.TestConfiguration;
+ import org.springframework.boot.test.web.server.LocalServerPort;
+ import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Primary;
+ import org.springframework.transaction.PlatformTransactionManager;
+ import org.springframework.transaction.event.TransactionPhase;
+ import org.springframework.transaction.event.TransactionalEventListener;
+@@ -41,6 +44,7 @@ import com.o2o.payment.domain.PaymentAttempt;
+ import com.o2o.payment.domain.PaymentAttemptId;
+ import com.o2o.payment.domain.PaymentRepository;
+ import com.o2o.payment.domain.RefundReason;
++import com.o2o.payment.infrastructure.JpaMockPaymentEventRepository;
+ import com.o2o.shared.ApiTime;
+ import com.o2o.shared.Money;
+ 
+@@ -96,6 +100,54 @@ class MockPaymentEventApiTest {
+         }
+     }
+ 
++    /**
++     * Y24. 전역 eventId 경합을 결정적으로 만드는 테스트 전용 데코레이터. 무장하면 findByEventId가
++     * 없음을 돌려준 뒤 문(barrier)에서 두 요청을 멈춘다. 둘 다 기록 없음을 본 뒤 함께 저장으로
++     * 가야 서로 다른 Payment의 같은 eventId가 같은 순간 INSERT에 부딪히는 상황이 재현된다. 무장하지
++     * 않으면 그대로 위임한다. 실제 저장(persist와 flush)은 위임 대상이 한다.
++     */
++    static class RacingEventRepository implements MockPaymentEventRepository {
++
++        private final MockPaymentEventRepository delegate;
++        private volatile CyclicBarrier gate;
++        private volatile String gateEventId;
++
++        RacingEventRepository(MockPaymentEventRepository delegate) {
++            this.delegate = delegate;
++        }
++
++        void arm(String eventId) {
++            this.gateEventId = eventId;
++            this.gate = new CyclicBarrier(2);
++        }
++
++        void disarm() {
++            this.gate = null;
++            this.gateEventId = null;
++        }
++
++        @Override
++        public MockPaymentEvent save(MockPaymentEvent event) {
++            return delegate.save(event);
++        }
++
++        @Override
++        public Optional<MockPaymentEvent> findByEventId(String eventId) {
++            Optional<MockPaymentEvent> found = delegate.findByEventId(eventId);
++            CyclicBarrier b = gate;
++            if (b != null && eventId.equals(gateEventId) && found.isEmpty()) {
++                try {
++                    b.await(5, TimeUnit.SECONDS);
++                } catch (InterruptedException e) {
++                    Thread.currentThread().interrupt();
++                } catch (Exception ignored) {
++                    // 문이 깨지거나 시간이 초과되면 그냥 진행한다. 안전망이다
++                }
++            }
++            return found;
++        }
++    }
++
+     @TestConfiguration
+     static class ApiTestConfiguration {
+ 
+@@ -108,6 +160,12 @@ class MockPaymentEventApiTest {
+         PolicyFailureOnce policyFailureOnce() {
+             return new PolicyFailureOnce();
+         }
++
++        @Bean
++        @Primary
++        RacingEventRepository racingEventRepository(JpaMockPaymentEventRepository real) {
++            return new RacingEventRepository(real);
++        }
+     }
+ 
+     private final HttpClient client = HttpClient.newBuilder()
+@@ -125,6 +183,9 @@ class MockPaymentEventApiTest {
+     @Autowired
+     private MockPaymentEventRepository eventRepository;
+ 
++    @Autowired
++    private RacingEventRepository racingRepository;
++
+     @Autowired
+     private CommittedPaymentEvents committed;
+ 
+@@ -614,6 +675,60 @@ class MockPaymentEventApiTest {
+         assertEquals(a.get("processedAt"), b.get("processedAt"));
+     }
+ 
++    // ---------- Y24 ----------
++
++    /**
++     * S9-R1-A-01. 서로 다른 Payment의 시도 둘에 같은 eventId가 같은 순간 온다. 각자 자기 루트만
++     * 잠가 줄을 서지 못하므로 규칙 2의 유일성은 이벤트 기록의 기본키가 지켜야 한다. persist와 flush로
++     * 한쪽은 PROCESSED, 다른 쪽은 기본키 충돌로 409 MOCK_EVENT_CONFLICT다. paymentAttemptId가 달라
++     * body가 다르므로 규칙 2의 충돌이 맞다. 진 쪽은 롤백되어 시도가 REQUESTED 그대로다.
++     *
++     * 데코레이터가 둘을 findByEventId 뒤에서 멈춰 둘 다 없음을 본 뒤 함께 저장으로 가게 한다.
++     * Y22는 같은 Payment 한 건의 경합이라 이 전역 경로를 지나지 않는다.
++     */
++    @Test
++    void Y24_서로_다른_Payment에_같은_eventId가_동시에_오면_하나는_PROCESSED_다른_하나는_409_MOCK_EVENT_CONFLICT다()
++            throws Exception {
++        PaymentAttemptView attemptA = deferredAttempt();
++        PaymentAttemptView attemptB = deferredAttempt();
++        String eventId = newEventId();
++        String bodyA = JSON.writeValueAsString(body(eventId, attemptA, "APPROVED"));
++        String bodyB = JSON.writeValueAsString(body(eventId, attemptB, "APPROVED"));
++
++        racingRepository.arm(eventId);
++        ExecutorService racers = Executors.newFixedThreadPool(2);
++        List<HttpResponse<String>> responses;
++        try {
++            Future<HttpResponse<String>> a = racers.submit(() -> deliver(MOCK, bodyA));
++            Future<HttpResponse<String>> b = racers.submit(() -> deliver(MOCK, bodyB));
++            responses = List.of(a.get(30, TimeUnit.SECONDS), b.get(30, TimeUnit.SECONDS));
++        } finally {
++            racers.shutdownNow();
++            racingRepository.disarm();
++        }
++
++        HttpResponse<String> first = responses.get(0);
++        HttpResponse<String> second = responses.get(1);
++        List<Integer> codes = List.of(first.statusCode(), second.statusCode());
++        assertTrue(codes.contains(200) && codes.contains(409), first.body() + " / " + second.body());
++
++        HttpResponse<String> won = first.statusCode() == 200 ? first : second;
++        HttpResponse<String> lost = first.statusCode() == 200 ? second : first;
++        String winnerAttemptId = JSON.readTree(won.body()).get("paymentAttemptId").asString();
++        assertResult(won, eventId, winnerAttemptId, "PROCESSED");
++        assertError(lost, 409, "MOCK_EVENT_CONFLICT");
++
++        // 기록은 그 eventId로 하나다(규칙 2의 유일성). 승자의 시도만 APPROVED, 패자는 REQUESTED
++        assertEquals(MockEventResult.Result.PROCESSED,
++                eventRepository.findByEventId(eventId).orElseThrow().result());
++        PaymentAttemptView winner = winnerAttemptId.equals(attemptA.id()) ? attemptA : attemptB;
++        PaymentAttemptView loser = winnerAttemptId.equals(attemptA.id()) ? attemptB : attemptA;
++        assertEquals("APPROVED", stored(winner).status());
++        assertEquals("REQUESTED", stored(loser).status());
++        assertEquals(1, committed.approvedOf(winner.id()));
++        assertEquals(0, committed.approvedOf(loser.id()));
++    }
++
+     // ---------- Y23 (dev 쪽) ----------
+ 
+     /** T30. 기본 컨텍스트는 dev라 행위자 헤더와 /internal 경로가 산다. 밖은 DevProfileBoundaryTest */
+diff --git a/backend/src/test/java/com/o2o/payment/application/PaymentApplicationServiceTest.java b/backend/src/test/java/com/o2o/payment/application/PaymentApplicationServiceTest.java
+index 4ea9ddb..4dd7f1b 100644
+--- a/backend/src/test/java/com/o2o/payment/application/PaymentApplicationServiceTest.java
++++ b/backend/src/test/java/com/o2o/payment/application/PaymentApplicationServiceTest.java
+@@ -18,12 +18,17 @@ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.boot.test.context.TestConfiguration;
+ import org.springframework.context.annotation.Bean;
+ import org.springframework.context.annotation.Primary;
++import org.springframework.dao.DuplicateKeyException;
++import org.springframework.jdbc.core.JdbcTemplate;
+ import org.springframework.transaction.PlatformTransactionManager;
+ import org.springframework.transaction.support.TransactionTemplate;
+ 
++import com.o2o.payment.CommittedPaymentEvents;
++import com.o2o.payment.domain.AlreadyApprovedException;
+ import com.o2o.payment.domain.AttemptInProgressException;
+ import com.o2o.payment.domain.MockMode;
+ import com.o2o.payment.domain.MockOutcome;
++import com.o2o.payment.domain.MockPaymentEventRepository;
+ import com.o2o.payment.domain.NoApprovedAttemptException;
+ import com.o2o.payment.domain.Payment;
+ import com.o2o.payment.domain.PaymentAttempt;
+@@ -42,7 +47,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
+ import static org.junit.jupiter.api.Assertions.assertTrue;
+ 
+ /**
+- * Y9와 Y10과 Y14, 그리고 Y7의 앱 서비스 몫. 설계 근거: 계약 8-1절, U3과 U4(06-2 3-4, 06-4 v5 1-1),
++ * Y9와 Y10과 Y14, 그리고 Y7과 Y3의 앱 서비스 몫. 설계 근거: 계약 8-1절, U3과 U4(06-2 3-4, 06-4 v5 1-1),
+  * 06-2 5절 Payment 행(시도 추가와 콜백 기록은 루트를 잠근 뒤), 08-3 결정 3과 4, 11 PAY-02 처리
+  * 규칙과 응답 모델 PaymentSummary와 Refund.
+  *
+@@ -67,6 +72,11 @@ class PaymentApplicationServiceTest {
+         Clock fixedClock() {
+             return Clock.fixed(FIXED_NOW, ZoneOffset.UTC);
+         }
++
++        @Bean
++        CommittedPaymentEvents committedPaymentEvents() {
++            return new CommittedPaymentEvents();
++        }
+     }
+ 
+     @Autowired
+@@ -81,6 +91,15 @@ class PaymentApplicationServiceTest {
+     @Autowired
+     private PlatformTransactionManager transactionManager;
+ 
++    @Autowired
++    private JdbcTemplate jdbcTemplate;
++
++    @Autowired
++    private MockPaymentEventRepository eventRepository;
++
++    @Autowired
++    private CommittedPaymentEvents committed;
++
+     private static String newBookingId() {
+         return "bk_test_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+     }
+@@ -93,6 +112,29 @@ class PaymentApplicationServiceTest {
+         return cur;
+     }
+ 
++    private static String newAttemptId() {
++        return "attempt_" + UUID.randomUUID().toString().replace("-", "");
++    }
++
++    private static PaymentAttemptView attemptOf(PaymentSummaryView summary, String attemptId) {
++        return summary.attempts().stream().filter(a -> a.id().equals(attemptId)).findFirst().orElseThrow();
++    }
++
++    /**
++     * T6. 기존 시도 행을 본떠 같은 Payment에 시도 행 하나를 직접 넣는다. 서비스 길로는 만들 수
++     * 없는 상태(Y3의 셋째 사례)와 도메인이 발급하는 ID의 중복(Y9의 U5)을 위해서다. 거래 번호는
++     * 따로 받아 U4가 아니라 보려는 제약이 막게 한다.
++     */
++    private int seedAttemptRow(String templateAttemptId, String id, int attemptNumber, String status,
++                               String pgTransactionId) {
++        return jdbcTemplate.update("""
++                INSERT INTO payment_attempt (id, attempt_number, kind, status, amount, currency,
++                    pg_transaction_id, mock_mode, requested_at, payment_id)
++                SELECT ?, ?, kind, ?, amount, currency, ?, mock_mode, requested_at, payment_id
++                FROM payment_attempt WHERE id = ?
++                """, id, attemptNumber, status, pgTransactionId, templateAttemptId);
++    }
++
+     private MockEventCommand event(String eventId, PaymentAttemptView attempt, MockOutcome outcome) {
+         String failureCode = outcome == MockOutcome.FAILED ? PaymentAttempt.MOCK_DECLINED : null;
+         return new MockEventCommand(eventId, attempt.id(), attempt.pgTransactionId(), outcome,
+@@ -143,6 +185,60 @@ class PaymentApplicationServiceTest {
+                 root(e).getMessage());
+     }
+ 
++    /**
++     * Y9. U5. payment_attempt의 기본키가 같은 id의 둘째 행을 거부한다(계약 2-1절 U5 행, S9-R1-B-02).
++     * 시도 ID는 도메인이 attempt_ 뒤 UUID로 발급해 서비스 길로는 중복이 나지 않으므로 기존 행을
++     * 본떠 같은 id로 둘째 행을 직접 넣는다(T6). 거래 번호는 달리 해 U4가 아니라 기본키가 막는 것을 본다.
++     */
++    @Test
++    void Y9_같은_id의_둘째_payment_attempt_행은_기본키가_거부한다() {
++        String bookingId = newBookingId();
++        PaymentAttemptView attempt = paymentService.openAttempt(bookingId, CHARGE, MockMode.DEFER);
++        String suffix = attempt.id().substring("attempt_".length(), "attempt_".length() + 8);
++
++        DuplicateKeyException e = assertThrows(DuplicateKeyException.class,
++                () -> seedAttemptRow(attempt.id(), attempt.id(), 2, "REQUESTED", "mock_tx_u5_" + suffix));
++        assertTrue(root(e).getMessage().contains("PRIMARY"), root(e).getMessage());
++        assertEquals(1, paymentService.attemptsOf(bookingId).attemptCount());
++
++        // 통과 쪽 짝. 다른 id면 들어간다
++        assertEquals(1, seedAttemptRow(attempt.id(), newAttemptId(), 2, "REQUESTED", "mock_tx_u5b_" + suffix));
++        assertEquals(2, paymentService.attemptsOf(bookingId).attemptCount());
++    }
++
++    /**
++     * Y3의 셋째 사례. S9-R1-A-03. recordApproval의 I7 둘째 방어선이다. 승인 시도가 있는 Payment의
++     * 다른 REQUESTED 시도에 승인이 오면 AlreadyApproved다(06-4 1-2 recordApproval Pre의 승인 이력
++     * 없음). 이 상태는 openAttempt가 I7과 I9로 막아 서비스 길로는 만들 수 없으므로 둘째 시도를 DB에
++     * 직접 심는다(T6). 앱 서비스 수준에서 보는 이유는 예외로 트랜잭션이 롤백되어 두 시도의 상태도
++     * 이벤트 기록도 발행도 바뀌지 않는 것까지 한 번에 보기 위해서다. API 층은 이 예외를 매핑하지
++     * 않으므로(계약 2절 INTERNAL-01 표에 그 행이 없다) 여기서 멈춘다.
++     */
++    @Test
++    void Y3_다른_시도가_APPROVED면_REQUESTED_시도의_승인은_AlreadyApproved이고_아무것도_남지_않는다() {
++        String bookingId = newBookingId();
++        PaymentAttemptView first = paymentService.openAttempt(bookingId, CHARGE, MockMode.DEFER);
++        paymentService.handleMockEvent(event("ev_1_" + bookingId, first, MockOutcome.APPROVED));
++        String rogueId = newAttemptId();
++        String rogueTx = "mock_tx_rogue_" + rogueId.substring("attempt_".length(), "attempt_".length() + 8);
++        assertEquals(1, seedAttemptRow(first.id(), rogueId, 2, "REQUESTED", rogueTx));
++        MockEventCommand approval = new MockEventCommand("ev_2_" + bookingId, rogueId, rogueTx,
++                MockOutcome.APPROVED, first.amount(), first.currency(), null);
++
++        AlreadyApprovedException e = assertThrows(AlreadyApprovedException.class,
++                () -> paymentService.handleMockEvent(approval));
++
++        assertEquals(first.id(), e.approvedAttemptId().value());
++        PaymentSummaryView summary = paymentService.attemptsOf(bookingId);
++        assertEquals(first.id(), summary.approvedAttemptId());
++        assertEquals("APPROVED", attemptOf(summary, first.id()).status());
++        assertEquals("REQUESTED", attemptOf(summary, rogueId).status());
++        assertNull(attemptOf(summary, rogueId).completedAt());
++        assertTrue(eventRepository.findByEventId("ev_2_" + bookingId).isEmpty());
++        assertEquals(1, committed.approvedOf(first.id()));
++        assertEquals(0, committed.approvedOf(rogueId));
++    }
++
+     /**
+      * Y10. 두 트랜잭션이 실제 MySQL에서 같은 Payment 행을 두고 경합한다. 앞 묶음 V14의 방식이다.
+      * 06-2 5절이 시도 추가는 루트를 잠근 뒤 하라고 적고 08-3 결정 3이 그 잠금 순서를 정한다.
+diff --git a/backend/src/test/java/com/o2o/payment/application/PaymentAutoResultTest.java b/backend/src/test/java/com/o2o/payment/application/PaymentAutoResultTest.java
+index fdf55f2..65bd789 100644
+--- a/backend/src/test/java/com/o2o/payment/application/PaymentAutoResultTest.java
++++ b/backend/src/test/java/com/o2o/payment/application/PaymentAutoResultTest.java
+@@ -1,21 +1,28 @@
+ package com.o2o.payment.application;
+ 
+ import java.time.Clock;
++import java.time.Duration;
+ import java.time.Instant;
+ import java.time.ZoneOffset;
+ import java.util.UUID;
+ 
+ import org.junit.jupiter.api.Test;
+ import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.SpringApplication;
++import org.springframework.boot.context.event.ApplicationReadyEvent;
+ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.boot.test.context.TestConfiguration;
++import org.springframework.context.ConfigurableApplicationContext;
+ import org.springframework.context.annotation.Bean;
+ import org.springframework.context.annotation.Primary;
+ import org.springframework.transaction.PlatformTransactionManager;
+ import org.springframework.transaction.support.TransactionTemplate;
+ 
++import com.o2o.BackendApplication;
+ import com.o2o.payment.CommittedPaymentEvents;
++import com.o2o.payment.domain.MockEventResult;
+ import com.o2o.payment.domain.MockMode;
++import com.o2o.payment.domain.MockPaymentEventRepository;
+ import com.o2o.payment.domain.Payment;
+ import com.o2o.payment.domain.PaymentApproved;
+ import com.o2o.payment.domain.PaymentAttempt;
+@@ -28,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
+ import static org.junit.jupiter.api.Assertions.assertTrue;
+ 
+ /**
+- * Y11과 Y12와 Y13. 설계 근거: 계약 7절 D-1(요청은 트랜잭션 안, 자동 결과는 커밋 뒤 어댑터가
++ * Y11과 Y12와 Y13과 Y25. 설계 근거: 계약 7절 D-1(요청은 트랜잭션 안, 자동 결과는 커밋 뒤 어댑터가
+  * REQUIRES_NEW로), layers.md 3-3 E1과 E2(구독자는 AFTER_COMMIT. 첫 구독자가 생기는 묶음은 롤백된
+  * 요청의 이벤트가 구독자에 닿지 않는 테스트를 필수로), T26과 11 결제 접수와 환불 절의 재시작
+  * 문장, 08-3 결정 6.
+@@ -75,6 +82,12 @@ class PaymentAutoResultTest {
+     @Autowired
+     private PlatformTransactionManager transactionManager;
+ 
++    @Autowired
++    private MockPaymentEventRepository eventRepository;
++
++    @Autowired
++    private ConfigurableApplicationContext context;
++
+     private static String newBookingId() {
+         return "bk_test_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+     }
+@@ -214,6 +227,34 @@ class PaymentAutoResultTest {
+         assertEquals(1, recorder.approvedOf(autoAttemptId));
+     }
+ 
++    /**
++     * Y25. S9-R1-A-02. Y13은 재개 논리를 직접 불러 봤고, 여기는 그 논리를 기동 완료 신호에 매단
++     * 한 줄(러너의 ApplicationReadyEvent 구독)을 본다. 계약 7절 D-1의 결정 가와 T26의 재시작 몫이다.
++     *
++     * 방법. REQUESTED이고 mockMode APPROVE인 시도를 심은 뒤 떠 있는 이 컨텍스트에 기동 완료
++     * 신호를 다시 낸다. 앱 안의 그 신호 구독자는 러너 하나다. 컨텍스트를 새로 띄우면 create-drop이
++     * 심은 행을 지우고, 프로세스 재기동은 테스트 밖이라 신호만 다시 낸다.
++     */
++    @Test
++    void Y25_기동_완료_신호가_오면_러너가_REQUESTED_APPROVE_시도를_APPROVED로_재개한다() {
++        String bookingId = newBookingId();
++        String attemptId = new TransactionTemplate(transactionManager)
++                .execute(status -> seedRequested(bookingId, MockMode.APPROVE));
++        assertEquals("REQUESTED", attemptOf(bookingId, attemptId).status());
++        assertEquals(0, recorder.approvedOf(attemptId));
++        assertTrue(eventRepository.findByEventId("auto_" + attemptId).isEmpty());
++
++        context.publishEvent(new ApplicationReadyEvent(new SpringApplication(BackendApplication.class),
++                new String[0], context, Duration.ZERO));
++
++        PaymentAttemptView resumed = attemptOf(bookingId, attemptId);
++        assertEquals("APPROVED", resumed.status());
++        assertEquals(FIXED_NOW, resumed.completedAt());
++        assertEquals(1, recorder.approvedOf(attemptId));
++        assertEquals(MockEventResult.Result.PROCESSED,
++                eventRepository.findByEventId("auto_" + attemptId).orElseThrow().result());
++    }
++
+     /** T6. 서비스를 거치지 않고 REQUESTED 시도를 심는다. 거래 번호는 Mock PG 대신 손으로 붙인다 */
+     private String seedRequested(String bookingId, MockMode mockMode) {
+         Payment payment = Payment.open(bookingId, CHARGE, FIXED_NOW);
+diff --git a/backend/src/test/java/com/o2o/payment/infrastructure/InProcessMockPaymentGatewayTest.java b/backend/src/test/java/com/o2o/payment/infrastructure/InProcessMockPaymentGatewayTest.java
+new file mode 100644
+index 0000000..413dba2
+--- /dev/null
++++ b/backend/src/test/java/com/o2o/payment/infrastructure/InProcessMockPaymentGatewayTest.java
+@@ -0,0 +1,51 @@
++package com.o2o.payment.infrastructure;
++
++import org.junit.jupiter.api.Test;
++
++import com.o2o.payment.domain.PaymentAttemptId;
++import com.o2o.shared.Money;
++
++import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertFalse;
++import static org.junit.jupiter.api.Assertions.assertNotEquals;
++import static org.junit.jupiter.api.Assertions.assertTrue;
++
++/**
++ * Y26. S9-R1-B-01. Mock PG 어댑터의 멱등성. 설계 근거: 계약 2절 openAttempt 표 8행(attemptId가
++ * 멱등키), 6절 08-3 결정 4 행(환불도 attemptId를 멱등키로 같은 키 재요청은 같은 결과), 06-4 v5 1-2.
++ *
++ * 어댑터만 본다. DB도 스프링도 없다. 앱 서비스 테스트(Y7)는 둘째 환불에서 어댑터 호출 자체를
++ * 건너뛰므로 어댑터의 같은 키 재호출은 여기서만 직접 확인한다.
++ */
++class InProcessMockPaymentGatewayTest {
++
++    private static final Money CHARGE = Money.krw(180_000);
++
++    @Test
++    void Y26_같은_attemptId의_request는_같은_거래_번호이고_다른_attemptId는_다르다() {
++        InProcessMockPaymentGateway gateway = new InProcessMockPaymentGateway();
++        PaymentAttemptId attemptId = PaymentAttemptId.of("attempt_aaaaaaaa");
++
++        String first = gateway.request(attemptId, CHARGE);
++        String again = gateway.request(attemptId, CHARGE);
++
++        assertEquals(first, again);
++        assertTrue(first.matches("mock_tx_[0-9a-f]{32}"), first);
++        assertNotEquals(first, gateway.request(PaymentAttemptId.of("attempt_bbbbbbbb"), CHARGE));
++    }
++
++    @Test
++    void Y26_같은_attemptId의_refund는_두_번_불러도_업무_효과가_하나이고_예외가_없다() {
++        InProcessMockPaymentGateway gateway = new InProcessMockPaymentGateway();
++        PaymentAttemptId attemptId = PaymentAttemptId.of("attempt_cccccccc");
++        assertFalse(gateway.hasRefunded(attemptId));
++
++        assertDoesNotThrow(() -> {
++            gateway.refund(attemptId, CHARGE);
++            gateway.refund(attemptId, CHARGE);
++        });
++
++        assertTrue(gateway.hasRefunded(attemptId));
++    }
++}
