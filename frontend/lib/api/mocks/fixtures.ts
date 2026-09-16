@@ -43,8 +43,9 @@ export const inventory: DailyInventory = {
 
 export const inventoryRange: InventoryRange = {
   roomTypeId: roomType.id,
+  // to는 끝 날짜 제외(document/11 821행). 10-01과 10-02가 있고 10-03이 누락
   from: "2026-10-01",
-  to: "2026-10-03",
+  to: "2026-10-04",
   items: [inventory, { ...inventory, date: "2026-10-02", version: 0 }],
   missingDates: ["2026-10-03"],
 };
@@ -60,7 +61,7 @@ export const rate: DailyRate = {
 export const rateRange: RateRange = {
   roomTypeId: roomType.id,
   from: "2026-10-01",
-  to: "2026-10-03",
+  to: "2026-10-04",
   items: [rate, { ...rate, date: "2026-10-02", version: 0 }],
   missingDates: ["2026-10-03"],
 };
