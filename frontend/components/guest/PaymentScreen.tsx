@@ -20,6 +20,7 @@ import type { SearchValues } from "../SearchForm";
 import { Skeleton } from "../Skeleton";
 import { BOOKING_BADGE, StatusBadge } from "../StatusBadge";
 import { StayConditions } from "./StayConditions";
+import { expiredTextOf } from "./booking-text";
 
 export const MAX_ATTEMPTS = 3;
 
@@ -45,11 +46,6 @@ export interface PaymentScreenProps {
   // 만료 뒤 같은 조건으로 새 예약. G1 쿼리
   onNewBooking: (query: string) => void;
 }
-
-const EXPIRED_TEXT: Record<string, string> = {
-  TTL_EXPIRED: "남은 시간 안에 결제하지 않아 예약이 만료됐습니다.",
-  PAYMENT_FAILED: "결제 시도 3회가 모두 실패해 예약이 만료됐습니다.",
-};
 
 // G5 결제. BOOK-03 진입 시. 결제 버튼이 PAY-01(클릭마다 새 키, mockMode는 쿠키 값이고 APPROVE면 생략).
 // 성공이나 replayed 뒤 BOOK-03 재조회는 훅의 onSettled. 남은 시간은 expiresAt과 serverNow 차이(P01)
@@ -128,7 +124,7 @@ export function PaymentScreen({ bookingId, onDetail, onReplaceDetail, onNewBooki
 
       {phase === "expired" ? (
         <Notice title="예약이 만료됐습니다" action={<Button onClick={() => onNewBooking(searchQueryOf(values))}>같은 조건으로 새 예약</Button>}>
-          {EXPIRED_TEXT[b.expirationReason ?? ""] ?? "예약이 만료됐습니다."}
+          {expiredTextOf(b.expirationReason)}
         </Notice>
       ) : null}
 

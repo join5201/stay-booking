@@ -1,0 +1,26 @@
+task-S9-frontend T9 게스트 3(G6, G7) 백엔드 실물 확인. 2026-09-16 17:12부터 17:16
+
+환경
+- 백엔드: o2o-dev 작업 트리의 backend에서 gradlew bootRun(dev 프로필, 8080). DB는 o2o-catalog-mysql 컨테이너(3307, o2o_catalog_test). T5부터 켜 둔 같은 프로세스.
+- 프론트: wt-front/frontend의 next build 결과를 next start -p 3000. 앱 안 브라우저, 개발용 바에서 행위자 guest_001과 guest_002와 public.
+- 자료: guest_001의 예약 10건(T8이 만든 셋과 T5의 하나, 09-13 취소 흐름 시험의 여섯. 숙소 둘 T4 실측 스테이 고침과 취소 흐름 스테이, 객실 둘 오션 더블과 스탠다드). 상태는 CONFIRMED 2, EXPIRED 4, CANCELED 3, 그리고 이 확인 중에 만든 1건.
+- 브라우저 도구는 요청 본문을 못 보여 준다. 키와 본문은 단위 테스트(BookingList 6건, BookingDetail 9건)로 대조하고 실물은 상태 코드와 화면으로 봤다.
+
+관찰 순서
+1. /bookings(guest_001) → GET BOOK-02 page=0&size=20 → 200(10건, 1쪽). 이름 조회는 CAT-03 둘과 CAT-08 둘뿐(줄 열에 숙소 둘과 객실 둘이라 캐시로 한 번씩). 줄마다 객실 이름과 숙소 이름, 숙박(2026-09-16 부터 2026-09-17 전까지 1박, 2명), 금액, 배지(만료, 확정, 취소), 요청 시각(서울), 상세 버튼. 필터 다섯 중 전체가 눌림.
+2. 확정 클릭 → URL /bookings?status=CONFIRMED, GET BOOK-02 status=CONFIRMED → 200(2건). 선점 클릭 → status=HELD → 200(0건) → 빈 상태 예약이 없습니다와 숙소 찾기 버튼.
+3. /bookings?status=BOGUS&page=1 직접 열기 → 필터는 전체로 읽고 요청은 page=1&size=20(status 없음) → 200(빈 쪽). 화면이 네 값 밖을 서버에 보내지 않는다. 화면 밖 curl로 status=BOGUS를 보내면 400 INVALID_REQUEST.
+4. 확정 목록에서 상세 클릭(booking_2767, 체크인 09-16이 오늘) → /bookings/{id}. GET BOOK-03 → 200(CONFIRMED). 경로 내 예약/예약 상세, 배지 확정, 이름 둘(캐시), 숙박 줄, 새로 고침, 확정 카드(확정 시각 16:50), 예약 취소 비활성(disabled true)과 이유 체크인 날짜가 지나 취소할 수 없습니다(W15 실물. 체크인 서울 날짜 == serverNow 서울 날짜), 요금 표, 결제 시도 1/3 승인 줄, 예약 정보(번호, 요청 시각, 확정 시각).
+5. 화면 밖 curl BOOK-04 같은 예약 → 409 CANCELLATION_NOT_ALLOWED(취소 가능 기간이 지났습니다. 체크인 전날까지 취소할 수 있습니다). 만료 예약(booking_ed4e)에 BOOK-04 → 409 BOOKING_STATE_CONFLICT. reason 301자 → 400 INVALID_REQUEST details [{field: reason, reason: 크기가 0에서 300 사이여야 합니다}]. 셋 다 lib/errors.ts 자리(notice, notice, field)에 있다.
+6. 새 예약: G4(부산, 09-17부터 09-18, 2명, APPROVE) → BOOK-01 201 → /bookings/booking_7ce4.../pay. 결제 전에 /bookings/booking_7ce4... 직접 열기 → BOOK-03 200(HELD) → 배지 선점, 남은 시간 09:46부터 감소, 카드 결제를 기다리는 예약입니다와 결제하기 버튼, 시도 0/3, 예약 정보에 만료 예정 17:23. 새로 고침 클릭 → GET BOOK-03 한 번 더 → 200. 결제하기 클릭 → /bookings/{id}/pay(G5).
+7. G5에서 결제하기 → PAY-01 202 → CONFIRMED 카드 → 예약 상세로 클릭 → /bookings/booking_7ce4...(G7이 생겨 404 페이지 아님). 배지 확정, 예약 취소 활성(disabled false), 이유 문구 없음(체크인 09-17이 서울 오늘 09-16보다 뒤).
+8. 예약 취소 클릭 → 시트(예약을 취소할까요? 환불 안내, 취소 사유 칸 0/300. 비워도 됩니다, 돌아가기, 예약 취소). 사유에 T9 실측 취소 입력 → 8/300. 시트의 예약 취소 클릭 → POST BOOK-04 200 → GET BOOK-03 200(CANCELED) → 시트 닫힘, 띠 예약을 취소했습니다, 배지 취소, 카드 예약이 취소됐습니다(취소 시각 17:15. 사유: T9 실측 취소), 결제 시도 줄 아래 환불 줄(90,000원, 예약 취소, 17:15), 예약 정보에 취소 시각. 예약 취소 버튼 없음.
+9. /bookings/booking_none → GET BOOK-03 404 → 전면 Notice 찾을 수 없습니다와 목록으로 버튼.
+10. /bookings/booking_ed4e...(EXPIRED TTL_EXPIRED) → 배지 만료, 카드 예약이 만료됐습니다와 남은 시간 안에 결제하지 않아 예약이 만료됐습니다, 남은 시간과 결제하기와 예약 취소 없음(읽기만), 시도 줄 1회 처리 중(DEFER), 예약 정보에 만료 시각 17:02. 취소 목록의 09-13 예약(booking_b25c...) → 카드 사유: 일정 변경, 환불 줄 200,000원.
+11. 상세를 연 채 개발용 바에서 guest_002로(같은 역할) → BOOK-03 재조회가 404(남의 예약) → 전면 Notice. /bookings → guest_002의 1건(T5의 만료 예약).
+12. public으로 → C1대로 /로. /bookings 직접 열기 → 미들웨어가 /로 보낸다(역할 첫 화면). 화면 밖 curl로 행위자 헤더 없이 BOOK-02 → 401 ACTOR_REQUIRED(화면의 Notice 문구가 개발용 바를 가리키는 코드. 미들웨어 때문에 화면에서는 안 난다).
+
+남긴 것
+- 남은 시간 0 도달 뒤 G7의 재조회 실물은 T8의 G5와 같은 Countdown과 refetch 경로라 단위 테스트로 갈음(10분 대기 생략).
+- 이 확인이 만든 예약 하나(booking_7ce4 CANCELED, 환불 90,000원)가 DB에 남는다. 요금과 재고는 안 건드렸다.
+- 목록 20건 넘는 페이지 이동의 실물은 자료가 11건이라 못 봤다(page=1 빈 쪽만). 단위 테스트(2 / 3 표시와 다음 클릭)로 갈음.
