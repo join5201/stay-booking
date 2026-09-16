@@ -3,11 +3,11 @@ import { HttpResponse, http } from "msw";
 import { describe, expect, it } from "vitest";
 import { ApiError } from "../client";
 import { keys } from "../keys";
-import { errorBody, property } from "../mocks/fixtures";
+import { errorBody, property, roomType } from "../mocks/fixtures";
 import { lastRequest, requestLog } from "../mocks/handlers";
 import { server } from "../mocks/server";
 import { queryWrapper, setActorCookie, setupMockServer } from "../mocks/test-utils";
-import { useCreateProperty, useMyProperties, useProperty, useUpdateProperty } from "./catalog";
+import { useCreateProperty, useMyProperties, useProperty, useRoomType, useUpdateProperty } from "./catalog";
 
 setupMockServer();
 
@@ -45,6 +45,23 @@ describe("조회 훅", () => {
     await waitFor(() => expect(denied.result.current.isError).toBe(true));
     expect(denied.result.current.error).toBeInstanceOf(ApiError);
     expect((denied.result.current.error as ApiError).code).toBe("ACTOR_REQUIRED");
+  });
+
+  it("useRoomType의 keep은 다시 마운트해도 다시 읽지 않는다. 기본은 1분이 지나면 다시 읽는다", async () => {
+    setActorCookie("host_001");
+    const { Wrapper, client } = queryWrapper();
+    // 2분 전에 읽은 값이 캐시에 있다. H4와 H5 머리는 이 값을 그대로 쓴다
+    client.setQueryData(keys.roomType("rt_001"), roomType, { updatedAt: Date.now() - 120_000 });
+    const kept = renderHook(() => useRoomType("rt_001", { keep: true }), { wrapper: Wrapper });
+    expect(kept.result.current.data).toEqual(roomType);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(requestLog).toHaveLength(0);
+    kept.unmount();
+
+    const plain = renderHook(() => useRoomType("rt_001"), { wrapper: Wrapper });
+    await waitFor(() => expect(requestLog).toHaveLength(1));
+    expect(lastRequest().path).toBe("/api/v1/room-types/rt_001");
+    expect(plain.result.current.data).toEqual(roomType);
   });
 });
 
