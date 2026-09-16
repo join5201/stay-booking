@@ -1,0 +1,11 @@
+
+Running 6 tests using 1 worker
+
+  ok 1 [chromium] › e2e\e01-booking-success.spec.ts:5:5 › E01 호스트 등록부터 게스트 결제 승인까지 (4.2s)
+  ok 2 [chromium] › e2e\e02-decline-expired.spec.ts:5:5 › E02 결제 거절 세 번 뒤 만료와 재고 반환 (1.4s)
+  ok 3 [chromium] › e2e\e03-defer-internal-event.spec.ts:5:5 › E03 결제 보류 뒤 모의 PG 승인 이벤트와 새로 고침 (918ms)
+  ok 4 [chromium] › e2e\e04-ttl-expired.spec.ts:7:5 › E04 남은 시간 0 도달 뒤 서버 재조회로만 만료 카드 (21.9s)
+  ok 5 [chromium] › e2e\e05-cancel-refund.spec.ts:5:5 › E05 확정 뒤 취소와 환불과 재고 복원 (1.2s)
+  ok 6 [chromium] › e2e\e06-version-conflict.spec.ts:12:5 › E06 버전 충돌 뒤 새로 읽기와 재저장 (648ms)
+
+  6 passed (32.9s)
