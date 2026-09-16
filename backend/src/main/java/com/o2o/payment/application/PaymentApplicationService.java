@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -230,8 +231,8 @@ public class PaymentApplicationService {
             // 규칙 3과 8. 새 이벤트를 다시 발행하지 않는다. 기록은 남겨 같은 eventId 재전달이
             // 규칙 2로 답하게 한다. processedAt은 최초 처리의 시각이다(11 응답 모델 MockEventResult)
             Instant firstProcessedAt = attempt.completedAt();
-            eventRepository.save(MockPaymentEvent.duplicate(command.eventId(), attemptId, bodyHash,
-                    firstProcessedAt));
+            recordEvent(MockPaymentEvent.duplicate(command.eventId(), attemptId, bodyHash,
+                    firstProcessedAt), command.eventId());
             return MockEventResult.duplicate(command.eventId(), attemptId, firstProcessedAt);
         }
 
@@ -243,8 +244,25 @@ public class PaymentApplicationService {
         }
 
         // 12와 13. 이벤트 기록을 시도 결과와 같은 트랜잭션에 저장하고 커밋한다(규칙 7의 결제 부분)
-        eventRepository.save(MockPaymentEvent.processed(command.eventId(), attemptId, bodyHash, now));
+        recordEvent(MockPaymentEvent.processed(command.eventId(), attemptId, bodyHash, now),
+                command.eventId());
         return MockEventResult.processed(command.eventId(), attemptId, now);
+    }
+
+    /**
+     * 이벤트 기록 저장(규칙 2와 7의 결제 부분). 리포지토리는 persist로 넣고 flush에서 기본키
+     * 충돌을 드러낸다(S9-R1-A-01). 여기 오는 충돌은 서로 다른 Payment가 같은 eventId를 같은
+     * 순간 넣은 것뿐이다. 같은 Payment의 같은 eventId는 루트 잠금이 규칙 2 조회에서 먼저
+     * 걸러 이 저장에 닿지 않는다(Y22). 서로 다른 Payment면 paymentAttemptId가 달라 body가
+     * 언제나 다르므로 규칙 2의 MOCK_EVENT_CONFLICT다(Y24). 예외로 트랜잭션이 롤백되어 진 쪽의
+     * 시도 전이는 남지 않는다.
+     */
+    private void recordEvent(MockPaymentEvent event, String eventId) {
+        try {
+            eventRepository.save(event);
+        } catch (DataIntegrityViolationException conflict) {
+            throw new MockEventConflictException(eventId);
+        }
     }
 
     private static PaymentAttempt attemptOf(Payment payment, PaymentAttemptId attemptId) {

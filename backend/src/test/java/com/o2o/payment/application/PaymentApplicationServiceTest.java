@@ -18,12 +18,17 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.o2o.payment.CommittedPaymentEvents;
+import com.o2o.payment.domain.AlreadyApprovedException;
 import com.o2o.payment.domain.AttemptInProgressException;
 import com.o2o.payment.domain.MockMode;
 import com.o2o.payment.domain.MockOutcome;
+import com.o2o.payment.domain.MockPaymentEventRepository;
 import com.o2o.payment.domain.NoApprovedAttemptException;
 import com.o2o.payment.domain.Payment;
 import com.o2o.payment.domain.PaymentAttempt;
@@ -42,7 +47,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Y9와 Y10과 Y14, 그리고 Y7의 앱 서비스 몫. 설계 근거: 계약 8-1절, U3과 U4(06-2 3-4, 06-4 v5 1-1),
+ * Y9와 Y10과 Y14, 그리고 Y7과 Y3의 앱 서비스 몫. 설계 근거: 계약 8-1절, U3과 U4(06-2 3-4, 06-4 v5 1-1),
  * 06-2 5절 Payment 행(시도 추가와 콜백 기록은 루트를 잠근 뒤), 08-3 결정 3과 4, 11 PAY-02 처리
  * 규칙과 응답 모델 PaymentSummary와 Refund.
  *
@@ -67,6 +72,11 @@ class PaymentApplicationServiceTest {
         Clock fixedClock() {
             return Clock.fixed(FIXED_NOW, ZoneOffset.UTC);
         }
+
+        @Bean
+        CommittedPaymentEvents committedPaymentEvents() {
+            return new CommittedPaymentEvents();
+        }
     }
 
     @Autowired
@@ -81,6 +91,15 @@ class PaymentApplicationServiceTest {
     @Autowired
     private PlatformTransactionManager transactionManager;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private MockPaymentEventRepository eventRepository;
+
+    @Autowired
+    private CommittedPaymentEvents committed;
+
     private static String newBookingId() {
         return "bk_test_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
     }
@@ -91,6 +110,29 @@ class PaymentApplicationServiceTest {
             cur = cur.getCause();
         }
         return cur;
+    }
+
+    private static String newAttemptId() {
+        return "attempt_" + UUID.randomUUID().toString().replace("-", "");
+    }
+
+    private static PaymentAttemptView attemptOf(PaymentSummaryView summary, String attemptId) {
+        return summary.attempts().stream().filter(a -> a.id().equals(attemptId)).findFirst().orElseThrow();
+    }
+
+    /**
+     * T6. 기존 시도 행을 본떠 같은 Payment에 시도 행 하나를 직접 넣는다. 서비스 길로는 만들 수
+     * 없는 상태(Y3의 셋째 사례)와 도메인이 발급하는 ID의 중복(Y9의 U5)을 위해서다. 거래 번호는
+     * 따로 받아 U4가 아니라 보려는 제약이 막게 한다.
+     */
+    private int seedAttemptRow(String templateAttemptId, String id, int attemptNumber, String status,
+                               String pgTransactionId) {
+        return jdbcTemplate.update("""
+                INSERT INTO payment_attempt (id, attempt_number, kind, status, amount, currency,
+                    pg_transaction_id, mock_mode, requested_at, payment_id)
+                SELECT ?, ?, kind, ?, amount, currency, ?, mock_mode, requested_at, payment_id
+                FROM payment_attempt WHERE id = ?
+                """, id, attemptNumber, status, pgTransactionId, templateAttemptId);
     }
 
     private MockEventCommand event(String eventId, PaymentAttemptView attempt, MockOutcome outcome) {
@@ -141,6 +183,60 @@ class PaymentApplicationServiceTest {
         }));
         assertTrue(root(e).getMessage().contains("uk_payment_attempt_pg_transaction"),
                 root(e).getMessage());
+    }
+
+    /**
+     * Y9. U5. payment_attempt의 기본키가 같은 id의 둘째 행을 거부한다(계약 2-1절 U5 행, S9-R1-B-02).
+     * 시도 ID는 도메인이 attempt_ 뒤 UUID로 발급해 서비스 길로는 중복이 나지 않으므로 기존 행을
+     * 본떠 같은 id로 둘째 행을 직접 넣는다(T6). 거래 번호는 달리 해 U4가 아니라 기본키가 막는 것을 본다.
+     */
+    @Test
+    void Y9_같은_id의_둘째_payment_attempt_행은_기본키가_거부한다() {
+        String bookingId = newBookingId();
+        PaymentAttemptView attempt = paymentService.openAttempt(bookingId, CHARGE, MockMode.DEFER);
+        String suffix = attempt.id().substring("attempt_".length(), "attempt_".length() + 8);
+
+        DuplicateKeyException e = assertThrows(DuplicateKeyException.class,
+                () -> seedAttemptRow(attempt.id(), attempt.id(), 2, "REQUESTED", "mock_tx_u5_" + suffix));
+        assertTrue(root(e).getMessage().contains("PRIMARY"), root(e).getMessage());
+        assertEquals(1, paymentService.attemptsOf(bookingId).attemptCount());
+
+        // 통과 쪽 짝. 다른 id면 들어간다
+        assertEquals(1, seedAttemptRow(attempt.id(), newAttemptId(), 2, "REQUESTED", "mock_tx_u5b_" + suffix));
+        assertEquals(2, paymentService.attemptsOf(bookingId).attemptCount());
+    }
+
+    /**
+     * Y3의 셋째 사례. S9-R1-A-03. recordApproval의 I7 둘째 방어선이다. 승인 시도가 있는 Payment의
+     * 다른 REQUESTED 시도에 승인이 오면 AlreadyApproved다(06-4 1-2 recordApproval Pre의 승인 이력
+     * 없음). 이 상태는 openAttempt가 I7과 I9로 막아 서비스 길로는 만들 수 없으므로 둘째 시도를 DB에
+     * 직접 심는다(T6). 앱 서비스 수준에서 보는 이유는 예외로 트랜잭션이 롤백되어 두 시도의 상태도
+     * 이벤트 기록도 발행도 바뀌지 않는 것까지 한 번에 보기 위해서다. API 층은 이 예외를 매핑하지
+     * 않으므로(계약 2절 INTERNAL-01 표에 그 행이 없다) 여기서 멈춘다.
+     */
+    @Test
+    void Y3_다른_시도가_APPROVED면_REQUESTED_시도의_승인은_AlreadyApproved이고_아무것도_남지_않는다() {
+        String bookingId = newBookingId();
+        PaymentAttemptView first = paymentService.openAttempt(bookingId, CHARGE, MockMode.DEFER);
+        paymentService.handleMockEvent(event("ev_1_" + bookingId, first, MockOutcome.APPROVED));
+        String rogueId = newAttemptId();
+        String rogueTx = "mock_tx_rogue_" + rogueId.substring("attempt_".length(), "attempt_".length() + 8);
+        assertEquals(1, seedAttemptRow(first.id(), rogueId, 2, "REQUESTED", rogueTx));
+        MockEventCommand approval = new MockEventCommand("ev_2_" + bookingId, rogueId, rogueTx,
+                MockOutcome.APPROVED, first.amount(), first.currency(), null);
+
+        AlreadyApprovedException e = assertThrows(AlreadyApprovedException.class,
+                () -> paymentService.handleMockEvent(approval));
+
+        assertEquals(first.id(), e.approvedAttemptId().value());
+        PaymentSummaryView summary = paymentService.attemptsOf(bookingId);
+        assertEquals(first.id(), summary.approvedAttemptId());
+        assertEquals("APPROVED", attemptOf(summary, first.id()).status());
+        assertEquals("REQUESTED", attemptOf(summary, rogueId).status());
+        assertNull(attemptOf(summary, rogueId).completedAt());
+        assertTrue(eventRepository.findByEventId("ev_2_" + bookingId).isEmpty());
+        assertEquals(1, committed.approvedOf(first.id()));
+        assertEquals(0, committed.approvedOf(rogueId));
     }
 
     /**
