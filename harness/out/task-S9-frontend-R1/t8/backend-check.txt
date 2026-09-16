@@ -1,0 +1,27 @@
+task-S9-frontend T8 게스트 2(G4, G5) 백엔드 실물 확인. 2026-09-16 16:49부터 17:03
+
+환경
+- 백엔드: o2o-dev 작업 트리의 backend에서 gradlew bootRun(dev 프로필, 8080). DB는 o2o-catalog-mysql 컨테이너(3307, o2o_catalog_test). T5부터 켜 둔 같은 프로세스.
+- 프론트: wt-front/frontend의 next build 결과를 next start -p 3000. 앱 안 브라우저, 개발용 바에서 행위자 guest_001과 Mock 모드 APPROVE, DECLINE, DEFER.
+- 자료: T4와 T5의 숙소 prop_5578(부산)과 객실 room_7eab(오션 더블, 최대 4명). 재고 09-16(5)부터 09-21, 요금 09-16(120000)과 09-17(100000). T7의 프로모션 T7 실측 10%(오늘부터 적용).
+- 브라우저 도구는 요청 본문을 못 보여 준다. 키와 본문은 단위 테스트(BookingConfirm 4건, PaymentScreen 8건)로 대조하고 실물은 상태 코드와 화면으로 봤다.
+
+관찰 순서
+1. G3(부산, 09-16부터 09-18, 2명)에서 예약하기 클릭 → /room-types/{id}/book?regionCode=BUSAN&checkIn=2026-09-16&checkOut=2026-09-18&guestCount=2. G4 진입 시 GET CAT-08과 SEARCH-03 → 200. 표 09-16 120,000 할인 12,000, 09-17 100,000 할인 10,000, 2박 합계 198,000원, 예상 금액 고정 문구. 버튼 198,000원에 예약 확인.
+2. 확인 전에 화면 밖 curl(host_001)로 RATE PATCH 09-16을 120000에서 130000으로(version 2 → 3) → 200. 이어 화면의 확인 클릭 → POST BOOK-01 409 PRICE_CHANGED → 화면 안 Notice 금액이 바뀌었습니다와 문구 금액이 바뀌어 예약을 만들지 않았습니다. 새 금액으로 다시 확인하세요. SEARCH-03 재조회 → 200(09-16 130,000, 2박 합계 207,000원). 버튼 207,000원으로 다시 확인 활성, 원래 확인 버튼 207,000원에 예약 확인은 비활성(disabled true).
+3. 207,000원으로 다시 확인 클릭 → POST BOOK-01 201 → /bookings/booking_2767.../pay로 이동. 단위 테스트가 이 경로의 키가 첫 요청과 다른 것과 expectedTotalAmount가 새 금액인 것을 본다.
+4. G5 진입: GET BOOK-03 → 200(HELD), 이어 CAT-03(지역 코드 몫)과 CAT-08(객실 이름). 배지 선점, 오션 더블, 2박 2명, 남은 시간 09:58부터 매초 감소, 요금 표(207,000원), 결제 시도 0/3과 결제 시도 없음, 버튼 예약 상세로와 결제하기(둘 다 활성). APPROVE라 개발용 표시 없음.
+5. 결제하기 클릭 → POST PAY-01 202 → GET BOOK-03 200(CONFIRMED) → 배지 확정, 카드 예약이 확정됐습니다와 예약 상세로 버튼, 결제 시도 1/3에 줄 하나(1회 승인 207,000원 개발용 APPROVE 16:50). 남은 시간과 결제 버튼 사라짐.
+6. 예약 상세로 클릭 → /bookings/booking_2767...(G7은 T9 몫이라 아직 404 페이지). 같은 예약의 /pay를 직접 열기 → BOOK-03 CONFIRMED → /bookings/booking_2767...로 replace(HELD가 아니면 G7로).
+7. 개발용 바에서 DECLINE. G4(09-16부터 09-17, 1박, 2명) → SEARCH-03 200(117,000원) → 확인 → BOOK-01 201 → /bookings/booking_4a09.../pay. 버튼 옆 개발용: DECLINE 표시.
+8. 결제하기 → PAY-01 202 → BOOK-03 200(HELD, FAILED 1) → 결제 시도 1/3(1회 실패 117,000원 Mock 거절 개발용 DECLINE), 버튼 다시 결제하기 활성. 다시 결제하기 → 202와 200 → 2/3. 다시 결제하기 → 202 → BOOK-03 200(EXPIRED, PAYMENT_FAILED) → 배지 만료, 카드 예약이 만료됐습니다와 문구 결제 시도 3회가 모두 실패해 예약이 만료됐습니다, 시도 3/3에 실패 줄 셋, 결제 버튼 없음.
+9. 같은 조건으로 새 예약 클릭 → /?regionCode=BUSAN&checkIn=2026-09-16&checkOut=2026-09-17&guestCount=2. G1이 SEARCH-01을 부르고 요약 1박 2명 숙소 1곳. 지역 코드는 CAT-03 응답에서 왔다.
+10. 개발용 바에서 DEFER. G4(같은 1박) → 확인 → 201 → /bookings/booking_ed4e.../pay. 결제하기 → PAY-01 202 → BOOK-03 200(HELD, REQUESTED 1) → 카드 결제를 처리 중입니다와 새로 고침 버튼, 시도 1/3(1회 처리 중 개발용 DEFER), 다시 결제하기 비활성(disabled true). 새로 고침 클릭 → GET BOOK-03 200 한 번 더, 상태 그대로.
+11. 화면 밖 curl로 같은 예약에 PAY-01(새 키) → 409 PAYMENT_IN_PROGRESS(완료되지 않은 결제 시도가 있습니다). 8번의 만료된 예약에 PAY-01 → 409 BOOKING_EXPIRED. BOOK-01을 키 없이 → 400 IDEMPOTENCY_KEY_REQUIRED. 셋 다 lib/errors.ts 자리(notice, notice, banner 새 키)에 있고 화면은 버튼 잠금으로 앞의 둘을 안 만든다.
+12. G4를 쿼리 둘만으로(checkIn, guestCount) 열기 → /room-types/{id}?checkIn=...&guestCount=...로 replace. G3의 날짜와 인원이 없습니다 문구.
+13. 남은 시간 0 도달(W14 TTL_EXPIRED): 10번의 DEFER 예약(expiresAt 17:02:33)의 /pay를 16:57에 열어 두었다(남은 시간 04:54부터 감소, 처리 중 카드). 0에 닿자 GET BOOK-03 한 번 더(요청 하나) → 200(EXPIRED, TTL_EXPIRED, serverNow 17:02:39) → 배지 만료, 카드 예약이 만료됐습니다와 문구 남은 시간 안에 결제하지 않아 예약이 만료됐습니다, 같은 조건으로 새 예약 버튼, 남은 시간과 처리 중 카드와 결제 버튼 사라짐. 시도 줄은 1회 처리 중 그대로(DEFER 시도는 완료되지 않은 채 남는다). 같은 시각 화면 밖 curl도 EXPIRED TTL_EXPIRED. 계약 10절의 TTL 만료 실물은 10분 대기라 갈음한다는 미결은 이 관찰로 닫힌다.
+
+남긴 것
+- 요금은 확인 뒤 curl로 120000에 되돌렸다(version 4).
+- 화면에서 만든 예약 셋(booking_2767 CONFIRMED, booking_4a09 EXPIRED, booking_ed4e EXPIRED TTL_EXPIRED)은 DB에 남는다. T9의 G6 목록 실물 자료로 쓴다.
+- REQUEST_IN_PROGRESS와 Retry-After와 IDEMPOTENCY_KEY_REUSED의 화면 동작은 단위 테스트로만 봤다(실물에서 같은 키 동시 전송을 브라우저 도구로 못 만든다).
