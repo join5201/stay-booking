@@ -83,13 +83,13 @@ export function useUpdateRoomType(roomTypeId: string) {
   });
 }
 
-// CAT-08. staleTime 60초. 편집 패널(H3)은 fresh로 열릴 때마다 다시 읽는다
-export function useRoomType(roomTypeId: string | undefined, options: { fresh?: boolean } = {}) {
+// CAT-08. staleTime 60초. 편집 패널(H3)은 fresh로 열릴 때마다 다시 읽고, 달력 머리(H4와 H5)는 keep으로 탭을 오가도 다시 읽지 않는다(CAT-07 성공이 setQueryData로 갱신)
+export function useRoomType(roomTypeId: string | undefined, options: { fresh?: boolean; keep?: boolean } = {}) {
   return useQuery({
     queryKey: keys.roomType(roomTypeId ?? ""),
     queryFn: async () => (await api<RoomType>(`/room-types/${roomTypeId}`)).data,
     enabled: !!roomTypeId,
-    staleTime: options.fresh ? 0 : ONE_MINUTE,
+    staleTime: options.fresh ? 0 : options.keep ? Infinity : ONE_MINUTE,
   });
 }
 
