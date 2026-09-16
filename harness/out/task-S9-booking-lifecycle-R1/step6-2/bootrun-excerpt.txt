@@ -1,0 +1,8 @@
+# 6-2단계 bootRun 로그 발췌
+# 기본 hold-ttl(10분)로 띄웠다. 호출 구간(23:01:04부터 DONE까지)에 WARN과 ERROR가 없었다. 취소와 환불 경로는 INFO 로그를 남기지 않으므로 서버가 처리한 증거는 http-calls.txt의 응답이다.
+47:2026-09-13T23:00:52.630+09:00  INFO 64372 --- [backend] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+48:2026-09-13T23:00:52.630+09:00  INFO 64372 --- [backend] [           main] com.o2o.BackendApplication               : Started BackendApplication in 8.1 seconds (process running for 8.674)
+49:2026-09-13T23:01:04.305+09:00  INFO 64372 --- [backend] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+50:2026-09-13T23:01:04.305+09:00  INFO 64372 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+51:2026-09-13T23:01:04.305+09:00  INFO 64372 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 0 ms
+# WARN/ERROR 줄 수(기동 후): 0

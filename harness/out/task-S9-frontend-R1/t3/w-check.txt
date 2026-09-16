@@ -1,0 +1,71 @@
+T3 완료 조건 대조 (2026-09-15). 8-1절 W01부터 W05, W09, W12의 T3 몫
+W01 행위자 헤더: lib/api/client.test.ts > W01 행위자 헤더 (4건)
+W02 Idempotency-Replayed: lib/api/client.test.ts > W02 Idempotency-Replayed (4건). 훅 몫은 booking.test.tsx replayed 건
+W03 오류 본문: lib/api/client.test.ts > W03 오류 본문 (3건). fieldError는 details로, fieldErrors 속성 없음
+W04 Retry-After: lib/api/client.test.ts > W04 Retry-After (3건)
+W05 serverNow: lib/api/client.test.ts > W05 serverNow (3건)
+W09 멱등키 T3 몫: lib/api/hooks/booking.test.tsx > W09 멱등키 (4건). 화면의 useRef 보관은 T7
+W12 요금 본문: lib/api/hooks/inventory.test.tsx > W12 요금 본문 (2건)
+placement 셋: lib/errors.test.ts (28건)
+훅 32개(인계 문서 표 기준. 계약의 서른셋은 INTERNAL-01 행을 포함해 센 수), MSW 핸들러 32개, 오류 규칙 23코드
+
+✓ lib/errors.test.ts > placement 셋 > INVALID_REQUEST는 field 1ms
+✓ lib/errors.test.ts > placement 셋 > INVALID_DATE_RANGE는 field 0ms
+✓ lib/errors.test.ts > placement 셋 > INVENTORY_BELOW_COMMITTED는 field 0ms
+✓ lib/errors.test.ts > placement 셋 > OCCUPANCY_EXCEEDED는 field 0ms
+✓ lib/errors.test.ts > placement 셋 > ACTOR_REQUIRED는 notice 0ms
+✓ lib/errors.test.ts > placement 셋 > ACCESS_DENIED는 notice 0ms
+✓ lib/errors.test.ts > placement 셋 > RESOURCE_NOT_FOUND는 notice 0ms
+✓ lib/errors.test.ts > placement 셋 > VERSION_CONFLICT는 notice 0ms
+✓ lib/errors.test.ts > placement 셋 > RESOURCE_ALREADY_EXISTS는 notice 0ms
+✓ lib/errors.test.ts > placement 셋 > PRICE_CHANGED는 notice 0ms
+✓ lib/errors.test.ts > placement 셋 > INVENTORY_UNAVAILABLE는 notice 0ms
+✓ lib/errors.test.ts > placement 셋 > INVENTORY_NOT_CONFIGURED는 notice 0ms
+✓ lib/errors.test.ts > placement 셋 > RATE_NOT_CONFIGURED는 notice 0ms
+✓ lib/errors.test.ts > placement 셋 > BOOKING_STATE_CONFLICT는 notice 0ms
+✓ lib/errors.test.ts > placement 셋 > BOOKING_EXPIRED는 notice 0ms
+✓ lib/errors.test.ts > placement 셋 > CANCELLATION_NOT_ALLOWED는 notice 0ms
+✓ lib/errors.test.ts > placement 셋 > PAYMENT_ATTEMPTS_EXHAUSTED는 notice 0ms
+✓ lib/errors.test.ts > placement 셋 > PAYMENT_IN_PROGRESS는 notice 0ms
+✓ lib/errors.test.ts > placement 셋 > REQUEST_IN_PROGRESS는 banner 0ms
+✓ lib/errors.test.ts > placement 셋 > IDEMPOTENCY_KEY_REQUIRED는 banner 0ms
+✓ lib/errors.test.ts > placement 셋 > IDEMPOTENCY_KEY_REUSED는 banner 0ms
+✓ lib/errors.test.ts > placement 셋 > TEMPORARY_FAILURE는 banner 0ms
+✓ lib/errors.test.ts > placement 셋 > INTERNAL_ERROR는 banner 0ms
+✓ lib/errors.test.ts > placement 셋 > 네트워크 오류와 모르는 5xx와 모르는 값은 banner 0ms
+✓ lib/errors.test.ts > 다시 시도 규칙 > 409 처리 중과 5xx와 네트워크는 같은 키, 금액 변경과 멱등키 오류는 새 키, 나머지는 없음 0ms
+✓ lib/errors.test.ts > 다시 시도 규칙 > 초 카운트는 ApiError의 retryAfterSec 그대로, 그 밖은 null 0ms
+✓ lib/errors.test.ts > 문구 > 서버 message를 그대로 내지 않는다 0ms
+✓ lib/errors.test.ts > 문구 > 필드 오류는 details의 field와 reason에서 만들고 빈 field는 뺀다 1ms
+✓ lib/api/client.test.ts > W01 행위자 헤더 > 쿠키 dev_actor를 X-Dev-Actor-Id로 붙인다 18ms
+✓ lib/api/client.test.ts > W01 행위자 헤더 > public이면 헤더를 생략한다 2ms
+✓ lib/api/client.test.ts > W01 행위자 헤더 > 쿠키가 없어도 헤더를 생략한다 2ms
+✓ lib/api/client.test.ts > W01 행위자 헤더 > 멱등키는 인자로 받아 Idempotency-Key로 보낸다 4ms
+✓ lib/api/client.test.ts > W02 Idempotency-Replayed > 200에 헤더 true면 replayed가 true이고 성공 3ms
+✓ lib/api/client.test.ts > W02 Idempotency-Replayed > 201에 헤더 true면 replayed가 true이고 성공 1ms
+✓ lib/api/client.test.ts > W02 Idempotency-Replayed > 202에 헤더 true면 replayed가 true이고 성공 1ms
+✓ lib/api/client.test.ts > W02 Idempotency-Replayed > 헤더가 없으면 replayed가 false 2ms
+✓ lib/api/client.test.ts > W03 오류 본문 > ApiError(status, code, message, traceId, details)로 바꾸고 details의 field로 필드 오류를 찾는다 2ms
+✓ lib/api/client.test.ts > W03 오류 본문 > 본문이 JSON이 아니면 HTTP_ERROR와 상태 코드 1ms
+✓ lib/api/client.test.ts > W03 오류 본문 > fetch가 실패하면 NetworkError 1ms
+✓ lib/api/client.test.ts > W04 Retry-After > 409 REQUEST_IN_PROGRESS에서만 retryAfterSec으로 읽는다 1ms
+✓ lib/api/client.test.ts > W04 Retry-After > 헤더 없는 503에서 초 카운트가 없다 1ms
+✓ lib/api/client.test.ts > W04 Retry-After > 헤더가 있어도 5xx에는 초 카운트를 기대하지 않는다 1ms
+✓ lib/api/client.test.ts > W05 serverNow > 본문 serverNow가 우선이다. 둘 다 있는 응답에서 본문 값 1ms
+✓ lib/api/client.test.ts > W05 serverNow > 본문에 없으면 Date 헤더 1ms
+✓ lib/api/client.test.ts > W05 serverNow > 둘 다 없으면 null 1ms
+✓ lib/api/client.test.ts > 쿼리 문자열 > 비어 있거나 undefined인 값은 빼고 나머지를 붙인다 2ms
+✓ lib/api/hooks/inventory.test.tsx > W12 요금 본문 > useUpdateRate는 version과 amount만 보낸다. currency 없음 31ms
+✓ lib/api/hooks/inventory.test.tsx > W12 요금 본문 > useCreateRate는 date와 amount에 currency KRW를 붙인다 6ms
+✓ lib/api/hooks/inventory.test.tsx > 재고 본문 > useUpdateInventory는 date를 경로로 보내고 본문은 version과 totalCount 4ms
+✓ lib/api/hooks/catalog.test.tsx > 조회 훅 > useProperty는 본보기 응답을 data로 내고 id가 없으면 부르지 않는다 82ms
+✓ lib/api/hooks/inventory.test.tsx > 재고 본문 > useBulkCreateInventory는 bulk 경로로 from과 to와 totalCount를 보내고 기간 조회를 다시 읽는다 91ms
+✓ lib/api/hooks/booking.test.tsx > W09 멱등키 (T3 몫. 화면의 useRef 보관은 T7) > useRequestBooking은 변수로 받은 키를 Idempotency-Key 헤더로 보내고 본문은 여섯 필드 60ms
+✓ lib/api/hooks/booking.test.tsx > W09 멱등키 (T3 몫. 화면의 useRef 보관은 T7) > 실패 뒤 같은 키로 다시 시도하면 같은 헤더, 새 동작이면 새 헤더 14ms
+✓ lib/api/hooks/booking.test.tsx > W09 멱등키 (T3 몫. 화면의 useRef 보관은 T7) > replayed 응답도 성공이고 캐시에 예약이 들어간다 11ms
+✓ lib/api/hooks/booking.test.tsx > W09 멱등키 (T3 몫. 화면의 useRef 보관은 T7) > 취소와 결제 요청도 키를 헤더로 보내고 예약 조회를 무효화한다 94ms
+✓ lib/api/hooks/catalog.test.tsx > 조회 훅 > useMyProperties는 page와 size를 쿼리로 붙이고 오류는 ApiError로 낸다 164ms
+✓ lib/api/hooks/catalog.test.tsx > 쓰기 훅과 캐시 > useCreateProperty는 결과를 캐시에 넣고 내 숙소 목록을 다시 읽는다 83ms
+✓ lib/api/hooks/catalog.test.tsx > 쓰기 훅과 캐시 > useUpdateProperty는 version과 바뀐 필드만 보내고 응답을 캐시에 덮어쓴다 151ms
+Test Files  5 passed (5)
+Tests  58 passed (58)

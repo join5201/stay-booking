@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.promotion.api.PromotionApiTest" tests="18" skipped="0" failures="0" errors="0" timestamp="2026-09-13T10:55:36.757Z" hostname="BOOK-QD5U7FFOBT" time="0.923">
+  <properties/>
+  <testcase name="PROMO_01_날짜_형식과_순서_오류는_400_INVALID_DATE_RANGE다()" classname="com.o2o.promotion.api.PromotionApiTest" time="0.031"/>
+  <testcase name="PROMO_02_유지_필드에_명시적_null과_변경_없는_요청은_400이다()" classname="com.o2o.promotion.api.PromotionApiTest" time="0.053"/>
+  <testcase name="PROMO_03_없는_ID는_404이고_있으면_열세_칸이다()" classname="com.o2o.promotion.api.PromotionApiTest" time="0.023"/>
+  <testcase name="V11_PROMO_05가_요금_없는_날짜에_409_RATE_NOT_CONFIGURED를_낸다()" classname="com.o2o.promotion.api.PromotionApiTest" time="0.044"/>
+  <testcase name="PROMO_05_없는_객실_타입은_404다()" classname="com.o2o.promotion.api.PromotionApiTest" time="0.009"/>
+  <testcase name="PROMO_05_30박은_통과하고_guestCount_0은_400_INVALID_REQUEST다()" classname="com.o2o.promotion.api.PromotionApiTest" time="0.321"/>
+  <testcase name="PROMO_04_size가_101이면_400이고_100은_통과한다()" classname="com.o2o.promotion.api.PromotionApiTest" time="0.016"/>
+  <testcase name="PROMO_04_목록은_enabled로_거르고_쪽_구조_다섯_칸이다()" classname="com.o2o.promotion.api.PromotionApiTest" time="0.065"/>
+  <testcase name="PROMO_01_숙박_기간을_생략하면_두_칸이_null로_나간다()" classname="com.o2o.promotion.api.PromotionApiTest" time="0.015"/>
+  <testcase name="V12_PROMO_05가_인원_초과에_409를_내고_후보_없음은_빈_배열과_null이다()" classname="com.o2o.promotion.api.PromotionApiTest" time="0.05"/>
+  <testcase name="PROMO_02_숙박_기간은_둘_다_null로_해제하고_하나만_보내면_400이다()" classname="com.o2o.promotion.api.PromotionApiTest" time="0.034"/>
+  <testcase name="PROMO_01_범위와_필수값_오류는_400_INVALID_REQUEST다()" classname="com.o2o.promotion.api.PromotionApiTest" time="0.018"/>
+  <testcase name="PROMO_01_운영자가_아니면_403이고_헤더가_없으면_401이다()" classname="com.o2o.promotion.api.PromotionApiTest" time="0.005"/>
+  <testcase name="V9_PROMO_02에서_지난_version이면_409이고_최근_변경이_남는다()" classname="com.o2o.promotion.api.PromotionApiTest" time="0.032"/>
+  <testcase name="PROMO_05_날짜_형식과_순서와_30박과_과거는_400_INVALID_DATE_RANGE다()" classname="com.o2o.promotion.api.PromotionApiTest" time="0.031"/>
+  <testcase name="V10_PROMO_02가_생략한_필드를_유지하고_합친_최종_상태에서_날짜_순서를_본다()" classname="com.o2o.promotion.api.PromotionApiTest" time="0.031"/>
+  <testcase name="PROMO_01_등록하면_201과_Location과_열세_칸이다()" classname="com.o2o.promotion.api.PromotionApiTest" time="0.012"/>
+  <testcase name="PROMO_05_후보를_할인액_내림차순으로_내고_하나를_선택한다()" classname="com.o2o.promotion.api.PromotionApiTest" time="0.071"/>
+  <system-out><![CDATA[2026-09-13T19:55:36.758+09:00  INFO 37604 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.promotion.api.PromotionApiTest]: PromotionApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-13T19:55:36.761+09:00  INFO 37604 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.promotion.api.PromotionApiTest
+2026-09-13T19:55:36.761+09:00  INFO 37604 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.promotion.api.PromotionApiTest]: PromotionApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-13T19:55:36.761+09:00  INFO 37604 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.promotion.api.PromotionApiTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.catalog.api.CatalogApiTest" tests="24" skipped="0" failures="0" errors="0" timestamp="2026-09-11T19:07:43.078Z" hostname="BOOK-QD5U7FFOBT" time="3.036">
+  <properties/>
+  <testcase name="C10_역할이_다르면_403이다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.399"/>
+  <testcase name="C6_body에_hostId를_넣으면_거절한다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.015"/>
+  <testcase name="C9_maxOccupancy가_0이면_400이다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.24"/>
+  <testcase name="CAT_08_등록한_객실_타입을_인증_없이_조회한다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.073"/>
+  <testcase name="C9_정상_body는_통과한다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.021"/>
+  <testcase name="C9_명세에_없는_필드를_보내면_400이다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.01"/>
+  <testcase name="객실_타입_응답_여덟_필드의_타입과_값이_명세대로다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.04"/>
+  <testcase name="CAT_06_객실_타입을_등록하면_201과_Location이_온다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.038"/>
+  <testcase name="응답_아홉_필드의_타입과_값이_명세대로다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.021"/>
+  <testcase name="CAT_03_등록한_숙소를_인증_없이_조회한다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.032"/>
+  <testcase name="CAT_01_숙소를_등록하면_201과_Location이_온다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.019"/>
+  <testcase name="C6_남의_숙소에_객실_타입을_등록하면_404다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.03"/>
+  <testcase name="C10_헤더가_없으면_401이다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.011"/>
+  <testcase name="C10_공개_조회는_헤더_없이_된다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.039"/>
+  <testcase name="주소는_300자까지_받고_301자는_거절한다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.027"/>
+  <testcase name="C6_응답의_hostId는_헤더_행위자다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.019"/>
+  <testcase name="CAT_03_없는_숙소는_404이고_코드가_RESOURCE_NOT_FOUND다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.024"/>
+  <testcase name="설명은_2000자까지_받고_2001자는_거절한다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.025"/>
+  <testcase name="시각이_UTC_소수점_셋_형식이다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.019"/>
+  <testcase name="지역_코드는_32자까지_받고_33자는_거절한다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.023"/>
+  <testcase name="C10_미등록_행위자면_401이다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.008"/>
+  <testcase name="C9_필수_필드가_빠지면_400이고_어느_필드인지_알려준다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.008"/>
+  <testcase name="최대_인원은_100까지_받고_101은_거절한다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.045"/>
+  <testcase name="이름은_100자까지_받고_101자는_거절한다()" classname="com.o2o.catalog.api.CatalogApiTest" time="0.024"/>
+  <system-out><![CDATA[2026-09-12T04:07:43.079+09:00  INFO 64168 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.catalog.api.CatalogApiTest]: CatalogApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-12T04:07:43.108+09:00  INFO 64168 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.catalog.api.CatalogApiTest
+2026-09-12T04:07:43.110+09:00  INFO 64168 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.catalog.api.CatalogApiTest]: CatalogApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-12T04:07:43.111+09:00  INFO 64168 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.catalog.api.CatalogApiTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.1)
+
+2026-09-12T04:07:43.221+09:00  INFO 64168 --- [    Test worker] com.o2o.catalog.api.CatalogApiTest       : Starting CatalogApiTest using Java 21.0.11 with PID 64168 (started by user in C:\Dev\potenup\99_projects\o2o-promo\backend)
+2026-09-12T04:07:43.222+09:00  INFO 64168 --- [    Test worker] com.o2o.catalog.api.CatalogApiTest       : No active profile set, falling back to 1 default profile: "default"
+2026-09-12T04:07:43.484+09:00  INFO 64168 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-09-12T04:07:43.534+09:00  INFO 64168 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 47 ms. Found 5 JPA repository interfaces.
+2026-09-12T04:07:43.814+09:00  INFO 64168 --- [    Test worker] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 0 (http)
+2026-09-12T04:07:43.855+09:00  INFO 64168 --- [    Test worker] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-09-12T04:07:43.856+09:00  INFO 64168 --- [    Test worker] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.24]
+2026-09-12T04:07:43.967+09:00  INFO 64168 --- [    Test worker] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 742 ms
+2026-09-12T04:07:44.080+09:00  INFO 64168 --- [    Test worker] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-09-12T04:07:44.121+09:00  INFO 64168 --- [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-09-12T04:07:44.123+09:00  INFO 64168 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2026-09-12T04:07:44.151+09:00  INFO 64168 --- [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection com.mysql.cj.jdbc.ConnectionImpl@2a292566
+2026-09-12T04:07:44.152+09:00  INFO 64168 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+2026-09-12T04:07:44.156+09:00  INFO 64168 --- [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://127.0.0.1:3307/o2o_promo_test]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 9.7.2
+	Default catalog/schema: o2o_promo_test/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-09-12T04:07:44.371+09:00  INFO 64168 --- [    Test worker] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-09-12T04:07:44.559+09:00  INFO 64168 --- [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-12T04:07:44.691+09:00  WARN 64168 --- [    Test worker] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-09-12T04:07:44.815+09:00  INFO 64168 --- [    Test worker] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 65104 (http) with context path '/'
+2026-09-12T04:07:44.820+09:00  INFO 64168 --- [    Test worker] com.o2o.catalog.api.CatalogApiTest       : Started CatalogApiTest in 1.642 seconds (process running for 11.205)
+2026-09-12T04:07:44.971+09:00  INFO 64168 --- [o-auto-1-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-09-12T04:07:44.972+09:00  INFO 64168 --- [o-auto-1-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-09-12T04:07:44.973+09:00  INFO 64168 --- [o-auto-1-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

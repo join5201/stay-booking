@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.booking.application.BookingPaymentServiceTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-09-15T10:10:54.720Z" hostname="BOOK-QD5U7FFOBT" time="0.837">
+  <properties/>
+  <testcase name="L6_만료_시각_1초_전에는_시도가_열린다()" classname="com.o2o.booking.application.BookingPaymentServiceTest" time="0.068"/>
+  <testcase name="L6_유효한_HELD는_REQUESTED_뷰를_돌려주고_청구액이_스냅샷_총액이며_APPROVE는_돌아올_때_확정돼_있다()" classname="com.o2o.booking.application.BookingPaymentServiceTest" time="0.118"/>
+  <testcase name="L6_EXPIRED에는_BookingExpired이고_시도가_열리지_않는다()" classname="com.o2o.booking.application.BookingPaymentServiceTest" time="0.07"/>
+  <testcase name="L6_만료_시각_지난_HELD는_먼저_만료와_선점_반환이_저장된_뒤_BookingExpired다()" classname="com.o2o.booking.application.BookingPaymentServiceTest" time="0.096"/>
+  <testcase name="L6_CONFIRMED와_CANCELED에는_InvalidStateTransition이다()" classname="com.o2o.booking.application.BookingPaymentServiceTest" time="0.117"/>
+  <testcase name="L6_시도_목록은_본인_예약의_전부를_번호_순서로_주고_시도가_없으면_비어_있다()" classname="com.o2o.booking.application.BookingPaymentServiceTest" time="0.144"/>
+  <testcase name="L6_남의_예약과_없는_예약은_자원_정보_없이_BookingNotFound다()" classname="com.o2o.booking.application.BookingPaymentServiceTest" time="0.062"/>
+  <testcase name="L6_실패_셋이_쌓인_HELD에_새_요청은_PaymentAttemptsExhausted다()" classname="com.o2o.booking.application.BookingPaymentServiceTest" time="0.076"/>
+  <testcase name="L6_DEFER는_HELD로_남고_같은_예약에_새_요청은_PaymentInProgress다()" classname="com.o2o.booking.application.BookingPaymentServiceTest" time="0.077"/>
+  <system-out><![CDATA[2026-09-15T19:10:54.722+09:00  INFO 47588 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.application.BookingPaymentServiceTest]: BookingPaymentServiceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-15T19:10:54.723+09:00  INFO 47588 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.application.BookingPaymentServiceTest
+2026-09-15T19:10:54.724+09:00  INFO 47588 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.booking.application.BookingPaymentServiceTest]: BookingPaymentServiceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-15T19:10:54.725+09:00  INFO 47588 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.booking.application.BookingPaymentServiceTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

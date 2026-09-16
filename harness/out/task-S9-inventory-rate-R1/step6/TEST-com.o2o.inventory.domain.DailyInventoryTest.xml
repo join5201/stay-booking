@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.inventory.domain.DailyInventoryTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-09-10T05:44:03.547Z" hostname="BOOK-QD5U7FFOBT" time="0.003">
+  <properties/>
+  <testcase name="개설하면_판매와_선점이_0이다()" classname="com.o2o.inventory.domain.DailyInventoryTest" time="0.001"/>
+  <testcase name="조정하면_총_수량과_버전이_바뀐다()" classname="com.o2o.inventory.domain.DailyInventoryTest" time="0.0"/>
+  <testcase name="조정으로_0까지는_내릴_수_있다()" classname="com.o2o.inventory.domain.DailyInventoryTest" time="0.0"/>
+  <testcase name="지난_버전으로_조정하면_거절한다()" classname="com.o2o.inventory.domain.DailyInventoryTest" time="0.001"/>
+  <testcase name="조정으로_총_수량을_음수로_내리면_거절한다()" classname="com.o2o.inventory.domain.DailyInventoryTest" time="0.0"/>
+  <testcase name="총_수량이_음수면_거절한다()" classname="com.o2o.inventory.domain.DailyInventoryTest" time="0.0"/>
+  <testcase name="총_수량이_0이면_개설한다()" classname="com.o2o.inventory.domain.DailyInventoryTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

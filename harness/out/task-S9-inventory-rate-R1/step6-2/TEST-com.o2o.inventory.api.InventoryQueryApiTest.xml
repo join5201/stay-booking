@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.inventory.api.InventoryQueryApiTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-09-10T05:52:15.434Z" hostname="BOOK-QD5U7FFOBT" time="0.586">
+  <properties/>
+  <testcase name="조회에서_from이_to보다_뒤면_400이다()" classname="com.o2o.inventory.api.InventoryQueryApiTest" time="0.032"/>
+  <testcase name="V9_과거_기간_조회는_허용된다()" classname="com.o2o.inventory.api.InventoryQueryApiTest" time="0.044"/>
+  <testcase name="V10_없는_날짜는_items가_아니라_missingDates에_담긴다()" classname="com.o2o.inventory.api.InventoryQueryApiTest" time="0.057"/>
+  <testcase name="V10_요금도_없는_날짜가_missingDates에_담긴다()" classname="com.o2o.inventory.api.InventoryQueryApiTest" time="0.051"/>
+  <testcase name="조회도_행위자가_없으면_401이고_GUEST면_403이다()" classname="com.o2o.inventory.api.InventoryQueryApiTest" time="0.027"/>
+  <testcase name="INV_04_기간을_조회하면_200이고_날짜_오름차순이다()" classname="com.o2o.inventory.api.InventoryQueryApiTest" time="0.089"/>
+  <testcase name="V11_없는_날짜_단건_조회는_404다()" classname="com.o2o.inventory.api.InventoryQueryApiTest" time="0.036"/>
+  <testcase name="남의_객실_타입은_조회도_404다()" classname="com.o2o.inventory.api.InventoryQueryApiTest" time="0.038"/>
+  <testcase name="INV_04_아무것도_없으면_items가_비고_전부_missingDates다()" classname="com.o2o.inventory.api.InventoryQueryApiTest" time="0.033"/>
+  <testcase name="조회도_366일_상한에_걸린다()" classname="com.o2o.inventory.api.InventoryQueryApiTest" time="0.048"/>
+  <testcase name="RATE_04_요금_단건은_200이고_없으면_404다()" classname="com.o2o.inventory.api.InventoryQueryApiTest" time="0.055"/>
+  <testcase name="INV_05_날짜_단건을_조회하면_200이고_일곱_필드다()" classname="com.o2o.inventory.api.InventoryQueryApiTest" time="0.042"/>
+  <system-out><![CDATA[2026-09-10T14:52:15.435+09:00  INFO 32684 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.inventory.api.InventoryQueryApiTest]: InventoryQueryApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-10T14:52:15.436+09:00  INFO 32684 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.inventory.api.InventoryQueryApiTest
+2026-09-10T14:52:15.437+09:00  INFO 32684 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.inventory.api.InventoryQueryApiTest]: InventoryQueryApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-10T14:52:15.438+09:00  INFO 32684 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.inventory.api.InventoryQueryApiTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

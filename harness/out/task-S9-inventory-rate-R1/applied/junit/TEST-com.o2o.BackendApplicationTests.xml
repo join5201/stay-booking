@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.BackendApplicationTests" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-09-11T05:25:32.355Z" hostname="BOOK-QD5U7FFOBT" time="0.645">
+  <properties/>
+  <testcase name="contextLoads()" classname="com.o2o.BackendApplicationTests" time="0.002"/>
+  <system-out><![CDATA[2026-09-11T14:25:32.357+09:00  INFO 55596 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.BackendApplicationTests]: BackendApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-11T14:25:32.366+09:00  INFO 55596 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.BackendApplicationTests
+2026-09-11T14:25:32.367+09:00  INFO 55596 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.BackendApplicationTests]: BackendApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-11T14:25:32.367+09:00  INFO 55596 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.BackendApplicationTests
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.1)
+
+2026-09-11T14:25:32.394+09:00  INFO 55596 --- [    Test worker] com.o2o.BackendApplicationTests          : Starting BackendApplicationTests using Java 21.0.11 with PID 55596 (started by user in C:\Dev\potenup\99_projects\o2o-dev\backend)
+2026-09-11T14:25:32.395+09:00  INFO 55596 --- [    Test worker] com.o2o.BackendApplicationTests          : No active profile set, falling back to 1 default profile: "default"
+2026-09-11T14:25:32.545+09:00  INFO 55596 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-09-11T14:25:32.564+09:00  INFO 55596 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 16 ms. Found 4 JPA repository interfaces.
+2026-09-11T14:25:32.608+09:00  INFO 55596 --- [    Test worker] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-09-11T14:25:32.633+09:00  INFO 55596 --- [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-09-11T14:25:32.634+09:00  INFO 55596 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2026-09-11T14:25:32.651+09:00  INFO 55596 --- [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection com.mysql.cj.jdbc.ConnectionImpl@685a8158
+2026-09-11T14:25:32.651+09:00  INFO 55596 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+2026-09-11T14:25:32.653+09:00  INFO 55596 --- [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://127.0.0.1:3307/o2o_catalog_test]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 9.7.2
+	Default catalog/schema: o2o_catalog_test/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-09-11T14:25:32.727+09:00  INFO 55596 --- [    Test worker] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-09-11T14:25:32.841+09:00  INFO 55596 --- [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-11T14:25:32.920+09:00  WARN 55596 --- [    Test worker] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-09-11T14:25:32.991+09:00  INFO 55596 --- [    Test worker] com.o2o.BackendApplicationTests          : Started BackendApplicationTests in 0.617 seconds (process running for 15.107)
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

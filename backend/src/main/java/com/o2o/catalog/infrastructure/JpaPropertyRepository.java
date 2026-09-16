@@ -1,11 +1,15 @@
 package com.o2o.catalog.infrastructure;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
 import com.o2o.catalog.domain.Property;
 import com.o2o.catalog.domain.PropertyRepository;
+import com.o2o.shared.HostId;
+import com.o2o.shared.PageQuery;
+import com.o2o.shared.PageResult;
 import com.o2o.shared.PropertyId;
 
 /**
@@ -23,9 +27,14 @@ public class JpaPropertyRepository implements PropertyRepository {
         this.jpaRepository = jpaRepository;
     }
 
+    /**
+     * 저장하면서 바로 flush한다. version의 저장 시점 대조(@Version)가 여기서 일어나게 하기 위해서다.
+     * 커밋까지 미루면 충돌이 트랜잭션 경계 밖에서 터지고 응답과 이벤트가 옛 version을 들고 나간다.
+     * R1 평가 A-01, B-01
+     */
     @Override
     public Property save(Property property) {
-        return jpaRepository.save(property);
+        return jpaRepository.saveAndFlush(property);
     }
 
     @Override
@@ -36,5 +45,31 @@ public class JpaPropertyRepository implements PropertyRepository {
     @Override
     public boolean existsById(PropertyId propertyId) {
         return jpaRepository.existsById(propertyId.value());
+    }
+
+    /**
+     * CAT-04. 지역 코드가 null이면 전체다. 11 필드표가 그 값을 선택으로 적는다.
+     * 널 분기를 JPQL 한 줄에 넣지 않고 메서드를 갈랐다. 조건이 하나 늘 때마다 쿼리 하나가
+     * 복잡해지는 것보다 호출 지점에서 갈라 두는 편이 읽힌다.
+     */
+    @Override
+    public PageResult<Property> findAll(String regionCode, PageQuery pageQuery) {
+        var pageable = SpringPage.toPageable(pageQuery);
+        return SpringPage.toResult(regionCode == null
+                ? jpaRepository.findAll(pageable)
+                : jpaRepository.findAllByRegionCode(regionCode, pageable));
+    }
+
+    /** CAT-05. 행위자의 hostId로 범위를 제한한다. 11 CAT-05 처리 규칙 */
+    @Override
+    public PageResult<Property> findByHostId(HostId hostId, PageQuery pageQuery) {
+        return SpringPage.toResult(
+                jpaRepository.findAllByHostId(hostId.value(), SpringPage.toPageable(pageQuery)));
+    }
+
+    /** SEARCH-01. 쪽 없는 지역 읽기, id 오름차순. 2026-09-12 추가 */
+    @Override
+    public List<Property> findAllByRegionCode(String regionCode) {
+        return jpaRepository.findAllByRegionCode(regionCode);
     }
 }

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.booking.domain.StayPeriodTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-09-11T08:55:53.609Z" hostname="BOOK-QD5U7FFOBT" time="0.002">
+  <properties/>
+  <testcase name="K1_1박은_통과하고_박수와_날짜_목록이_오름차순이다()" classname="com.o2o.booking.domain.StayPeriodTest" time="0.0"/>
+  <testcase name="K1_30박은_통과하고_31박은_거절한다()" classname="com.o2o.booking.domain.StayPeriodTest" time="0.001"/>
+  <testcase name="K1_새_예약의_체크인은_오늘_이상이어야_한다()" classname="com.o2o.booking.domain.StayPeriodTest" time="0.0"/>
+  <testcase name="K1_체크인이_체크아웃과_같거나_뒤면_거절한다()" classname="com.o2o.booking.domain.StayPeriodTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

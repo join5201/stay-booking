@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.inventory.domain.InventoryAllocationServiceTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-09-13T13:57:03.409Z" hostname="BOOK-QD5U7FFOBT" time="0.494">
+  <properties/>
+  <testcase name="L4_셋째_날_판매가_없으면_releaseSold가_예외로_나가고_첫째_날의_반환도_남지_않는다()" classname="com.o2o.inventory.domain.InventoryAllocationServiceTest" time="0.091"/>
+  <testcase name="L4_commit은_N행_전부에서_선점을_판매로_옮긴다()" classname="com.o2o.inventory.domain.InventoryAllocationServiceTest" time="0.087"/>
+  <testcase name="L4_releaseHeld는_N행_전부에서_선점을_되돌리고_releaseSold는_판매를_되돌린다()" classname="com.o2o.inventory.domain.InventoryAllocationServiceTest" time="0.137"/>
+  <testcase name="L4_빠진_날짜가_있으면_잠금_단계에서_거절한다()" classname="com.o2o.inventory.domain.InventoryAllocationServiceTest" time="0.061"/>
+  <testcase name="L4_셋째_날_선점이_부족하면_commit이_예외로_나가고_첫째_날의_이동도_남지_않는다()" classname="com.o2o.inventory.domain.InventoryAllocationServiceTest" time="0.081"/>
+  <system-out><![CDATA[2026-09-13T22:57:03.416+09:00  INFO 45900 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.inventory.domain.InventoryAllocationServiceTest]: InventoryAllocationServiceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-13T22:57:03.432+09:00  INFO 45900 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.inventory.domain.InventoryAllocationServiceTest
+2026-09-13T22:57:03.446+09:00  INFO 45900 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.o2o.inventory.domain.InventoryAllocationServiceTest]: InventoryAllocationServiceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-13T22:57:03.447+09:00  INFO 45900 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.inventory.domain.InventoryAllocationServiceTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

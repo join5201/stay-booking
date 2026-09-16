@@ -1,0 +1,95 @@
+# 6-2단계 로컬 HTTP 호출 기록. 조회 넷이다.
+# 계약 8절 6-2단계의 완료 조건이다. gradlew bootRun으로 띄운 실제 서버에 curl로 쳤다.
+# 일시: 2026-09-10 05:53:06 UTC, 서버: http://127.0.0.1:8080, DB: o2o_catalog_test (127.0.0.1:3307)
+# 대상: INV-04, INV-05, RATE-03, RATE-04
+# 준비 등록 상태 코드: 201 201 201 
+# 준비: 내 객실 타입 room_122c51fa27b148a597a8a50b68e1dffd (재고 2026-10-20 와 2026-10-22, 요금 2026-10-20). 남의 객실 타입 room_a0aba67ff6764cb59a64bfaa8b7f846a
+
+== INV-04 GET .../inventories?from=2026-10-20&to=2026-10-23 (가운데 2026-10-21 이 비어 있다) ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 430
+Date: Thu, 10 Sep 2026 05:53:07 GMT
+
+{"roomTypeId":"room_122c51fa27b148a597a8a50b68e1dffd","from":"2026-10-20","to":"2026-10-23","items":[{"roomTypeId":"room_122c51fa27b148a597a8a50b68e1dffd","date":"2026-10-20","totalCount":5,"heldCount":0,"soldCount":0,"availableCount":5,"version":0},{"roomTypeId":"room_122c51fa27b148a597a8a50b68e1dffd","date":"2026-10-22","totalCount":7,"heldCount":0,"soldCount":0,"availableCount":7,"version":0}],"missingDates":["2026-10-21"]}
+
+== INV-05 GET .../inventories/2026-10-20 ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 148
+Date: Thu, 10 Sep 2026 05:53:07 GMT
+
+{"roomTypeId":"room_122c51fa27b148a597a8a50b68e1dffd","date":"2026-10-20","totalCount":5,"heldCount":0,"soldCount":0,"availableCount":5,"version":0}
+
+== V11 INV-05 없는 날짜 2026-10-21. 404 RESOURCE_NOT_FOUND ==
+HTTP/1.1 404 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Thu, 10 Sep 2026 05:53:07 GMT
+
+{"code":"RESOURCE_NOT_FOUND","message":"자원을 찾을 수 없습니다.","traceId":"trace_cd5cfce404e84d02af32277b2b69d001","details":[]}
+
+== RATE-03 GET .../rates?from=2026-10-20&to=2026-10-23 ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 265
+Date: Thu, 10 Sep 2026 05:53:07 GMT
+
+{"roomTypeId":"room_122c51fa27b148a597a8a50b68e1dffd","from":"2026-10-20","to":"2026-10-23","items":[{"roomTypeId":"room_122c51fa27b148a597a8a50b68e1dffd","date":"2026-10-20","amount":100000,"currency":"KRW","version":0}],"missingDates":["2026-10-21","2026-10-22"]}
+
+== RATE-04 GET .../rates/2026-10-20 ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 119
+Date: Thu, 10 Sep 2026 05:53:07 GMT
+
+{"roomTypeId":"room_122c51fa27b148a597a8a50b68e1dffd","date":"2026-10-20","amount":100000,"currency":"KRW","version":0}
+
+== RATE-04 없는 날짜 2026-10-21. 404 ==
+HTTP/1.1 404 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Thu, 10 Sep 2026 05:53:07 GMT
+
+{"code":"RESOURCE_NOT_FOUND","message":"자원을 찾을 수 없습니다.","traceId":"trace_bebc448e52f7417d8212304bd8ccccac","details":[]}
+
+== V9 조회 반쪽. 과거 기간 2026-09-05 부터 2026-09-07 까지. 400이 아니라 200 ==
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 146
+Date: Thu, 10 Sep 2026 05:53:07 GMT
+
+{"roomTypeId":"room_122c51fa27b148a597a8a50b68e1dffd","from":"2026-09-05","to":"2026-09-07","items":[],"missingDates":["2026-09-05","2026-09-06"]}
+
+== 조회도 366일 상한. from 에 368일. 400 INVALID_DATE_RANGE ==
+HTTP/1.1 400 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Thu, 10 Sep 2026 05:53:07 GMT
+Connection: close
+
+{"code":"INVALID_DATE_RANGE","message":"날짜 값이 올바르지 않습니다.","traceId":"trace_294c16409a7447bc8e57e386d8682e4f","details":[]}
+
+== V7 남의 객실 타입 조회. 404 ==
+HTTP/1.1 404 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Thu, 10 Sep 2026 05:53:07 GMT
+
+{"code":"RESOURCE_NOT_FOUND","message":"자원을 찾을 수 없습니다.","traceId":"trace_17a88c5c17ff419c9b70929b94f632fe","details":[]}
+
+== 인증 헤더 없음. 401 ACTOR_REQUIRED ==
+HTTP/1.1 401 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Thu, 10 Sep 2026 05:53:07 GMT
+
+{"code":"ACTOR_REQUIRED","message":"필요한 개발 행위자가 없거나 미등록입니다.","traceId":"trace_73a24c8787cd45a38e7adfb6220610b5","details":[]}
+
+== GUEST 로 조회. 403 ACCESS_DENIED ==
+HTTP/1.1 403 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Thu, 10 Sep 2026 05:53:07 GMT
+
+{"code":"ACCESS_DENIED","message":"이 작업에 필요한 역할이 아닙니다.","traceId":"trace_393ddf2a8104431f951aa817d619fb2e","details":[]}

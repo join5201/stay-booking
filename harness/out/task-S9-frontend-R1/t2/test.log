@@ -1,0 +1,14 @@
+
+> frontend@0.1.0 test
+> vitest run
+
+
+ RUN  v5.0.1 C:/Users/user/AppData/Local/Temp/claude/C--Dev-potenup-99-projects-o2o-dev/5724dd38-3bac-4921-9dec-80b14107b361/scratchpad/wt-front/frontend
+
+
+ Test Files  7 passed (7)
+      Tests  38 passed (38)
+   Start at  18:53:55
+   Duration  2.13s (environment 89%, import 6%, transform 4%, tests 1%, worker 1%)
+
+exit=0

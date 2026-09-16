@@ -1,0 +1,13 @@
+# task-S9-payment 4단계 결과 요약 (실행 2026-09-12 06:03, 기록 2026-09-13 18:02)
+
+명령: export SPRING_DATASOURCE_URL=jdbc:mysql://127.0.0.1:3307/o2o_payment_test; JAVA_HOME 21; ./backend/gradlew.bat -p backend cleanTest test
+결과: exit 0, BUILD SUCCESSFUL in 39s
+
+junit XML 합계 (backend/build/test-results/test):
+{"files":30,"tests":282,"failures":0,"errors":0,"skipped":0}
+
+접속 문자열 (junit XML 시스템 출력에서):
+jdbc:mysql://127.0.0.1:3307/o2o_payment_test
+
+이번 묶음 테스트는 아직 없다. 4단계는 기존 282건이 그대로 통과하는 것과 컨텍스트 기동(엔티티 매핑, 리포지토리 질의 파싱, 구독자와 러너 등록)을 본다.
+새 파일: payment/domain 27, payment/application 7, payment/infrastructure 8. 커밋 0fb9876, ea61597, 22de11a

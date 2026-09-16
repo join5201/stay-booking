@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.o2o.inventory.application.InventoryApplicationServiceTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-09-11T19:09:04.261Z" hostname="BOOK-QD5U7FFOBT" time="1.301">
+  <properties/>
+  <testcase name="V13_서울_오늘은_등록된다()" classname="com.o2o.inventory.application.InventoryApplicationServiceTest" time="0.022"/>
+  <testcase name="없는_객실_타입에_요금을_등록하면_거절한다()" classname="com.o2o.inventory.application.InventoryApplicationServiceTest" time="0.008"/>
+  <testcase name="판매분_아래로_조정하면_거절하고_수량을_유지한다()" classname="com.o2o.inventory.application.InventoryApplicationServiceTest" time="0.072"/>
+  <testcase name="다른_날짜에는_재고를_등록한다()" classname="com.o2o.inventory.application.InventoryApplicationServiceTest" time="0.018"/>
+  <testcase name="V13_오늘은_UTC가_아니라_서울_날짜다()" classname="com.o2o.inventory.application.InventoryApplicationServiceTest" time="0.009"/>
+  <testcase name="같은_날짜에_요금을_두_번_등록하면_거절한다()" classname="com.o2o.inventory.application.InventoryApplicationServiceTest" time="0.021"/>
+  <testcase name="판매분과_같은_값으로는_조정할_수_있다()" classname="com.o2o.inventory.application.InventoryApplicationServiceTest" time="0.022"/>
+  <testcase name="같은_날짜에_재고를_두_번_등록하면_거절한다()" classname="com.o2o.inventory.application.InventoryApplicationServiceTest" time="0.018"/>
+  <testcase name="남의_객실_타입에_재고를_등록하면_거절한다()" classname="com.o2o.inventory.application.InventoryApplicationServiceTest" time="0.009"/>
+  <system-out><![CDATA[2026-09-12T04:09:04.283+09:00  INFO 45352 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.inventory.application.InventoryApplicationServiceTest
+2026-09-12T04:09:04.286+09:00  INFO 45352 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.o2o.BackendApplication for test class com.o2o.inventory.application.InventoryApplicationServiceTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.1)
+
+2026-09-12T04:09:04.332+09:00  INFO 45352 --- [    Test worker] c.o.i.a.InventoryApplicationServiceTest  : Starting InventoryApplicationServiceTest using Java 21.0.11 with PID 45352 (started by user in C:\Dev\potenup\99_projects\o2o-dev\backend)
+2026-09-12T04:09:04.332+09:00  INFO 45352 --- [    Test worker] c.o.i.a.InventoryApplicationServiceTest  : No active profile set, falling back to 1 default profile: "default"
+2026-09-12T04:09:04.553+09:00  INFO 45352 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-09-12T04:09:04.626+09:00  INFO 45352 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 71 ms. Found 6 JPA repository interfaces.
+2026-09-12T04:09:04.679+09:00  INFO 45352 --- [    Test worker] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-09-12T04:09:04.720+09:00  INFO 45352 --- [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-09-12T04:09:04.721+09:00  INFO 45352 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-5 - Starting...
+2026-09-12T04:09:04.744+09:00  INFO 45352 --- [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-5 - Added connection com.mysql.cj.jdbc.ConnectionImpl@11cd442d
+2026-09-12T04:09:04.744+09:00  INFO 45352 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-5 - Start completed.
+2026-09-12T04:09:04.747+09:00  INFO 45352 --- [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://127.0.0.1:3307/o2o_catalog_test]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 9.7.2
+	Default catalog/schema: o2o_catalog_test/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-09-12T04:09:04.937+09:00  INFO 45352 --- [    Test worker] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-09-12T04:09:05.166+09:00  INFO 45352 --- [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-12T04:09:05.297+09:00  WARN 45352 --- [    Test worker] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-09-12T04:09:05.351+09:00  INFO 45352 --- [    Test worker] c.o.i.a.InventoryApplicationServiceTest  : Started InventoryApplicationServiceTest in 1.061 seconds (process running for 38.268)
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
