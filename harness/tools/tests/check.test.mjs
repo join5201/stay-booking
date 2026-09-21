@@ -526,6 +526,7 @@ test('scopeKind. 경로 앞자리가 파일 성격을 정한다', () => {
   assert.equal(scopeKind(path.join(ROOT, 'harness/out/task-S8-R1/candidate.md')), 'step');
   assert.equal(scopeKind(path.join(ROOT, 'harness/docs/10-9-x.md')), 'harness-doc');
   assert.equal(scopeKind(path.join(ROOT, 'harness/prompts/generate.md')), 'harness-doc');
+  assert.equal(scopeKind(path.join(ROOT, '.claude/skills/o2o-harness/skills/round/SKILL.md')), 'harness-doc');
 });
 
 // 테스트는 임시 폴더에 fixture를 쓴다. 그 파일이 성격을 얻으면 기존 73건이 달라진다
