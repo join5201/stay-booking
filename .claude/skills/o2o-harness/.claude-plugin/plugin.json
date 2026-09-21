@@ -1,0 +1,9 @@
+{
+  "name": "o2o-harness",
+  "displayName": "O2O 하네스 절차",
+  "version": "0.1.0",
+  "description": "O2O 하네스의 반복 절차를 여는 스킬 묶음. 라운드(세션 재개, 계약, 평가 준비, 결정표와 반영), 기록 행, 승인 요청 양식, 보호 경로",
+  "author": { "name": "join5201" },
+  "repository": "https://github.com/join5201/stay-booking",
+  "keywords": ["harness", "o2o", "skills"]
+}

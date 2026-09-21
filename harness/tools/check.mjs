@@ -334,6 +334,8 @@ const SCOPE = [
   ['harness/out/', 'step'],
   ['harness/docs/', 'harness-doc'],
   ['harness/prompts/', 'harness-doc'],
+  // 스킬 폴더의 SKILL.md와 곁 파일. 절차 문서라 날짜와 금지 기호는 보고 종료 문장은 없다 (이슈 189)
+  ['.claude/skills/', 'harness-doc'],
 ];
 
 // 성격별로 적용하지 않는 검사와 그 이유. 범위 밖은 통과가 아니라 따로 센다.

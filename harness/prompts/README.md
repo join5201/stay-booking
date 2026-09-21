@@ -1,7 +1,7 @@
 # harness/prompts/
 
 최초 작성: 2026-09-08
-최종 갱신: 2026-09-08 (신설)
+최종 갱신: 2026-09-21 (dev-ptcf-prompt.v3.md 행 추가. 마스터 프롬프트 행에 round 스킬 이관. 이슈 189)
 
 무엇이 들어가는가: 실행 중에 읽는 양식과 기준이다. 매 라운드 열어 채우거나 그대로 인용한다.
 
@@ -23,6 +23,7 @@
 | harness-ptcf-prompt.md | 하네스 준비 단계용 마스터 프롬프트 v2 | 안 된다 |
 | harness-ptcf-prompt.v2.md | 하네스 실행 단계용 마스터 프롬프트 v2. 세션 인계용 | 안 된다 |
 | dev-ptcf-prompt.md | 개발 세션용 프롬프트 v1 | 안 된다 |
+| dev-ptcf-prompt.v3.md | 개발 세션용 프롬프트 v3. 카탈로그 네 API 한 바퀴용 | 안 된다 |
 
 한 줄 규칙: 이 폴더에서 평가자에게 넘기는 것은 eval-criteria-*.md 둘뿐이다.
 
@@ -34,7 +35,7 @@ task-contract.md 행을 풀어 적는다. 빈 양식은 평가 입력이 아니�
 |---|---|---|
 | 양식 | 빈칸이 있는 틀. contract, generate, evaluate, decision-table, apply | 사람과 모델이 채운다 |
 | 기준 | 채우지 않고 그대로 인용하는 것. eval-criteria 둘, answer-format | 아무도 채우지 않는다 |
-| 마스터 프롬프트 | 세션 첫 턴에 붙이는 것. 07, harness-ptcf 둘, dev-ptcf | 사람이 붙인다 |
+| 마스터 프롬프트 | 세션 첫 턴에 붙이던 것. 07, harness-ptcf 둘, dev-ptcf 둘 | 2026-09-21부터 첫 턴 절차 T1부터 T5와 단계 선택표는 .claude/skills/o2o-harness의 round 스킬이 대신한다. Context 절은 작성 시점 상태라 이력이다. 07 v3만 설계 단계용으로 남는다 |
 
 버전 표기가 둘로 갈리는 것도 이 성격 차이에서 온다. 양식은 버전 한 줄만 두고, 기준과 마스터 프롬프트는 문서라서 최초 작성일과 최종 갱신일 두 줄을 둔다.
 
