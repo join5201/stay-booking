@@ -26,6 +26,7 @@
 | description은 여는 조건을 첫 문장에 적는다 | 목록에 실릴 때 앞부분만 남는다. 1,536자에서 잘린다 |
 | SKILL.md는 500줄 이하. 긴 것은 곁 파일로 | 공식 문서 권고. 본문은 열릴 때만 문맥에 실린다 |
 | 문체는 CLAUDE.md 2절 그대로 | 이 폴더도 g1 doc의 대상이다. check.mjs SCOPE에 harness-doc 성격으로 들어 있다 |
+| 검사는 스킬 폴더마다 node harness/tools/check.mjs sweep 폴더 --type doc | sweep은 한 폴더만 본다. 이 묶음은 폴더 다섯이다 |
 | 평가 입력이 아니다 | Codex는 이 폴더를 읽지 않는다(AGENTS.md E6) |
 
 ## 동작 조건 (공식 문서 2026-09-21 확인)
