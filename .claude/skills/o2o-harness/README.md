@@ -15,7 +15,7 @@
 | README.md | 이 파일 | 있음 |
 | skills/round/ | 세션 재개 T1부터 T5와 단계 선택표. 곁 파일 contract.md, eval-prep.md, request-skeleton.md, decision.md | 있음 |
 | skills/progress-row/ | 기록 파일 셋에 행을 더할 때. paths harness/state | 있음 |
-| skills/approval-request/ | 결정 쟁점을 구하는 턴의 여섯 칸 양식 | 예정 |
+| skills/approval-request/ | 결정 쟁점을 구하는 턴의 여섯 칸 양식 | 있음 |
 | skills/guarded-paths/ | project-sync와 settings.json을 만질 때 | 예정. 선택 |
 
 ## 규칙
