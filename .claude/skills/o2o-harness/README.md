@@ -1,7 +1,7 @@
 # .claude/skills/o2o-harness/
 
 최초 작성: 2026-09-21
-최종 갱신: 2026-09-21 (신설. 뼈대만. 이슈 번호는 개설 뒤 기입)
+최종 갱신: 2026-09-21 (round 스킬과 곁 파일 넷. 그 전 같은 날 신설. 이슈 189)
 
 무엇이 들어가는가: 하네스의 반복 절차를 여는 스킬 묶음이다. .claude-plugin/plugin.json 한 장이 이 폴더를 o2o-harness라는 플러그인으로 만들고, skills/ 아래 SKILL.md 하나하나가 각자의 여는 조건을 가진 스킬이다.
 
@@ -13,7 +13,7 @@
 |---|---|---|
 | .claude-plugin/plugin.json | 묶음 선언. name이 o2o-harness | 있음 |
 | README.md | 이 파일 | 있음 |
-| skills/round/ | 세션 재개 T1부터 T5와 단계 선택표. 곁 파일 contract.md, eval-prep.md, request-skeleton.md, decision.md | 예정 |
+| skills/round/ | 세션 재개 T1부터 T5와 단계 선택표. 곁 파일 contract.md, eval-prep.md, request-skeleton.md, decision.md | 있음 |
 | skills/progress-row/ | 기록 파일 셋에 행을 더할 때 | 예정 |
 | skills/approval-request/ | 결정 쟁점을 구하는 턴의 여섯 칸 양식 | 예정 |
 | skills/guarded-paths/ | project-sync와 settings.json을 만질 때 | 예정. 선택 |
@@ -25,7 +25,7 @@
 | SKILL.md는 절차와 여는 조건만 적고 규칙 본문은 정본을 링크한다 | 정본이 둘이면 갈라진다(harness/docs/10-14 4절) |
 | description은 여는 조건을 첫 문장에 적는다 | 목록에 실릴 때 앞부분만 남는다. 1,536자에서 잘린다 |
 | SKILL.md는 500줄 이하. 긴 것은 곁 파일로 | 공식 문서 권고. 본문은 열릴 때만 문맥에 실린다 |
-| 문체는 CLAUDE.md 2절 그대로 | 이 폴더도 g1 doc의 대상으로 둔다. check.mjs SCOPE에 추가 예정 |
+| 문체는 CLAUDE.md 2절 그대로 | 이 폴더도 g1 doc의 대상이다. check.mjs SCOPE에 harness-doc 성격으로 들어 있다 |
 | 평가 입력이 아니다 | Codex는 이 폴더를 읽지 않는다(AGENTS.md E6) |
 
 ## 동작 조건 (공식 문서 2026-09-21 확인)
