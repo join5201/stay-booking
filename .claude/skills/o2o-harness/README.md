@@ -1,7 +1,7 @@
 # .claude/skills/o2o-harness/
 
 최초 작성: 2026-09-21
-최종 갱신: 2026-09-21 (round 스킬과 곁 파일 넷. 그 전 같은 날 신설. 이슈 189)
+최종 갱신: 2026-09-21 (스킬 넷 전부 있음. 그 전 같은 날 round, 신설. 이슈 189)
 
 무엇이 들어가는가: 하네스의 반복 절차를 여는 스킬 묶음이다. .claude-plugin/plugin.json 한 장이 이 폴더를 o2o-harness라는 플러그인으로 만들고, skills/ 아래 SKILL.md 하나하나가 각자의 여는 조건을 가진 스킬이다.
 
@@ -16,7 +16,7 @@
 | skills/round/ | 세션 재개 T1부터 T5와 단계 선택표. 곁 파일 contract.md, eval-prep.md, request-skeleton.md, decision.md | 있음 |
 | skills/progress-row/ | 기록 파일 셋에 행을 더할 때. paths harness/state | 있음 |
 | skills/approval-request/ | 결정 쟁점을 구하는 턴의 여섯 칸 양식 | 있음 |
-| skills/guarded-paths/ | project-sync와 settings.json을 만질 때 | 예정. 선택 |
+| skills/guarded-paths/ | project-sync와 settings.json을 만질 때. paths 셋 | 있음 |
 
 ## 규칙
 
