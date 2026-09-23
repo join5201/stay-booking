@@ -1,7 +1,7 @@
 # stay-booking
 
 최초 작성: 2026-09-08
-최종 갱신: 2026-09-23 (저장소 소개를 채웠다. 소개, 기능, 범위, 문서, 폴더. 이슈 195)
+최종 갱신: 2026-09-23 (저장소 소개를 채웠다. 소개, 기능, 범위, 기술 스택, 구성도, 문서, 폴더. 이슈 195)
 
 O2O 숙박 예약 서비스의 설계 문서와 구현을 담은 저장소다. 호스트가 숙소와 객실, 날짜별 재고와 요금을 올리고, 게스트가 숙소를 검색해 예약하고 결제하며, 운영자가 프로모션을 만든다. 도메인 주도 설계(DDD)로 설계 문서를 쓰고 Spring Boot 백엔드와 Next.js 화면으로 구현했으며, 로컬 개발과 검증까지 다룬다.
 
@@ -26,6 +26,55 @@ O2O 숙박 예약 서비스의 설계 문서와 구현을 담은 저장소다. �
 | 검증 | 백엔드, 화면, E2E 자동 테스트 | 부하 측정 |
 
 현재 상태(2026-09-23 기준): 명세의 서비스 API 32개와 로컬 Mock API 1개, 화면 열네 개(게스트 일곱, 호스트 다섯, 운영자 둘)가 main에 있다. 백엔드의 기능별 진행 표는 [backend/README.md](backend/README.md)에 있다.
+
+## 기술 스택
+
+| 구분 | 기술 | 판 |
+|---|---|---|
+| 백엔드 | Java | 21 |
+| 백엔드 | Spring Boot (Web MVC, Data JPA, Validation) | 4.1.1 |
+| 백엔드 | Gradle (저장소에 래퍼 포함) | 9.7.1 |
+| DB | MySQL (Docker 컨테이너) | 9.7.2 |
+| 프론트 | Next.js (App Router), React | 16.3.5, 19.2.8 |
+| 프론트 | TypeScript | 5.9.3 |
+| 프론트 | Tailwind CSS, TanStack Query | 4.3.3, 5.102.8 |
+| 테스트 | JUnit (Spring Boot 테스트 스타터) | 6.0.3 |
+| 테스트 | Vitest, Testing Library, MSW | 5.0.1, 16.3.3, 2.15.0 |
+| 테스트 | Playwright (Chromium) | 1.63.0 |
+
+판은 [build.gradle](backend/build.gradle), [gradle-wrapper.properties](backend/gradle/wrapper/gradle-wrapper.properties), [docker-compose.yml](backend/docker-compose.yml), [package-lock.json](frontend/package-lock.json)에 고정된 값이다. JUnit은 build.gradle에 판을 적지 않아 Spring Boot의 의존성 관리가 정한다.
+
+## 구성도
+
+```mermaid
+flowchart LR
+  B["브라우저"] --> N["Next.js<br/>localhost:3000"]
+  N -->|"/api/v1"| S["Spring Boot<br/>localhost:8080"]
+  S --> M[("MySQL 컨테이너<br/>127.0.0.1:3307")]
+```
+
+브라우저는 Next.js만 부른다. /api/v1 아래 요청은 Next.js가 BACKEND_URL(비어 있으면 http://localhost:8080)로 넘긴다([next.config.ts](frontend/next.config.ts)의 rewrites). 백엔드에 CORS 설정이 없어 같은 출처로 부르는 구성이다. 3000과 8080은 Next.js와 Spring Boot의 기본 포트이고, 3307은 [docker-compose.yml](backend/docker-compose.yml)이 컨테이너의 3306을 이어 둔 포트다.
+
+백엔드는 Spring Boot 모듈 하나다. com.o2o 아래에 설계의 바운디드 컨텍스트 다섯이 패키지 하나씩이고, 검색 읽기 모델과 공유 커널이 따로 패키지를 갖는다.
+
+| 패키지 | 설계에서의 이름 | 맡는 일 |
+|---|---|---|
+| catalog | 숙소 카탈로그 | 호스트가 판매할 숙소와 객실 타입 |
+| inventory | 재고와 요금 | 날짜별 판매 가능 수량과 단가 |
+| promotion | 프로모션 | 자동 적용 할인 정책 |
+| booking | 예약 | 예약 생성(재고 선점 포함), 확정, 취소, 만료 |
+| payment | 결제 | 결제 요청과 결과 기록(Mock 결제) |
+| search | 검색(읽기 모델) | 다른 컨텍스트의 저장소를 읽기만 해서 검색과 조회에 답한다. 층은 api와 application 둘 |
+| shared | 공유 커널 | 여러 컨텍스트가 같이 쓰는 행위자 식별, 오류 응답, ID와 금액과 날짜 같은 값 |
+
+컨텍스트 하나 안의 층은 넷이다. api가 application을, application이 domain을 부르고, infrastructure는 domain이 선언한 인터페이스를 구현한다. domain은 다른 층을 참조하지 않는다.
+
+| 층 | 하는 일 |
+|---|---|
+| api | HTTP 요청을 도메인의 말로 바꾸고 형식을 검사한다 |
+| application | 트랜잭션 경계, 컨텍스트를 넘는 선행조건, 이벤트 발행 |
+| domain | 불변식을 지킨다. 상태를 바꾸는 유일한 입구다 |
+| infrastructure | 저장, 조회, 잠금. 유일성과 무결성 |
 
 ## 문서
 
