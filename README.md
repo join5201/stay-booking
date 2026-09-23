@@ -1,7 +1,7 @@
 # stay-booking
 
 최초 작성: 2026-09-08
-최종 갱신: 2026-09-23 (저장소 소개를 채웠다. 소개, 기능, 범위, 기술 스택, 구성도, 실행, 테스트, 문서, 폴더. 이슈 195)
+최종 갱신: 2026-09-23 (저장소 소개 본문을 새로 썼다. 이슈 195)
 
 O2O 숙박 예약 서비스의 설계 문서와 구현을 담은 저장소다. 호스트가 숙소와 객실, 날짜별 재고와 요금을 올리고, 게스트가 숙소를 검색해 예약하고 결제하며, 운영자가 프로모션을 만든다. 도메인 주도 설계(DDD)로 설계 문서를 쓰고 Spring Boot 백엔드와 Next.js 화면으로 구현했으며, 로컬 개발과 검증까지 다룬다.
 
@@ -75,6 +75,16 @@ flowchart LR
 | application | 트랜잭션 경계, 컨텍스트를 넘는 선행조건, 이벤트 발행 |
 | domain | 불변식을 지킨다. 상태를 바꾸는 유일한 입구다 |
 | infrastructure | 저장, 조회, 잠금. 유일성과 무결성 |
+
+## 설계에서 다룬 문제
+
+| 문제 | 푼 방법 | 확인 |
+|---|---|---|
+| 마지막 객실 하나에 두 손님이 동시에 예약한다 | 예약 요청은 숙박 날짜의 재고 행을 날짜 오름차순으로 잠근 뒤(비관적 락, SELECT ... FOR UPDATE) 남은 수량을 보고 선점한다. 나중 요청은 앞 요청이 커밋한 뒤 남은 수량 0을 읽고 409 INVENTORY_UNAVAILABLE을 받는다. 연박 중 하루라도 모자라면 어느 날짜도 선점하지 않는다 | 명세 [T08](document/11-o2o-api-spec.md#t08), [T09](document/11-o2o-api-spec.md#t09). [BookingApiTest](backend/src/test/java/com/o2o/booking/api/BookingApiTest.java), [BookingApplicationServiceTest](backend/src/test/java/com/o2o/booking/application/BookingApplicationServiceTest.java) |
+| 응답을 못 받은 클라이언트가 같은 요청을 다시 보낸다 | 예약 생성, 결제 요청, 취소는 Idempotency-Key 헤더가 필수다. 서버는 행위자, HTTP 메서드, 경로, 키를 유니크 키로 기록한다. 같은 body면 첫 응답에 Idempotency-Replayed: true를 붙여 돌려주고, 다른 body면 409 IDEMPOTENCY_KEY_REUSED, 첫 요청이 처리 중이면 409 REQUEST_IN_PROGRESS다 | 명세 [T10](document/11-o2o-api-spec.md#t10), [T11](document/11-o2o-api-spec.md#t11), [T14](document/11-o2o-api-spec.md#t14). [BookingApiTest](backend/src/test/java/com/o2o/booking/api/BookingApiTest.java), [BookingPaymentApiTest](backend/src/test/java/com/o2o/booking/api/BookingPaymentApiTest.java) |
+| 결제 승인과 선점 시한 만료가 겹친다 | 확정과 만료를 승인 기록의 서버 시각 하나로 가른다. 그 시각이 만료 시각보다 앞이면 확정하고, 같거나 뒤면 승인액을 환불하고 만료한다. 승인 처리와 만료 처리가 같은 판정 메서드를 불러 처리 순서와 관계없이 결과가 하나다 | 명세 [T18](document/11-o2o-api-spec.md#t18), [T19](document/11-o2o-api-spec.md#t19), [T20](document/11-o2o-api-spec.md#t20). [BookingLockContentionTest](backend/src/test/java/com/o2o/booking/application/BookingLockContentionTest.java), [PaymentOutcomeServiceTest](backend/src/test/java/com/o2o/booking/application/PaymentOutcomeServiceTest.java) |
+
+세 경우의 테스트는 MySQL 컨테이너에서 돈다. 명세가 동시성과 유니크 제약과 롤백을 실제 MySQL에서 확인하도록 정한다.
 
 ## 실행
 
