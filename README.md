@@ -166,3 +166,9 @@ flowchart LR
 | [harness/](harness/README.md) | AI 개발 절차의 양식, 평가 기준, 검사 스크립트, 작업 기록과 그 근거 문서 |
 | [.claude/](.claude) | Claude Code 권한 규칙과 훅 설정, 절차 스킬 넷 |
 | [.github/](.github) | 이슈 양식 셋과 PR 양식 |
+
+## 라이선스와 만든 사람
+
+라이선스 파일을 두지 않았다.
+
+만든 사람: [join5201](https://github.com/join5201)
