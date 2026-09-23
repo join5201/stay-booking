@@ -53,7 +53,7 @@ flowchart LR
   S --> M[("MySQL 컨테이너<br/>127.0.0.1:3307")]
 ```
 
-브라우저는 Next.js만 부른다. /api/v1 아래 요청은 Next.js가 BACKEND_URL(비어 있으면 http://localhost:8080)로 넘긴다([next.config.ts](frontend/next.config.ts)의 rewrites). 백엔드에 CORS 설정이 없어 같은 출처로 부르는 구성이다. 3000과 8080은 Next.js와 Spring Boot의 기본 포트이고, 3307은 [docker-compose.yml](backend/docker-compose.yml)이 컨테이너의 3306을 이어 둔 포트다.
+브라우저는 Next.js만 부른다. /api/v1 아래 요청은 Next.js가 BACKEND_URL(비어 있으면 `http://localhost:8080`)로 넘긴다([next.config.ts](frontend/next.config.ts)의 rewrites). 백엔드에 CORS 설정이 없어 같은 출처로 부르는 구성이다. 3000과 8080은 Next.js와 Spring Boot의 기본 포트이고, 3307은 [docker-compose.yml](backend/docker-compose.yml)이 컨테이너의 3306을 이어 둔 포트다.
 
 백엔드는 Spring Boot 모듈 하나다. com.o2o 아래에 설계의 바운디드 컨텍스트 다섯이 패키지 하나씩이고, 검색 읽기 모델과 공유 커널이 따로 패키지를 갖는다.
 
