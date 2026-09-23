@@ -74,7 +74,7 @@ backend/.env의 계정 이름이나 비밀번호가 컨테이너를 처음 만�
 | 대상 | 포트 | 이유 |
 |---|---|---|
 | 테스트 MySQL 컨테이너 | 127.0.0.1:3307 | 3306은 이 기계의 다른 MySQL이 이미 쓰고 있다(2026-09-08 확인) |
-| 백엔드 서버 | 8080 | Spring Boot 기본값이다. application.properties에 server.port가 없다(2026-09-23 확인) |
+| 백엔드 서버 | 8080 | Spring Boot 기본값이다. backend/src/main/resources/application.properties에 server.port가 없다(2026-09-23 확인) |
 
 ## 5. 패키지 구조 (2026-09-23 네 행과 search 층 문단)
 
