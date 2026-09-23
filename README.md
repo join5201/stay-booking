@@ -125,6 +125,25 @@ npm run dev
 
 백엔드 테스트는 bootRun과 같은 DB를 쓰고 스키마를 지우고 다시 만든다(create-drop). 띄워 둔 앱의 데이터도 함께 지워진다. E2E는 백엔드와 프론트를 E2E용 DB와 설정으로 띄운 뒤 돈다. 조건은 [frontend/README.md 2절](frontend/README.md#2-실행)에 있다. API 명세의 [검증 기준](document/11-o2o-api-spec.md#검증-기준) T01부터 T30은 [backend/README.md](backend/README.md) 6절에 30개 모두 통과로 기록되어 있다.
 
+## 개발 방식
+
+작업은 작업 계약 단위로 나누고 한 계약을 아래 절차로 진행한다. 생성과 수정은 Claude Code가 하고, 평가는 생성 대화를 모르는 Codex 새 작업 둘이 허용된 입력만 받아 따로 한다. A는 그 작업의 기능과 계약을, B는 공통 품질을 본다. 두 앱은 API로 이어져 있지 않고, 앱 사이의 파일 전달과 결정과 확정은 사람이 한다. 백엔드는 기능 하나를 코드, 테스트, 검증까지 끝낸 뒤 다음 기능으로 넘어갔다.
+
+```mermaid
+flowchart LR
+  C["작업 계약<br/>사람 승인"] --> G["생성<br/>Claude Code"]
+  G --> K1["형식 검사<br/>스크립트"]
+  K1 --> A["평가 A<br/>Codex 새 작업"]
+  K1 --> B["평가 B<br/>Codex 새 작업"]
+  A --> D["결정<br/>사람"]
+  B --> D
+  D --> K2["결정표 검사<br/>스크립트"]
+  K2 --> R["반영<br/>Claude Code"]
+  R --> F["확정<br/>사람"]
+```
+
+양식, 평가 기준, 검사 스크립트, 작업 기록과 그 근거 문서는 [harness/](harness/README.md)에 있다.
+
 ## 문서
 
 | 문서 | 무엇 |
