@@ -1,7 +1,7 @@
 # stay-booking
 
 최초 작성: 2026-09-08
-최종 갱신: 2026-09-23 (저장소 소개를 채웠다. 소개, 기능, 범위, 기술 스택, 구성도, 문서, 폴더. 이슈 195)
+최종 갱신: 2026-09-23 (저장소 소개를 채웠다. 소개, 기능, 범위, 기술 스택, 구성도, 실행, 테스트, 문서, 폴더. 이슈 195)
 
 O2O 숙박 예약 서비스의 설계 문서와 구현을 담은 저장소다. 호스트가 숙소와 객실, 날짜별 재고와 요금을 올리고, 게스트가 숙소를 검색해 예약하고 결제하며, 운영자가 프로모션을 만든다. 도메인 주도 설계(DDD)로 설계 문서를 쓰고 Spring Boot 백엔드와 Next.js 화면으로 구현했으며, 로컬 개발과 검증까지 다룬다.
 
@@ -75,6 +75,45 @@ flowchart LR
 | application | 트랜잭션 경계, 컨텍스트를 넘는 선행조건, 이벤트 발행 |
 | domain | 불변식을 지킨다. 상태를 바꾸는 유일한 입구다 |
 | infrastructure | 저장, 조회, 잠금. 유일성과 무결성 |
+
+## 실행
+
+| 준비물 | 조건 | 쓰는 곳 |
+|---|---|---|
+| JDK | 21 | 백엔드. Gradle은 래퍼(gradlew)가 받는다 |
+| Docker | Compose 포함 | MySQL 컨테이너 |
+| Node.js | 20.9 이상 | 프론트. Next.js 16.3 문서의 최소 판 |
+
+```
+# 백엔드. 저장소 루트에서
+cp backend/env.example backend/.env
+# backend/.env에 O2O_MYSQL_ROOT_PASSWORD, O2O_MYSQL_USER, O2O_MYSQL_PASSWORD를 채운 뒤
+docker compose -f backend/docker-compose.yml up -d
+cd backend
+JAVA_HOME=<JDK 21 경로> ./gradlew bootRun
+
+# 프론트. 다른 터미널에서 저장소 루트부터
+cd frontend
+npm install
+npm run dev
+```
+
+`http://localhost:3000`을 열고 화면 위 개발용 바에서 행위자를 고른다. 값은 public(헤더 없음), guest_001, guest_002, host_001, host_002, operator_001이다. public이 아니면 Mock 결제 칸도 보인다. APPROVE는 승인, DECLINE은 실패 결과를 자동으로 전달하고 DEFER는 결과를 따로 보낼 때까지 기다린다. API를 직접 부를 때는 요청 헤더 `X-Dev-Actor-Id`에 행위자 ID를 넣고, Mock 결제 결과를 손으로 보낼 때는 mock_001을 쓴다.
+
+백엔드 주소가 `http://localhost:8080`이 아니면 frontend/env.example을 frontend/.env.local로 복사하고 BACKEND_URL을 적는다. 실패했을 때의 출력과 원인은 [backend/README.md 3절](backend/README.md#3-실행)에 있다.
+
+## 테스트
+
+마지막 측정은 2026-09-16 main [eb4cc19](https://github.com/join5201/stay-booking/commit/eb4cc19)이다. 그 뒤 2026-09-23까지 backend와 frontend 코드는 바뀌지 않았다.
+
+| 대상 | 폴더 | 명령 | 마지막 결과 |
+|---|---|---|---|
+| 백엔드 | backend | `./gradlew test` | 460건, 실패 0 |
+| 프론트 단위와 컴포넌트 | frontend | `npm run test` | 230건 통과 |
+| 프론트 타입, 린트, 빌드 | frontend | `npm run typecheck`, `npm run lint`, `npm run build` | 오류 0, 빌드 라우트 17 |
+| E2E | frontend | `npm run test:e2e` | 6건 통과(E2E용 DB를 비운 뒤) |
+
+백엔드 테스트는 bootRun과 같은 DB를 쓰고 스키마를 지우고 다시 만든다(create-drop). 띄워 둔 앱의 데이터도 함께 지워진다. E2E는 백엔드와 프론트를 E2E용 DB와 설정으로 띄운 뒤 돈다. 조건은 [frontend/README.md 2절](frontend/README.md#2-실행)에 있다. API 명세의 [검증 기준](document/11-o2o-api-spec.md#검증-기준) T01부터 T30은 [backend/README.md](backend/README.md) 6절에 30개 모두 통과로 기록되어 있다.
 
 ## 문서
 
