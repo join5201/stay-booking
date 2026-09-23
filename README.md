@@ -1,7 +1,7 @@
 # stay-booking
 
 최초 작성: 2026-09-08
-최종 갱신: 2026-09-24 (절 제목에 반영 날짜와 사실 문장의 출처 링크. PR 198 리뷰. 그 전 2026-09-23 저장소 소개 본문을 새로 썼다. 이슈 195)
+최종 갱신: 2026-09-24 (절 제목에 반영 날짜와 사실 문장의 출처 링크. PR 198 리뷰. 같은 날 backend/README.md 3절 링크를 파일 링크로. 그 전 2026-09-23 저장소 소개 본문을 새로 썼다. 이슈 195)
 
 O2O 숙박 예약 서비스의 [설계 문서](document/README.md)와 구현을 담은 저장소다. 호스트가 숙소와 객실, 날짜별 재고와 요금을 올리고, 게스트가 숙소를 검색해 예약하고 결제하며, 운영자가 프로모션을 만든다([역할별 사용 범위](document/11-o2o-api-spec.md#인증과-접근-제어)). 도메인 주도 설계(DDD)로 설계 문서를 쓰고 Spring Boot 백엔드와 Next.js 화면으로 구현했으며, 로컬 개발과 검증까지 다룬다([설계 계획](document/01-o2o-ddd-plan.md)).
 
@@ -110,7 +110,7 @@ npm run dev
 
 `http://localhost:3000`을 열고 화면 위 [개발용 바](frontend/components/DevActorBar.tsx)에서 행위자를 고른다. 값은 public(헤더 없음), guest_001, guest_002, host_001, host_002, operator_001이다([dev-actor.ts](frontend/lib/dev-actor.ts)). public이 아니면 Mock 결제 칸도 보인다. APPROVE는 승인, DECLINE은 실패 결과를 자동으로 전달하고 DEFER는 결과를 따로 보낼 때까지 기다린다([Mock 이벤트 명세](document/11-o2o-api-spec.md#내부-처리와-mock-이벤트)). API를 직접 부를 때는 요청 헤더 `X-Dev-Actor-Id`에 행위자 ID를 넣고, Mock 결제 결과를 손으로 보낼 때는 mock_001을 쓴다([인증 명세](document/11-o2o-api-spec.md#인증과-접근-제어)).
 
-백엔드 주소가 `http://localhost:8080`이 아니면 frontend/env.example을 frontend/.env.local로 복사하고 BACKEND_URL을 적는다. 실패했을 때의 출력과 원인은 [backend/README.md 3절](backend/README.md#3-실행)에 있다.
+백엔드 주소가 `http://localhost:8080`이 아니면 frontend/env.example을 frontend/.env.local로 복사하고 BACKEND_URL을 적는다. 실패했을 때의 출력과 원인은 [backend/README.md](backend/README.md) 3절에 있다.
 
 ## 테스트 (2026-09-23 신설)
 
