@@ -29,16 +29,16 @@
 //
 // 통과 출력 예시
 //   PASS g1 harness/out/task-S8-R1/candidate.md
-//     검사 9건 통과
+//     검사 10건 통과
 //       doc.date-created doc.date-updated doc.no-emdash doc.no-middot doc.no-bold doc.table-cells
-//       link.exists link.stale doc.end-sentence
+//       link.exists link.stale link.anchor doc.end-sentence
 //   이름을 다 적는 이유는 그 명령이 무엇을 보는지 실행 한 번으로 알기 위해서다 (10-14 2-3절 A2).
 //
 // 범위 밖 출력 예시
 //   PASS g1 harness/docs/10-9-o2o-harness-answer-format-plan.md
-//     검사 8건 통과
+//     검사 9건 통과
 //       doc.date-created doc.date-updated doc.no-emdash doc.no-middot doc.no-bold doc.table-cells
-//       link.exists link.stale
+//       link.exists link.stale link.anchor
 //     범위 밖 1건
 //       doc.end-sentence  하네스 문서는 Step 산출물이 아니라 고정 종료 문장이 없다 (10-14 3절)
 //   범위 밖은 통과로 세지 않는다. 검사를 안 돌린 것과 돌려서 통과한 것을 가른다 (10-14 2-3절 A4).
@@ -47,7 +47,7 @@
 //   FAIL g1 harness/docs/10-99-example.md
 //     [doc.date-created] 1  최초 작성 줄이 없다 (F5)
 //     [doc.date-updated] 1  최종 갱신 줄이 없다 (F5)
-//     검사 8건 중 2건 실패
+//     검사 9건 중 2건 실패
 //   FAIL sweep harness/docs --type doc
 //     문서 16개 중 15개 통과
 //     실패 1개
@@ -113,10 +113,19 @@
 //   FAIL g1 harness/docs/10-99-example.md
 //     [doc.table-cells]  50  머리글 17행은 6칸인데 이 행은 4칸이다 (F4)
 //     [doc.table-cells]  62  머리글 17행은 6칸인데 이 행은 7칸이다 (F4)
-//     검사 9건 중 2건 실패
+//     검사 10건 중 2건 실패
 //   칸이 모자란 것과 넘치는 것을 한 검사로 잡는다. 넘치는 쪽은 대개 이스케이프하지 않은
 //   파이프 기호이고, 마크다운이 넘치는 칸을 버려서 그 칸의 글이 화면에서 사라진다.
 //   파일 이름은 가상이다. 실재하는 파일을 적으면 그 파일을 고치는 순간 예시가 낡는다.
+//
+// 절 주소 실패 출력 예시 (종료 코드 1. 이슈 202)
+//   FAIL g1 harness/docs/10-99-example.md
+//     [link.anchor] 6  절 주소가 대상 파일에 없다: 10-98-example.md#3-실행
+//     검사 9건 중 1건 실패
+//   절 주소는 대상 파일의 제목에서 GitHub와 같은 규칙으로 만든다. 제목에 반영 날짜가
+//   붙으면(D4) 주소가 바뀌는데 파일은 그대로라 link.exists로는 안 잡힌다. 2026-09-23에
+//   루트 README의 backend/README.md#3-실행이 이렇게 깨졌고 그때 g1은 PASS였다.
+//   파일 이름은 가상이다.
 //
 // numbers 통과 출력 예시
 //   PASS numbers harness/docs
@@ -176,6 +185,7 @@
 //   양식의 경로 행과 해시 행을 짝으로 읽고 파일 목록 전체를 대조한다(HRV-07).
 //   오판 기록은 지정된 식별 필드에서만 ID를 읽는다(HRV-08).
 //   g1 doc이 필수 항목과 상대 링크와 앵커까지 본다(HRV-09 문서분).
+//   앵커는 그때 코드에 빠져 있었고 2026-09-24 이슈 202에서 넣었다(link.anchor).
 //
 // 종료 코드: 0 통과, 1 검사 실패, 2 사용법 오류
 
@@ -573,7 +583,69 @@ export function fill(file, { dry = false } = {}) {
 
 // ---------- g1 ----------
 
-// 링크 검사. 절대경로, 상대경로, 앵커까지 본다 (HRV-09 문서분)
+// 제목 한 줄의 GitHub 절 주소 (이슈 202). GitHub는 렌더된 제목 글자로 주소를 만들어서
+// 링크와 그림과 태그와 문자 이름을 렌더된 모양으로 먼저 푼다. 문자 이름 여섯은 렌더되면
+// 어차피 지워질 기호라 통째로 지운다
+export function headingSlug(heading) {
+  return heading
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&(?:amp|lt|gt|quot|apos|nbsp);/g, '')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{M}\p{N}\p{Pc} -]/gu, '')
+    .replace(/ /g, '-');
+}
+
+// 파일 하나의 앵커 집합. 제목 슬러그와 명시 a id다. 같은 슬러그가 다시 나오면 GitHub처럼
+// -1, -2를 붙인다. 펜스 안의 # 줄은 제목이 아니다
+export function anchorSet(text) {
+  const ids = new Set();
+  const seen = new Map();
+  for (const line of stripFences(text)) {
+    const h = line.match(/^ {0,3}#{1,6}(?:[ \t]+(.*?))?(?:[ \t]+#+)?[ \t]*$/);
+    if (h) {
+      const base = headingSlug(h[1] || '');
+      const n = seen.get(base) || 0;
+      seen.set(base, n + 1);
+      ids.add(n ? `${base}-${n}` : base);
+    }
+    for (const m of line.matchAll(/<a\s(?:[^>]*?\s)?id=["']([^"']+)["']/gi)) ids.add(m[1]);
+  }
+  return ids;
+}
+
+// 절 주소 검사 (이슈 202). 파일 존재만 보면 제목이 바뀌어 깨진 절 주소가 통과한다.
+// D4가 바뀐 절 제목에 날짜를 붙이므로 절 주소는 제목을 고칠 때마다 바뀐다.
+// 상대 경로 .md와 같은 파일만 본다. 절대경로는 worktree마다 다른 파일을 가리킨다 (이슈 26).
+// 펜스와 인라인 코드 안은 GitHub가 링크로 렌더하지 않는다
+function checkAnchors(r, text, file) {
+  const self = path.resolve(file);
+  const dir = path.dirname(self);
+  const cache = new Map([[self, anchorSet(text)]]);
+  let ok = true;
+  stripFences(text).forEach((line, i) => {
+    for (const m of line.replace(/`[^`]*`/g, '').matchAll(/\]\(([^)]+)\)/g)) {
+      const raw = m[1].trim();
+      const at = raw.indexOf('#');
+      if (at < 0 || /^(https?:|mailto:)/.test(raw)) continue;
+      const target = raw.slice(0, at);
+      if (target && (!/\.md$/i.test(target) || /^[A-Za-z]:\//.test(target))) continue;
+      const abs = target ? path.resolve(dir, target) : self;
+      if (!isFile(abs)) continue; // 없는 파일은 link.exists가 보고한다
+      let frag = raw.slice(at + 1);
+      try { frag = decodeURIComponent(frag); } catch { /* 깨진 퍼센트 인코딩은 그대로 대조한다 */ }
+      if (!frag) continue; // #만 있으면 문서 첫머리다
+      if (!cache.has(abs)) cache.set(abs, anchorSet(fs.readFileSync(abs, 'utf8')));
+      if (cache.get(abs).has(frag)) continue;
+      ok = false;
+      r.check('link.anchor', i + 1, false, `절 주소가 대상 파일에 없다: ${raw}`);
+    }
+  });
+  if (ok) r.check('link.anchor', 0, true, '');
+}
+
+// 링크 검사. 절대경로와 상대경로의 파일 존재를 본다 (HRV-09 문서분). 절 주소는 checkAnchors가 본다
 function checkLinks(r, text, file) {
   const dir = path.dirname(path.resolve(file));
   let existOk = true;
@@ -592,6 +664,7 @@ function checkLinks(r, text, file) {
   });
   if (existOk) r.check('link.exists', 0, true, '');
   if (staleOk) r.check('link.stale', 0, true, '');
+  checkAnchors(r, text, file);
 }
 
 // prefix는 검사 ID의 앞부분이다. 문서는 doc, 답변은 answer를 쓴다.

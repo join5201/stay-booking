@@ -26,7 +26,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { fill, g1, g2, answer, sweep, numbers, state, stateRows, supersededSet, settings, ruleBody, scopeKind, skipReason, union, unionFiles, unionMarks } from '../check.mjs';
+import { fill, g1, g2, answer, sweep, numbers, state, stateRows, supersededSet, settings, ruleBody, scopeKind, skipReason, union, unionFiles, unionMarks, headingSlug, anchorSet } from '../check.mjs';
 import { touchedNames } from '../numbers-gate.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -237,6 +237,8 @@ const docCases = [
   ['옛 상대경로 링크', (t) => t.replace('본문이다.', '본문이다. [옛 링크](claude/06-4.md)'), /link\.stale/],
   // HRV-09
   ['깨진 상대 링크', (t) => t.replace('본문이다.', '본문이다. [상대](./없는파일.md)'), /link\.exists/],
+  // 이슈 202
+  ['같은 파일에 없는 절 주소', (t) => t.replace('본문이다.', '본문이다. [위](#없는-절)'), /link\.anchor/],
   // 이슈 93. 원인 셋을 각각 건다. 칸 모자람, 칸 넘침, 이스케이프 안 한 파이프
   ['표 칸이 모자람', (t) => t.replace('| --dry | 쓰지 않고 결과만 낸다 |', '| --dry 쓰지 않고 결과만 낸다 |'), /doc\.table-cells/],
   ['표 칸이 넘침', (t) => t.replace('| --dry | 쓰지 않고 결과만 낸다 |', '| --dry | 쓰지 않고 | 결과만 낸다 |'), /doc\.table-cells/],
@@ -260,6 +262,80 @@ test('g1 doc 실패. 승인 양식의 필수 항목 누락', () => {
 
 test('g1 doc 통과. 필수 항목이 있으면 통과', () => {
   const r = run(() => g1(prep('g1-doc-pass.md'), { type: 'doc', require: ['본문이다'] }));
+  assert.equal(r.code, 0);
+});
+
+// ---------- g1 절 주소 (이슈 202) ----------
+// 기대값은 GitHub 렌더 HTML(contents API)의 user-content id에서 옮겼다. 검사기 출력에서
+// 옮기면 검사기가 GitHub를 오해한 것까지 통과한다(HRV-07과 같은 이유)
+
+test('headingSlug. 한글 제목', () => {
+  // document/11-o2o-api-spec.md. 55b76cc 렌더 id user-content-인증과-접근-제어
+  assert.equal(headingSlug('인증과 접근 제어'), '인증과-접근-제어');
+});
+
+test('headingSlug. 괄호와 날짜가 든 제목', () => {
+  // backend/README.md 3절. ca85854 렌더 id user-content-3-실행-2026-09-23-bootrun-줄
+  assert.equal(headingSlug('3. 실행 (2026-09-23 bootRun 줄)'), '3-실행-2026-09-23-bootrun-줄');
+});
+
+test('headingSlug. 문자 이름은 렌더된 기호로 보고 지운다', () => {
+  // document/11-o2o-api-spec.md. 55b76cc 렌더 id user-content-pageproperty
+  assert.equal(headingSlug('Page&lt;Property&gt;'), 'pageproperty');
+});
+
+test('anchorSet. 같은 제목이 다시 나오면 -1, -2를 붙인다', () => {
+  // 실제 중복은 harness/project-sync/08-2. 55b76cc 렌더 id user-content-요구사항-역추적표-1
+  assert.deepEqual([...anchorSet('## 예시\n\n## 예시\n\n## 예시\n')], ['예시', '예시-1', '예시-2']);
+});
+
+test('anchorSet. 펜스 안의 # 줄은 제목이 아니다', () => {
+  assert.deepEqual([...anchorSet('```bash\n# 주석\n```\n\n## 본문\n')], ['본문']);
+});
+
+// 링크를 건 문서와 대상 문서를 한 임시 폴더에 둔다. 상대 링크가 그 폴더 안에서 풀린다
+function anchorPair(link, target = '# 대상\n\n## 3. 실행 (2026-09-23 bootRun 줄)\n') {
+  const dir = fs.mkdtempSync(path.join(TMP, 'anchor-'));
+  fs.writeFileSync(path.join(dir, 'target.md'), target, 'utf8');
+  const src = path.join(dir, 'src.md');
+  fs.copyFileSync(prep('g1-doc-pass.md', (t) => t.replace('본문이다.', `본문이다. ${link}`)), src);
+  return src;
+}
+
+test('g1 doc 통과. 다른 파일의 괄호와 날짜가 든 제목을 GitHub 절 주소로 가리킨다', () => {
+  const r = run(() => g1(anchorPair('[실행](target.md#3-실행-2026-09-23-bootrun-줄)'), { type: 'doc' }));
+  assert.equal(r.code, 0);
+  assert.match(r.out, /link\.anchor/);
+});
+
+test('g1 doc 실패. 제목에 날짜가 붙기 전의 절 주소 (2026-09-23 실제 사례)', () => {
+  const r = run(() => g1(anchorPair('[실행](target.md#3-실행)'), { type: 'doc' }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /\[link\.anchor\] \d+ +절 주소가 대상 파일에 없다: target\.md#3-실행$/m);
+});
+
+test('g1 doc 통과. 명시 a id를 가리킨다', () => {
+  const r = run(() => g1(anchorPair('[공통](target.md#common)', '<a id="common"></a>\n\n## 공통\n'), { type: 'doc' }));
+  assert.equal(r.code, 0);
+});
+
+test('g1 doc 통과. 퍼센트 인코딩한 절 주소는 풀어서 대조한다', () => {
+  const frag = encodeURIComponent('3-실행-2026-09-23-bootrun-줄');
+  const r = run(() => g1(anchorPair(`[실행](target.md#${frag})`), { type: 'doc' }));
+  assert.equal(r.code, 0);
+});
+
+test('g1 doc 실패. 대상 파일이 없으면 link.exists만 보고한다', () => {
+  const r = run(() => g1(anchorPair('[실행](없는파일.md#3-실행)'), { type: 'doc' }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /\[link\.exists\]/);
+  assert.doesNotMatch(r.out, /\[link\.anchor\]/);
+});
+
+test('g1 doc 통과. 펜스 안의 링크 모양은 링크가 아니다', () => {
+  const f = prep('g1-doc-pass.md', (t) => t.replace('— · **bold**', '— · **bold** [없는 절](#없는-절)'));
+  assert.match(fs.readFileSync(f, 'utf8'), /\[없는 절\]\(#없는-절\)/); // 치환이 헛돌면 이 테스트는 공짜로 통과한다
+  const r = run(() => g1(f, { type: 'doc' }));
   assert.equal(r.code, 0);
 });
 
@@ -590,6 +666,7 @@ test('g1 doc. 통과 출력이 검사 이름을 다 적는다', () => {
   const r = run(() => g1(prep('g1-doc-pass.md'), { type: 'doc' }));
   assert.equal(r.code, 0);
   assert.match(r.out, /doc\.date-created/);
+  assert.match(r.out, /link\.anchor/);
   assert.match(r.out, /doc\.end-sentence/);
   assert.doesNotMatch(r.out, /범위 밖/);
 });
