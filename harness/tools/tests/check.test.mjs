@@ -339,6 +339,19 @@ test('g1 doc 통과. 펜스 안의 링크 모양은 링크가 아니다', () => 
   assert.equal(r.code, 0);
 });
 
+// PR 203 리뷰. 슬래시로 시작하는 절대경로도 C:/ 모양과 같은 이유로 건너뛴다.
+// 절대경로는 작업 트리마다 다른 파일을 가리킨다 (이슈 26)
+test('g1 doc 통과. 드라이브 글자 없는 절대경로의 절 주소는 보지 않는다', () => {
+  const dir = fs.mkdtempSync(path.join(TMP, 'anchor-'));
+  fs.writeFileSync(path.join(dir, 'target.md'), '# 대상\n', 'utf8');
+  const abs = path.join(dir, 'target.md').replace(/^[A-Za-z]:/, '').split(path.sep).join('/');
+  assert.ok(fs.statSync(path.resolve(dir, abs)).isFile()); // 파일이 없으면 파일 확인에서 먼저 빠져 공짜로 통과한다
+  const src = path.join(dir, 'src.md');
+  fs.copyFileSync(prep('g1-doc-pass.md', (t) => t.replace('본문이다.', `본문이다. [대상](${abs}#없는-절)`)), src);
+  const r = run(() => g1(src, { type: 'doc' }));
+  assert.equal(r.code, 0);
+});
+
 // ---------- g1 api, code ----------
 
 test('g1 api 통과', () => {

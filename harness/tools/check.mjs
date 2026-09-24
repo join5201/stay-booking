@@ -618,6 +618,7 @@ export function anchorSet(text) {
 // 절 주소 검사 (이슈 202). 파일 존재만 보면 제목이 바뀌어 깨진 절 주소가 통과한다.
 // D4가 바뀐 절 제목에 날짜를 붙이므로 절 주소는 제목을 고칠 때마다 바뀐다.
 // 상대 경로 .md와 같은 파일만 본다. 절대경로는 worktree마다 다른 파일을 가리킨다 (이슈 26).
+// /로 시작하는 경로도 컴퓨터의 루트에서 풀려 이 트리 밖 파일을 읽으므로 C:/ 모양과 같이 건너뛴다 (PR 203 리뷰).
 // 펜스와 인라인 코드 안은 GitHub가 링크로 렌더하지 않는다
 function checkAnchors(r, text, file) {
   const self = path.resolve(file);
@@ -630,7 +631,7 @@ function checkAnchors(r, text, file) {
       const at = raw.indexOf('#');
       if (at < 0 || /^(https?:|mailto:)/.test(raw)) continue;
       const target = raw.slice(0, at);
-      if (target && (!/\.md$/i.test(target) || /^[A-Za-z]:\//.test(target))) continue;
+      if (target && (!/\.md$/i.test(target) || /^[A-Za-z]:\//.test(target) || path.isAbsolute(target))) continue;
       const abs = target ? path.resolve(dir, target) : self;
       if (!isFile(abs)) continue; // 없는 파일은 link.exists가 보고한다
       let frag = raw.slice(at + 1);
