@@ -8,7 +8,8 @@
 #   backend  JDK 21과 mysql:9.7.2 서비스로 gradlew test. 이미지와 포트(3307)와 DB 이름은
 #            backend/docker-compose.yml과 같다. DB 계정은 이 작업 안에서만 사는 일회용 값이라
 #            비밀이 아니다. JUnit XML은 성공과 실패 모두 올린다.
-#   harness  Node 22로 검사기 테스트와 게이트 넷(settings, union, sweep, numbers).
+#   harness  Windows와 Node 22로 검사기 테스트와 게이트 넷(settings, union, sweep, numbers).
+#            검사기가 Windows 경로를 전제로 쓰여 리눅스가 아니라 Windows에서 돌린다.
 #
 # 로컬에서 같은 것을 돌리는 예시
 #   docker compose -f backend/docker-compose.yml up -d
@@ -17,7 +18,7 @@
 #   node harness/tools/check.mjs settings .claude/settings.json
 #   node harness/tools/check.mjs union .gitattributes
 #   node harness/tools/check.mjs sweep harness/docs --type doc
-#   node harness/tools/check.mjs numbers harness/docs --local-only
+#   node harness/tools/check.mjs numbers harness/docs
 #
 # 실패 시 출력 예시
 #   Communications link failure
@@ -93,14 +94,23 @@ jobs:
 
   harness:
     name: harness
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # 검사기는 Windows 경로(C:/...)를 전제로 쓰였다. 리눅스에서는 /tmp 같은 절대경로를 경로로 읽지
+    # 못해 check.test.mjs 15건이 실패했다(첫 실행 run 36095041494). 개발 환경과 같은 Windows에서 돌린다
+    runs-on: windows-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # numbers는 기본으로 origin/main과 대조한다. 얕은 체크아웃에는 그 ref가 없다
+          fetch-depth: 0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22'
       - name: 검사기 테스트
+        # 테스트가 임시 폴더의 파일을 저장소 기준 상대경로로 적는다. 작업 폴더와 같은 드라이브에 둔다
+        env:
+          TEMP: ${{ runner.temp }}
+          TMP: ${{ runner.temp }}
         run: node --test harness/tools/tests/check.test.mjs
       - name: 권한 설정의 Bash와 PowerShell 짝
         run: node harness/tools/check.mjs settings .claude/settings.json
@@ -108,5 +118,5 @@ jobs:
         run: node harness/tools/check.mjs union .gitattributes
       - name: 하네스 문서 g1
         run: node harness/tools/check.mjs sweep harness/docs --type doc
-      - name: 문서 번호 겹침
-        run: node harness/tools/check.mjs numbers harness/docs --local-only
+      - name: 문서 번호 겹침(origin/main과 대조)
+        run: node harness/tools/check.mjs numbers harness/docs
