@@ -2,6 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "autoCompactWindow": 400000,
   "permissions": {
+    "defaultMode": "default",
     "deny": [
       "Read(./.env)",
       "Read(./.env.*)",
@@ -36,6 +37,12 @@
       "PowerShell(node harness/tools/build-v2.mjs *)",
       "PowerShell(git status *)",
       "PowerShell(git diff *)"
+    ],
+    "ask": [
+      "Bash(gh pr merge *)",
+      "PowerShell(gh pr merge *)",
+      "Edit(./harness/tools/**)",
+      "Edit(./AGENTS.md)"
     ]
   },
   "hooks": {
