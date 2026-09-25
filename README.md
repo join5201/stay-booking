@@ -1,98 +1,82 @@
 # stay-booking
 
-최초 작성: 2026-09-08
-최종 갱신: 2026-09-24 (절 제목에 반영 날짜와 사실 문장의 출처 링크. PR 198 리뷰. 같은 날 backend/README.md 3절 링크를 파일 링크로. 그 전 2026-09-23 저장소 소개 본문을 새로 썼다. 이슈 195)
+호스트가 객실과 날짜별 재고를 올리고 게스트가 검색, 예약, 결제하는 숙박 예약 서비스다. 도메인 주도 설계(DDD)로 설계 문서를 쓰고 Spring Boot 백엔드와 Next.js 화면으로 구현했다. 핵심 문제는 아래 셋이다.
 
-O2O 숙박 예약 서비스의 [설계 문서](document/README.md)와 구현을 담은 저장소다. 호스트가 숙소와 객실, 날짜별 재고와 요금을 올리고, 게스트가 숙소를 검색해 예약하고 결제하며, 운영자가 프로모션을 만든다([역할별 사용 범위](document/11-o2o-api-spec.md#인증과-접근-제어)). 도메인 주도 설계(DDD)로 설계 문서를 쓰고 Spring Boot 백엔드와 Next.js 화면으로 구현했으며, 로컬 개발과 검증까지 다룬다([설계 계획](document/01-o2o-ddd-plan.md)).
+- [동시 예약](#동시-예약): 마지막 객실 하나에 두 명이 동시에 예약해도 한 명만 성공한다
+- [같은 요청 재전송](#같은-요청-재전송): 응답을 못 받아 같은 요청을 다시 보내도 한 번만 처리한다
+- [결제 승인과 만료](#결제-승인과-만료): 결제 승인과 예약 만료가 겹쳐도 결과는 하나다
 
-## 기능 (2026-09-23 신설)
+## 기능
 
-| 역할 | 할 수 있는 일 | 명세 |
-|---|---|---|
-| 공개 | 숙소와 객실 조회, 숙소 검색, 객실 가용성과 예상 금액 조회, 적용 가능한 프로모션 조회 | [숙소](document/11-o2o-api-spec.md#숙소), [객실 타입](document/11-o2o-api-spec.md#객실-타입), [검색](document/11-o2o-api-spec.md#검색), [프로모션](document/11-o2o-api-spec.md#프로모션) |
-| 호스트 | 본인 숙소와 객실 타입의 등록과 수정, 날짜별 재고와 요금 관리 | [숙소](document/11-o2o-api-spec.md#숙소), [객실 타입](document/11-o2o-api-spec.md#객실-타입), [재고](document/11-o2o-api-spec.md#재고), [요금](document/11-o2o-api-spec.md#요금) |
-| 운영자 | 프로모션 등록, 수정, 관리 목록 조회 | [프로모션](document/11-o2o-api-spec.md#프로모션) |
-| 게스트 | 본인 예약의 요청과 조회, Mock 결제 요청, 확정 예약 취소와 전액 Mock 환불 | [예약과 결제](document/11-o2o-api-spec.md#예약과-결제) |
-| 시스템 | Mock 결제 결과 전달, 결제 승인 시 예약 확정, 선점 시한이 지나거나 결제가 세 번 실패한 예약의 만료, 만료 뒤 도착한 승인의 환불 | [내부 처리와 Mock 이벤트](document/11-o2o-api-spec.md#내부-처리와-mock-이벤트) |
+| 사용자 | 할 수 있는 일 |
+|---|---|
+| 누구나 | 숙소 검색, 빈 객실과 예상 금액과 할인 조회 |
+| 게스트 | 예약과 조회, Mock 결제, 취소와 전액 환불 |
+| 호스트 | 숙소와 객실 등록, 날짜별 재고와 요금 관리 |
+| 운영자 | 자동 적용 할인(프로모션) 등록과 수정 |
+| 시스템 | 결제 승인 시 확정, 시한 초과나 3회 실패 시 만료 |
 
-## 범위 (2026-09-23 신설. 2026-09-24 출처 링크)
+범위는 로컬 개발과 검증까지다. 로그인 대신 개발용 요청 헤더 `X-Dev-Actor-Id`로 사용자를 정하고, 결제는 실제 대행사 대신 모의(Mock) 결제를 쓴다.
 
-| 항목 | 들어 있는 것 | 없는 것 |
-|---|---|---|
-| 실행 환경 | 로컬 개발과 검증 | 배포와 운영 준비 |
-| 인증 | 개발 프로파일에서 요청 헤더 `X-Dev-Actor-Id`로 역할과 소유자를 정한다 | 회원가입, 로그인, 토큰 |
-| 결제 | Mock 결제 요청, Mock 결과 전달, Mock 환불 | 실제 결제 대행 연동 |
-| 서비스 형태 | 날짜별 객실 재고를 선점하는 숙박 예약 | 배차, 배달, 채팅, 정산, 광고 |
-| 검증 | 백엔드, 화면, E2E 자동 테스트 | 부하 측정 |
-
-현재 상태(2026-09-23 기준): [명세](document/11-o2o-api-spec.md)의 서비스 API 32개와 로컬 Mock API 1개, [화면 열네 개](harness/tasks/task-S9-frontend.md#2-대상과-설계-근거)(게스트 일곱, 호스트 다섯, 운영자 둘)가 main에 있다. 백엔드의 기능별 진행 표는 [backend/README.md](backend/README.md)에 있다.
-
-## 기술 스택 (2026-09-23 신설)
-
-| 구분 | 기술 | 판 |
-|---|---|---|
-| 백엔드 | Java | 21 |
-| 백엔드 | Spring Boot (Web MVC, Data JPA, Validation) | 4.1.1 |
-| 백엔드 | Gradle (저장소에 래퍼 포함) | 9.7.1 |
-| DB | MySQL (Docker 컨테이너) | 9.7.2 |
-| 프론트 | Next.js (App Router), React | 16.3.5, 19.2.8 |
-| 프론트 | TypeScript | 5.9.3 |
-| 프론트 | Tailwind CSS, TanStack Query | 4.3.3, 5.102.8 |
-| 테스트 | JUnit (Spring Boot 테스트 스타터) | 6.0.3 |
-| 테스트 | Vitest, Testing Library, MSW | 5.0.1, 16.3.3, 2.15.0 |
-| 테스트 | Playwright (Chromium) | 1.63.0 |
-
-판은 [build.gradle](backend/build.gradle), [gradle-wrapper.properties](backend/gradle/wrapper/gradle-wrapper.properties), [docker-compose.yml](backend/docker-compose.yml), [package-lock.json](frontend/package-lock.json)에 고정된 값이다. JUnit은 build.gradle에 판을 적지 않아 Spring Boot의 의존성 관리가 정한다.
-
-## 구성도 (2026-09-23 신설. 2026-09-24 출처 링크)
+## 구조
 
 ```mermaid
-flowchart LR
-  B["브라우저"] --> N["Next.js<br/>localhost:3000"]
-  N -->|"/api/v1"| S["Spring Boot<br/>localhost:8080"]
+flowchart TB
+  B["브라우저"] --> N["Next.js localhost:3000"] -->|"/api/v1"| S
+  subgraph S["Spring Boot localhost:8080"]
+    CA["catalog<br/>숙소와 객실"] ~~~ BO["booking<br/>예약"]
+    IN["inventory<br/>재고와 요금"] ~~~ PA["payment<br/>결제"]
+    PR["promotion<br/>프로모션"] ~~~ SE["search<br/>검색, 읽기만"]
+  end
   S --> M[("MySQL 컨테이너<br/>127.0.0.1:3307")]
 ```
 
-브라우저는 Next.js만 부른다. /api/v1 아래 요청은 Next.js가 BACKEND_URL(비어 있으면 `http://localhost:8080`)로 넘긴다([next.config.ts](frontend/next.config.ts)의 rewrites). 백엔드에 CORS 설정이 없어 같은 출처로 부르는 구성이다. 3000과 8080은 Next.js와 Spring Boot의 기본 포트이고, 3307은 [docker-compose.yml](backend/docker-compose.yml)이 컨테이너의 3306을 이어 둔 포트다.
+브라우저는 Next.js만 부르고, /api/v1 아래 요청은 Next.js가 백엔드로 넘긴다. 백엔드는 Spring Boot 애플리케이션 하나이고 설계에서 나눈 업무 영역(바운디드 컨텍스트)마다 패키지 하나를 둔다. 층 규칙은 [backend/README.md](backend/README.md)에 있다.
 
-백엔드는 Spring Boot 모듈 하나다([settings.gradle](backend/settings.gradle)). [com.o2o](backend/src/main/java/com/o2o) 아래에 설계의 [바운디드 컨텍스트 다섯](document/05-2-o2o-bounded-contexts.md#1-컨텍스트-목록)이 패키지 하나씩이고, 검색 읽기 모델과 [공유 커널](document/06-1-o2o-context-map.md#4-공유-커널-후보-04-6-판정-승계)이 따로 패키지를 갖는다.
-
-| 패키지 | 설계에서의 이름 | 맡는 일 |
-|---|---|---|
-| catalog | 숙소 카탈로그 | 호스트가 판매할 숙소와 객실 타입 |
-| inventory | 재고와 요금 | 날짜별 판매 가능 수량과 단가 |
-| promotion | 프로모션 | 자동 적용 할인 정책 |
-| booking | 예약 | 예약 생성(재고 선점 포함), 확정, 취소, 만료 |
-| payment | 결제 | 결제 요청과 결과 기록(Mock 결제) |
-| search | 검색(읽기 모델) | 다른 컨텍스트의 저장소를 읽기만 해서 검색과 조회에 답한다. 층은 api와 application 둘 |
-| shared | 공유 커널 | 여러 컨텍스트가 같이 쓰는 행위자 식별, 오류 응답, ID와 금액과 날짜 같은 값 |
-
-컨텍스트 하나 안의 층은 넷이다. api가 application을, application이 domain을 부르고, infrastructure는 domain이 선언한 인터페이스를 구현한다. domain은 다른 층을 참조하지 않는다([층 규칙](backend/.claude/rules/layers.md)).
-
-| 층 | 하는 일 |
+| 구분 | 기술 |
 |---|---|
-| api | HTTP 요청을 도메인의 말로 바꾸고 형식을 검사한다 |
-| application | 트랜잭션 경계, 컨텍스트를 넘는 선행조건, 이벤트 발행 |
-| domain | 불변식을 지킨다. 상태를 바꾸는 유일한 입구다 |
-| infrastructure | 저장, 조회, 잠금. 유일성과 무결성 |
+| 백엔드 | Java 21, Spring Boot 4.1, Gradle 9.7 |
+| DB | MySQL 9.7 (Docker 컨테이너) |
+| 프론트 | Next.js 16.3, React 19.2, TypeScript 5.9 |
+| 화면과 데이터 | Tailwind CSS 4.3, TanStack Query 5 |
+| 백엔드 테스트 | JUnit 6, 실제 MySQL 컨테이너 |
+| 프론트 테스트 | Vitest, Testing Library, MSW, Playwright |
 
-## 설계에서 다룬 문제 (2026-09-23 신설. 2026-09-24 출처 링크)
+## 핵심 문제를 푼 방법
 
-| 문제 | 푼 방법 | 확인 |
-|---|---|---|
-| 마지막 객실 하나에 두 손님이 동시에 예약한다 | 예약 요청은 숙박 날짜의 재고 행을 날짜 오름차순으로 잠근 뒤(비관적 락, SELECT ... FOR UPDATE) 남은 수량을 보고 선점한다. 나중 요청은 앞 요청이 커밋한 뒤 남은 수량 0을 읽고 409 INVENTORY_UNAVAILABLE을 받는다. 연박 중 하루라도 모자라면 어느 날짜도 선점하지 않는다 | 명세 [T08](document/11-o2o-api-spec.md#t08), [T09](document/11-o2o-api-spec.md#t09). [BookingApiTest](backend/src/test/java/com/o2o/booking/api/BookingApiTest.java), [BookingApplicationServiceTest](backend/src/test/java/com/o2o/booking/application/BookingApplicationServiceTest.java) |
-| 응답을 못 받은 클라이언트가 같은 요청을 다시 보낸다 | 예약 생성, 결제 요청, 취소는 Idempotency-Key 헤더가 필수다. 서버는 행위자, HTTP 메서드, 경로, 키를 유니크 키로 기록한다. 같은 body면 첫 응답에 Idempotency-Replayed: true를 붙여 돌려주고, 다른 body면 409 IDEMPOTENCY_KEY_REUSED, 첫 요청이 처리 중이면 409 REQUEST_IN_PROGRESS다 | 명세 [T10](document/11-o2o-api-spec.md#t10), [T11](document/11-o2o-api-spec.md#t11), [T14](document/11-o2o-api-spec.md#t14). [BookingApiTest](backend/src/test/java/com/o2o/booking/api/BookingApiTest.java), [BookingPaymentApiTest](backend/src/test/java/com/o2o/booking/api/BookingPaymentApiTest.java) |
-| 결제 승인과 선점 시한 만료가 겹친다 | 확정과 만료를 승인 기록의 서버 시각 하나로 가른다. 그 시각이 만료 시각보다 앞이면 확정하고, 같거나 뒤면 승인액을 환불하고 만료한다. 승인 처리와 만료 처리가 같은 판정 메서드를 불러 처리 순서와 관계없이 결과가 하나다 | 명세 [T18](document/11-o2o-api-spec.md#t18), [T19](document/11-o2o-api-spec.md#t19), [T20](document/11-o2o-api-spec.md#t20). [BookingLockContentionTest](backend/src/test/java/com/o2o/booking/application/BookingLockContentionTest.java), [PaymentOutcomeServiceTest](backend/src/test/java/com/o2o/booking/application/PaymentOutcomeServiceTest.java) |
+### 동시 예약
 
-세 경우의 테스트는 MySQL 컨테이너에서 돈다([테스트 설정](backend/src/test/resources/application.properties)). [명세](document/11-o2o-api-spec.md#검증-기준)가 동시성과 유니크 제약과 롤백을 실제 MySQL에서 확인하도록 정한다.
+- 문제: 마지막 객실 하나에 두 명이 동시에 예약하면 둘 다 남은 수량 1을 읽고 둘 다 성공할 수 있다.
+- 방법: 예약할 날짜의 재고 행을 날짜 순서로 잠근 뒤(비관적 락, SELECT ... FOR UPDATE) 수량을 줄인다. 늦게 온 요청은 남은 수량 0을 읽고 409 INVENTORY_UNAVAILABLE을 받는다. 연박 중 하루라도 모자라면 어느 날짜도 잡지 않는다.
+- 확인: [BookingApiTest](backend/src/test/java/com/o2o/booking/api/BookingApiTest.java) K19. 두 요청을 동시에 보내 하나만 201을 받는다.
 
-## 실행 (2026-09-23 신설. 2026-09-24 출처 링크)
+### 같은 요청 재전송
 
-| 준비물 | 조건 | 쓰는 곳 |
-|---|---|---|
-| JDK | 21 | 백엔드. 판은 [build.gradle](backend/build.gradle)이 정한다. Gradle은 [래퍼](backend/gradle/wrapper/gradle-wrapper.properties)(gradlew)가 받는다 |
-| Docker | Compose 포함 | [docker-compose.yml](backend/docker-compose.yml)의 MySQL 컨테이너 |
-| Node.js | 20.9 이상 | 프론트. [Next.js 16.3 설치 문서](https://nextjs.org/docs/app/getting-started/installation)의 최소 판 |
+- 문제: 응답을 못 받은 클라이언트가 같은 예약 요청을 다시 보내면 예약이 두 번 생길 수 있다.
+- 방법: 예약, 결제 요청, 취소는 요청마다 고유 키를 담는 Idempotency-Key 헤더를 필수로 받는다. 같은 키로 같은 내용이 다시 오면 처리하지 않고 첫 응답을 돌려주고, 다른 내용이면 409 IDEMPOTENCY_KEY_REUSED다.
+- 확인: [BookingApiTest](backend/src/test/java/com/o2o/booking/api/BookingApiTest.java) K15. 같은 키로 다시 보내면 같은 응답이 오고 재고 선점 수가 늘지 않는다.
+
+### 결제 승인과 만료
+
+- 문제: 예약은 재고를 잡은 뒤 정해진 시한 안에 결제가 승인돼야 확정된다. 승인 처리와 만료 처리가 같은 순간에 돌면 먼저 잠근 쪽에 따라 결과가 갈릴 수 있다.
+- 방법: 승인 기록의 서버 시각이 만료 시각보다 앞이면 확정하고, 같거나 뒤면 승인액을 환불하고 만료한다. 두 처리가 이 판정 하나를 같이 불러 순서와 관계없이 결과가 하나다.
+- 확인: [BookingLockContentionTest](backend/src/test/java/com/o2o/booking/application/BookingLockContentionTest.java). 두 처리를 동시에 보내고 순서를 바꿔도 결과가 하나인지 본다.
+
+## 개발 방식
+
+```mermaid
+flowchart LR
+  G["만든다<br/>Claude Code"] --> K["형식 검사<br/>스크립트"] --> A["기능 평가<br/>Codex"] & Q["품질 평가<br/>Codex"]
+  A & Q --> D["정한다<br/>사람"] --> R["고친다<br/>Claude Code"] --> F["확정<br/>사람"]
+```
+
+평가는 만든 대화를 모르는 Codex 새 작업 둘이 따로 한다. 두 도구는 API로 이어져 있지 않고, 파일 전달과 결정과 확정은 사람이 한다.
+
+백엔드는 기능 하나를 코드, 테스트, 검증까지 끝낸 뒤 다음 기능으로 넘어갔다. 양식, 평가 기준, 검사 스크립트, 작업 기록은 [harness/](harness/README.md)에 있다.
+
+## 실행
+
+준비물은 JDK 21, Docker(Compose 포함), Node.js 20.9 이상이다.
 
 ```
 # 백엔드. 저장소 루트에서
@@ -108,67 +92,37 @@ npm install
 npm run dev
 ```
 
-`http://localhost:3000`을 열고 화면 위 [개발용 바](frontend/components/DevActorBar.tsx)에서 행위자를 고른다. 값은 public(헤더 없음), guest_001, guest_002, host_001, host_002, operator_001이다([dev-actor.ts](frontend/lib/dev-actor.ts)). public이 아니면 Mock 결제 칸도 보인다. APPROVE는 승인, DECLINE은 실패 결과를 자동으로 전달하고 DEFER는 결과를 따로 보낼 때까지 기다린다([Mock 이벤트 명세](document/11-o2o-api-spec.md#내부-처리와-mock-이벤트)). API를 직접 부를 때는 요청 헤더 `X-Dev-Actor-Id`에 행위자 ID를 넣고, Mock 결제 결과를 손으로 보낼 때는 mock_001을 쓴다([인증 명세](document/11-o2o-api-spec.md#인증과-접근-제어)).
+`http://localhost:3000`을 연다. 새 DB에는 예시 데이터가 없으니 화면 위 개발용 바에서 host_001을 골라 숙소, 객실 타입, 날짜별 재고와 요금을 등록한 뒤 guest_001로 바꿔 예약한다.
 
-백엔드 주소가 `http://localhost:8080`이 아니면 frontend/env.example을 frontend/.env.local로 복사하고 BACKEND_URL을 적는다. 실패했을 때의 출력과 원인은 [backend/README.md](backend/README.md) 3절에 있다.
+Mock 결제의 기본값은 승인이다. 실행이 실패할 때의 출력과 원인은 [backend/README.md](backend/README.md)의 실행 절에 있다.
 
-## 테스트 (2026-09-23 신설)
+## 테스트
 
-마지막 측정은 2026-09-16 main [eb4cc19](https://github.com/join5201/stay-booking/commit/eb4cc19)이다. 그 뒤 2026-09-23까지 backend와 frontend 코드는 바뀌지 않았다.
+| 대상 | 명령 | 결과 |
+|---|---|---|
+| 백엔드 | `./gradlew test` | 460건, 실패 0 |
+| 프론트 단위 | `npm run test` | 230건 통과 |
+| 프론트 검사 | `npm run typecheck`, `lint`, `build` | 오류 0 |
+| E2E | `npm run test:e2e` | 6건 통과 |
 
-| 대상 | 폴더 | 명령 | 마지막 결과 |
-|---|---|---|---|
-| 백엔드 | backend | `./gradlew test` | 460건, 실패 0 |
-| 프론트 단위와 컴포넌트 | frontend | `npm run test` | 230건 통과 |
-| 프론트 타입, 린트, 빌드 | frontend | `npm run typecheck`, `npm run lint`, `npm run build` | 오류 0, 빌드 라우트 17 |
-| E2E | frontend | `npm run test:e2e` | 6건 통과(E2E용 DB를 비운 뒤) |
+마지막 측정은 2026-09-16 main [eb4cc19](https://github.com/join5201/stay-booking/commit/eb4cc19)이고, 그 뒤 소스와 테스트 코드는 바뀌지 않았다. 백엔드 테스트는 bootRun과 같은 DB의 스키마를 지우고 다시 만들어 띄워 둔 앱의 데이터도 지운다. E2E 조건은 [frontend/README.md](frontend/README.md#2-실행)에 있다.
 
-백엔드 테스트는 bootRun과 같은 DB를 쓰고 스키마를 지우고 다시 만든다(create-drop). 띄워 둔 앱의 데이터도 함께 지워진다. E2E는 백엔드와 프론트를 E2E용 DB와 설정으로 띄운 뒤 돈다. 조건은 [frontend/README.md 2절](frontend/README.md#2-실행)에 있다. API 명세의 [검증 기준](document/11-o2o-api-spec.md#검증-기준) T01부터 T30은 [backend/README.md](backend/README.md) 6절에 30개 모두 통과로 기록되어 있다.
+## 더 보기
 
-## 개발 방식 (2026-09-23 신설. 2026-09-24 출처 링크)
-
-작업은 [작업 계약](harness/tasks/README.md) 단위로 나누고 한 계약을 아래 절차로 진행한다. 생성과 수정은 Claude Code가 하고, 평가는 생성 대화를 모르는 Codex 새 작업 둘이 허용된 입력만 받아 따로 한다([CLAUDE.md 1절](CLAUDE.md#1-프로젝트와-기술-구성)). A는 그 작업의 기능과 계약을, B는 공통 품질을 본다([평가 요청문](harness/prompts/evaluate.md)). 두 앱은 API로 이어져 있지 않고, 앱 사이의 파일 전달과 결정과 확정은 사람이 한다([하네스 도해 1절](harness/docs/10-17-o2o-harness-overview.md#1-한-라운드의-아홉-단계)). 백엔드는 기능 하나를 코드, 테스트, 검증까지 끝낸 뒤 다음 기능으로 넘어갔다([CLAUDE.md 5절](CLAUDE.md#5-do-not)).
-
-```mermaid
-flowchart LR
-  C["작업 계약<br/>사람 승인"] --> G["생성<br/>Claude Code"]
-  G --> K1["형식 검사<br/>스크립트"]
-  K1 --> A["평가 A<br/>Codex 새 작업"]
-  K1 --> B["평가 B<br/>Codex 새 작업"]
-  A --> D["결정<br/>사람"]
-  B --> D
-  D --> K2["결정표 검사<br/>스크립트"]
-  K2 --> R["반영<br/>Claude Code"]
-  R --> F["확정<br/>사람"]
-```
-
-양식, 평가 기준, 검사 스크립트, 작업 기록과 그 근거 문서는 [harness/](harness/README.md)에 있다.
-
-## 문서 (2026-09-23 신설)
-
-| 문서 | 무엇 |
+| 문서 | 내용 |
 |---|---|
-| [설계 요약](document/06-6-o2o-design-digest.md) | 설계 전체의 요약. 컨텍스트 경계, 애그리거트, 책임 분담(CRC), 계약(DbC) |
-| [API 명세](document/11-o2o-api-spec.md) | 서비스 API 32개와 로컬 Mock API 1개의 경로, 요청과 응답, 오류 코드, 처리 규칙 |
-| [용어 사전](document/05-3-o2o-glossary.md) | 컨텍스트별 용어 정의 |
-| [컨텍스트 맵](document/06-1-o2o-context-map.md) | 컨텍스트 사이의 관계 |
-| [애그리거트](document/06-2-o2o-aggregates.md) | 애그리거트 일곱과 각각이 지키는 불변식. 근거는 [설명본](document/06-2-o2o-aggregates-explained.md) |
-| [계약과 정책](document/06-4-o2o-contracts.md) | 도메인 규칙과 커맨드 계약(DbC), 정책. 근거는 [설명본](document/06-4-o2o-contracts-explained.md) |
-| [설계 문서 전체 목록](harness/README.md#설계-문서) | 계획, 기능 목록, 이벤트 스토밍부터 검토 기록까지 |
+| [설계 요약](document/06-6-o2o-design-digest.md) | 영역 경계, 애그리거트, 책임, 계약의 요약 |
+| [API 명세](document/11-o2o-api-spec.md) | 서비스 API 32개와 Mock API 1개 |
+| [용어 사전](document/05-3-o2o-glossary.md) | 영역별 용어 정의 |
+| [document/](document/README.md) | 설계 문서 전체와 검토 기록 |
+| [backend/](backend/README.md) | 백엔드 실행, 패키지 구조, 기능별 진행 |
+| [frontend/](frontend/README.md) | 화면 구성, 실행, E2E 조건 |
+| [harness/](harness/README.md) | AI 개발 절차의 양식, 평가 기준, 검사 스크립트 |
 
-## 폴더 (2026-09-23 신설)
+## 라이선스
 
-| 폴더 | 무엇 |
-|---|---|
-| [document/](document/README.md) | 설계 문서, API 명세, 검토 기록 |
-| [backend/](backend/README.md) | Spring Boot 백엔드와 테스트, 테스트용 MySQL 컨테이너 설정 |
-| [frontend/](frontend/README.md) | Next.js 화면과 테스트 |
-| [harness/](harness/README.md) | AI 개발 절차의 양식, 평가 기준, 검사 스크립트, 작업 기록과 그 근거 문서 |
-| [.claude/](.claude) | Claude Code 권한 규칙과 훅 설정, 절차 스킬 넷 |
-| [.github/](.github) | 이슈 양식 셋과 PR 양식 |
+라이선스 파일을 두지 않았다. 만든 사람은 [join5201](https://github.com/join5201)이다.
 
-## 라이선스와 만든 사람 (2026-09-23 신설)
+최초 작성: 2026-09-08
 
-라이선스 파일을 두지 않았다.
-
-만든 사람: [join5201](https://github.com/join5201)
+최종 갱신: 2026-09-25 (독자 질문 순서로 다시 썼다. 이슈 210)
