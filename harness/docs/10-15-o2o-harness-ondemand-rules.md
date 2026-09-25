@@ -65,7 +65,7 @@ settings.json은 JSON이라 주석을 달 수 없다. deny와 allow와 ask와 de
 | deny에 삭제 명령 | N2를 규칙이 아니라 게이트로 만든다. 삭제는 되돌릴 수 없다 |
 | deny에 project-sync 편집 | 원본 사본이 병합 도중 오염되면 H2의 차이표가 근거를 잃는다 |
 | allow에 검사 스크립트와 git 조회 | 검사를 돌릴 때마다 승인 프롬프트가 뜨면 G1을 건너뛰게 된다 |
-| defaultMode에 default | 비워 두면 기본값을 따르는데 그 기본값이 요금제와 실행 방식마다 다르다. Pro, Max, Team 요금제의 터미널과 VS Code 세션은 auto로 시작한다. auto에서는 사람 대신 분류 모델이 승인하고, 작업 중인 저장소로의 push와 PR 생성도 묻지 않는다. 사람의 승인을 게이트로 쓰는 규칙(N8, 4-1 7단계)이 서려면 시작 모드를 적어야 한다. 프로젝트 설정의 값이 사용자 설정보다 앞서고 데스크톱 앱도 같은 값을 새 로컬 세션에 쓴다. 세션 중에 모드를 바꾸는 것은 막지 않는다(harness/state/knowledge.md 2026-09-25 행) |
+| defaultMode에 default | 비워 두면 기본값을 따르는데 그 기본값이 요금제와 실행 방식마다 다르다. Pro, Max, Team 요금제의 터미널과 VS Code 세션은 auto로 시작한다. auto에서는 사람 대신 분류 모델이 승인하고, 작업 중인 저장소로의 push와 PR 생성도 묻지 않는다. 사람의 승인을 게이트로 쓰는 규칙(N8, 4-1 7단계)이 서려면 시작 모드를 적어야 한다. 프로젝트 설정의 값이 사용자 설정보다 앞서고 데스크톱 앱도 같은 값을 새 로컬 세션에 쓴다. VS Code 확장은 예외다. 시작 모드를 정할 때 프로젝트 설정을 읽지 않으므로 VS Code로 여는 사람은 VS Code 사용자 설정 claudeCode.initialPermissionMode를 default로 둔다. 저장소가 강제할 수 없는 자리다. 세션 중에 모드를 바꾸는 것은 막지 않는다(harness/state/knowledge.md 2026-09-25의 권한 모드 기본값 행과 VS Code 시작 모드 행) |
 | ask에 병합 명령과 harness/tools/와 AGENTS.md | ask는 auto에서도 묻고 allow보다 먼저 평가된다. 세션 중에 모드를 바꿔도 이 세 자리에는 사람 확인이 남는다. gh pr merge는 4-1 7단계의 사용자 병합 승인 자리다. harness/tools/는 검사기라 생성 쪽이 고치면 게이트가 조용히 약해진다. AGENTS.md는 평가자 규칙이고 생성자가 읽지도 않는 파일이다(AGENTS.md 9행) |
 
 allow 규칙은 폴더를 신뢰한 뒤에 적용된다. deny와 ask는 즉시 적용된다(permissions 문서).
