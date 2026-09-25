@@ -21,17 +21,13 @@
 ## 구조
 
 ```mermaid
-flowchart TB
-  B["브라우저"] --> N["Next.js localhost:3000"] -->|"/api/v1"| S
-  subgraph S["Spring Boot localhost:8080"]
-    CA["catalog<br/>숙소와 객실"] ~~~ BO["booking<br/>예약"]
-    IN["inventory<br/>재고와 요금"] ~~~ PA["payment<br/>결제"]
-    PR["promotion<br/>프로모션"] ~~~ SE["search<br/>검색, 읽기만"]
-  end
-  S --> M[("MySQL 컨테이너<br/>127.0.0.1:3307")]
+flowchart LR
+  B["브라우저"] --> N["Next.js<br/>:3000"] -->|"/api/v1"| S["Spring Boot :8080<br/>숙소와 객실<br/>재고와 요금, 프로모션<br/>예약, 결제, 검색"] --> M[("MySQL<br/>:3307")]
 ```
 
-브라우저는 Next.js만 부르고, /api/v1 아래 요청은 Next.js가 백엔드로 넘긴다. 백엔드는 Spring Boot 애플리케이션 하나이고 설계에서 나눈 업무 영역(바운디드 컨텍스트)마다 패키지 하나를 둔다. 층 규칙은 [backend/README.md](backend/README.md)에 있다.
+브라우저는 Next.js만 부르고, /api/v1 아래 요청은 Next.js가 백엔드로 넘긴다. 백엔드는 Spring Boot 애플리케이션 하나이고 MySQL은 Docker 컨테이너로 띄운다.
+
+설계에서 나눈 업무 영역(바운디드 컨텍스트)마다 패키지 하나를 둔다. 숙소와 객실(catalog), 재고와 요금(inventory), 프로모션(promotion), 예약(booking), 결제(payment), 검색(search)이고 검색은 다른 영역의 데이터를 읽기만 한다. 층 규칙은 [backend/README.md](backend/README.md)에 있다.
 
 | 구분 | 기술 |
 |---|---|
@@ -66,13 +62,14 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-  G["만든다<br/>Claude Code"] --> K["형식 검사<br/>스크립트"] --> A["기능 평가<br/>Codex"] & Q["품질 평가<br/>Codex"]
-  A & Q --> D["정한다<br/>사람"] --> R["고친다<br/>Claude Code"] --> F["확정<br/>사람"]
+  G["만든다<br/>Claude Code"] --> A["기능 평가<br/>Codex"] & Q["품질 평가<br/>Codex"] --> D["정한다<br/>사람"] --> R["고친다<br/>Claude Code"]
 ```
 
-평가는 만든 대화를 모르는 Codex 새 작업 둘이 따로 한다. 두 도구는 API로 이어져 있지 않고, 파일 전달과 결정과 확정은 사람이 한다.
+평가는 만든 대화를 모르는 Codex 새 작업 둘이 따로 한다. 두 도구는 API로 이어져 있지 않고, 파일 전달과 반영 결정과 완료 확정은 사람이 한다.
 
-백엔드는 기능 하나를 코드, 테스트, 검증까지 끝낸 뒤 다음 기능으로 넘어갔다. 양식, 평가 기준, 검사 스크립트, 작업 기록은 [harness/](harness/README.md)에 있다.
+스크립트가 평가 전에는 산출물 형식을, 결정 뒤에는 지적마다 결정과 이유가 빠짐없는지를 검사한다. 백엔드는 기능 하나를 코드, 테스트, 검증까지 끝낸 뒤 다음 기능으로 넘어갔다.
+
+양식, 평가 기준, 검사 스크립트, 작업 기록은 [harness/](harness/README.md)에 있다.
 
 ## 실행
 
