@@ -125,7 +125,7 @@
 //   절 주소는 대상 파일의 제목에서 GitHub와 같은 규칙으로 만든다. 제목에 반영 날짜가
 //   붙으면(D4) 주소가 바뀌는데 파일은 그대로라 link.exists로는 안 잡힌다. 2026-09-23에
 //   루트 README의 backend/README.md#3-실행이 이렇게 깨졌고 그때 g1은 PASS였다.
-//   HTML 주석과 코드 구간 안의 제목과 a 태그와 링크 모양은 GitHub 화면에 없어서 세지 않는다(PR 203 리뷰).
+//   코드 구간 안의 a 태그와 링크 모양은 GitHub 화면에서 글자일 뿐이라 세지 않는다(PR 203 리뷰).
 //   파일 이름은 가상이다.
 //
 // numbers 통과 출력 예시
@@ -598,10 +598,12 @@ export function headingSlug(heading) {
     .replace(/ /g, '-');
 }
 
-// GitHub 화면에 앵커도 링크도 되지 않는 구간을 공백으로 가린다 (PR 203 리뷰). 펜스와 HTML 주석과
-// 백틱 코드 구간이다. 원문 모양대로 읽으면 주석 속 a 태그가 앵커로 잡혀 깨진 링크가 통과한다.
-// 줄바꿈은 남겨서 줄 번호가 원문과 같다. 앞에서 먼저 열린 쪽이 이긴다. 코드 안의 <!--는 주석이 아니다.
-// 마크다운 해석기가 아니다. 네 칸 들여쓴 코드와 여러 줄에 걸친 코드 구간은 알아보지 못한다
+// GitHub 화면에 앵커도 링크도 되지 않는 구간을 공백으로 가린다 (PR 203 리뷰). 펜스와 백틱 코드
+// 구간이다. 원문 모양대로 읽으면 코드 속 a 태그가 앵커로 잡혀 깨진 링크가 통과한다.
+// 줄바꿈은 남겨서 줄 번호가 원문과 같다.
+// 마크다운 해석기가 아니다. 네 칸 들여쓴 코드와 여러 줄에 걸친 코드 구간은 알아보지 못한다.
+// HTML 주석은 가리지 않는다. 주석 속 a 태그와 # 줄도 앵커로 센다. 저장소 md에 주석이 없어
+// 이슈 202 범위 밖으로 뒀다 (PR 203 리뷰 결정)
 function maskUnrendered(text) {
   const src = stripFences(text).join('\n');
   const blank = (s) => s.replace(/[^\n]/g, ' ');
@@ -610,18 +612,7 @@ function maskUnrendered(text) {
   let out = '';
   let i = 0;
   while (i < src.length) {
-    if (src.startsWith('<!--', i) && !escaped(i)) {
-      // 줄 첫머리의 주석은 HTML 블록이라 빈 줄을 넘고, 안 닫히면 문서 끝까지 숨는다.
-      // 문단 안의 주석은 빈 줄을 못 넘고, 그 안에서 못 닫으면 글자다
-      const block = /^ {0,3}$/.test(src.slice(src.lastIndexOf('\n', i - 1) + 1, i));
-      const end = src.indexOf('-->', i + 4);
-      const stop = end < 0 ? (block ? src.length : -1) : end + 3;
-      if (stop > 0 && (block || !/\n[ \t]*\n/.test(src.slice(i, stop)))) {
-        out += blank(src.slice(i, stop));
-        i = stop;
-        continue;
-      }
-    } else if (src[i] === '`' && !escaped(i)) {
+    if (src[i] === '`' && !escaped(i)) {
       // 같은 길이의 백틱 줄이 같은 줄에 있어야 코드 구간이다. 없으면 백틱은 글자다.
       // 줄을 넘어 찾으면 표 칸의 홀로 선 백틱이 다음 행과 짝을 지어 그 사이 링크를 가린다
       let n = 1;
@@ -640,7 +631,7 @@ function maskUnrendered(text) {
 }
 
 // 파일 하나의 앵커 집합. 제목 슬러그와 명시 a id다. 같은 슬러그가 다시 나오면 GitHub처럼
-// -1, -2를 붙인다. 펜스와 주석 안의 # 줄은 제목이 아니고 주석과 코드 구간 안의 a 태그는 앵커가 아니다.
+// -1, -2를 붙인다. 펜스 안의 # 줄은 제목이 아니고 코드 구간 안의 a 태그는 앵커가 아니다.
 // 제목인지는 가린 줄로 보고 주소는 원래 줄로 만든다. 제목 안의 코드 글자도 주소에 들어간다
 const HEADING = /^ {0,3}#{1,6}(?:[ \t]+(.*?))?(?:[ \t]+#+)?[ \t]*$/;
 export function anchorSet(text) {
@@ -664,7 +655,7 @@ export function anchorSet(text) {
 // D4가 바뀐 절 제목에 날짜를 붙이므로 절 주소는 제목을 고칠 때마다 바뀐다.
 // 상대 경로 .md와 같은 파일만 본다. 절대경로는 worktree마다 다른 파일을 가리킨다 (이슈 26).
 // /로 시작하는 경로도 컴퓨터의 루트에서 풀려 이 트리 밖 파일을 읽으므로 C:/ 모양과 같이 건너뛴다 (PR 203 리뷰).
-// 펜스와 HTML 주석과 코드 구간 안은 GitHub가 링크로 렌더하지 않는다 (maskUnrendered)
+// 펜스와 코드 구간 안은 GitHub가 링크로 렌더하지 않는다 (maskUnrendered)
 function checkAnchors(r, text, file) {
   const self = path.resolve(file);
   const dir = path.dirname(self);

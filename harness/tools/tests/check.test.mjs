@@ -352,51 +352,19 @@ test('g1 doc 통과. 드라이브 글자 없는 절대경로의 절 주소는 �
   assert.equal(r.code, 0);
 });
 
-// PR 203 리뷰. GitHub 화면에 없는 것은 앵커도 링크도 아니다. HTML 주석은 사라지고 백틱 구간은
-// 코드 글자다. 기대값은 GitHub 렌더 API(gfm) HTML에서 옮겼다(2026-09-25). 그 API는 제목 id를
-// 내주지 않아서 제목 요소가 생기는지와 링크가 a 요소인지만 옮겼다
-
-test('anchorSet. HTML 주석 안의 a id는 앵커가 아니다', () => {
-  // 렌더 HTML <p>x  y</p>
-  assert.deepEqual([...anchorSet('x <!-- <a id="c"></a> --> y\n')], []);
-});
-
-test('anchorSet. 여러 줄 주석 안의 # 줄은 제목이 아니다', () => {
-  // 렌더 HTML의 h2는 보이는 제목 하나다
-  assert.deepEqual([...anchorSet('<!--\n## 숨은 제목\n-->\n\n## 보이는 제목\n')], ['보이는-제목']);
-});
+// PR 203 리뷰. GitHub 화면에서 백틱 구간은 코드 글자라 앵커도 링크도 아니다. HTML 주석은
+// 이슈 202 범위 밖이라 가리지 않는다. 기대값은 GitHub 렌더 API(gfm) HTML에서 옮겼다(2026-09-25).
+// 그 API는 제목 id를 내주지 않아서 코드 요소와 a 요소가 생기는지만 옮겼다
 
 test('anchorSet. 코드 구간 안의 a id는 앵커가 아니다', () => {
   // 렌더 HTML <code>&lt;a id="d"&gt;&lt;/a&gt;</code>
   assert.deepEqual([...anchorSet('`<a id="d"></a>` 설명\n')], []);
 });
 
-test('anchorSet. 코드 구간 안의 <!--는 주석을 열지 않는다', () => {
-  // 주석으로 읽으면 뒤가 다 숨는다. 렌더 HTML에는 <code>&lt;!--</code>와 h2 다음이 다 있다
-  assert.deepEqual([...anchorSet('`<!--` 로 연다\n\n## 다음\n')], ['다음']);
-});
-
-test('anchorSet. 문단 안의 <!--는 빈 줄을 넘어 닫히지 않는다', () => {
-  // 렌더 HTML <p>주석은 &lt;!-- 로 연다</p> 뒤에 h2 다음. 문단이 끝나면 글자다
-  assert.deepEqual([...anchorSet('주석은 <!-- 로 연다\n\n## 다음\n\n닫는 표시는 --> 다\n')], ['다음']);
-});
-
-test('anchorSet. 줄 첫머리에서 열고 닫지 않은 주석은 끝까지 숨긴다', () => {
-  // 렌더 HTML은 h2 앞 하나뿐이다
-  assert.deepEqual([...anchorSet('## 앞\n\n<!--\n## 뒤\n')], ['앞']);
-});
-
 test('anchorSet. 제목 안의 코드 글자는 주소에 들어간다', () => {
   // 코드 구간을 가린 줄로 주소를 만들면 빠진다. 저장소에 이런 제목이 없어 nodejs/node
   // doc/api/path.md 69행에서 옮겼다. 9800c29 렌더 id user-content-pathbasenamepath-suffix
   assert.deepEqual([...anchorSet('## `path.basename(path[, suffix])`\n')], ['pathbasenamepath-suffix']);
-});
-
-test('g1 doc 실패. 주석 안에만 있는 a id를 가리킨다', () => {
-  // 고치기 전에는 통과했다. GitHub에서는 갈 곳이 없는 링크다
-  const r = run(() => g1(anchorPair('[공통](target.md#common)', '<!-- <a id="common"></a> -->\n\n## 공통\n'), { type: 'doc' }));
-  assert.equal(r.code, 1);
-  assert.match(r.out, /\[link\.anchor\] +\d+ +절 주소가 대상 파일에 없다: target\.md#common$/m);
 });
 
 test('g1 doc 통과. 백틱 두 개 코드 구간 안의 링크 모양은 링크가 아니다', () => {
@@ -412,14 +380,6 @@ test('g1 doc 실패. 역슬래시로 푼 백틱 사이의 링크는 진짜 링�
   assert.match(r.out, /\[link\.anchor\] +\d+ +절 주소가 대상 파일에 없다: #없는-절$/m);
 });
 
-test('g1 doc 실패. 코드 구간 속 <!--와 -->는 그 사이 링크를 주석으로 가리지 않는다', () => {
-  // 렌더 HTML <code>&lt;!--</code> <a href="#없는-절">x</a> <code>--&gt;</code>.
-  // 주석을 먼저 찾으면 링크가 가려진다. 앞에서 먼저 열린 코드 구간이 이긴다
-  const r = run(() => g1(anchorPair('`<!--` [x](#없는-절) `-->`'), { type: 'doc' }));
-  assert.equal(r.code, 1);
-  assert.match(r.out, /\[link\.anchor\] +\d+ +절 주소가 대상 파일에 없다: #없는-절$/m);
-});
-
 test('g1 doc 실패. 표 칸의 홀로 선 백틱은 다음 행의 백틱과 코드 구간을 이루지 않는다', () => {
   // 렌더 HTML에서 첫 행의 백틱은 글자이고 둘째 행의 링크는 a 요소다. 코드 구간을 줄을 넘어
   // 찾으면 두 백틱 사이의 링크가 가려져 깨진 링크를 놓친다. 그래서 한 줄 안에서만 찾는다
@@ -430,14 +390,6 @@ test('g1 doc 실패. 표 칸의 홀로 선 백틱은 다음 행의 백틱과 코
   const r = run(() => g1(f, { type: 'doc' }));
   assert.equal(r.code, 1);
   assert.match(r.out, /\[link\.anchor\] +\d+ +절 주소가 대상 파일에 없다: #없는-절$/m);
-});
-
-test('g1 doc 실패. 여러 줄 주석 뒤의 실패 줄 번호는 원문 줄 번호다', () => {
-  // 렌더 HTML에서 주석은 사라지고 넷째 줄의 링크는 a 요소다. 가린 뒤에도 줄 수가 그대로여야 한다.
-  // 골든의 본문이다. 줄이 6행이라 링크는 9행이다
-  const r = run(() => g1(anchorPair('<!--\n메모\n-->\n[x](#없는-절)'), { type: 'doc' }));
-  assert.equal(r.code, 1);
-  assert.match(r.out, /\[link\.anchor\] +9 +절 주소가 대상 파일에 없다: #없는-절$/m);
 });
 
 // ---------- g1 api, code ----------
