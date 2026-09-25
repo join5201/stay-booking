@@ -83,6 +83,7 @@
 | 2026-09-11 | 확정 시 선점에서 판매로 이동 | HELD에서 CONFIRMED로 바뀔 때 예약한 날짜마다 그 수량만큼 heldCount가 줄고 soldCount가 는다. 두 수량 변경과 예약 상태 변경은 같은 트랜잭션에서 함께 한다 | 질문과 답변 7번. 06-2 4절 확정 경로 commit ×N | 06-4 1-1 A3 확정 이동 | 중 | O |
 | 2026-09-11 | 일부 날짜 취소는 현재 범위 밖 | 연박 예약의 일부 날짜만 취소하는 기능은 현재 범위에서 지원하지 않는다. 예약 전체 취소만 가능하고 일부 날짜 환불 규칙은 요구사항에 넣지 않는다. 확정 제외가 아니라 보류다 | 질문과 답변 8번. 02 기능 목록 129행(보류, 미확정), 11 명세 P05(제안값) | 02 기능 목록 129행 | 하 | O |
 | 2026-09-11 | CodeRabbit path_filters는 minimatch다 | 공식 문서가 path_filters에 minimatch를 쓴다고 적는다. 그래서 어느 파일이 막히는지를 봇에 물어보지 않고 같은 라이브러리로 로컬에서 잴 수 있다. 저장소 파일 목록에 패턴을 걸어 막히는 것과 남는 것을 세면 된다. 포함 패턴과 제외 패턴이 섞였을 때 어느 것이 이기는지는 문서에 없다. 제외만 쓰면 순서와 무관하다 | https://docs.coderabbit.ai/guides/review-instructions 와 실측 | harness/docs/10-16 6-1절 | 중 | X |
+| 2026-09-25 | 권한 모드의 기본값과 ask | defaultMode를 비워 두면 기본값을 따르고, 그 기본값은 Pro, Max, Team 요금제의 터미널과 VS Code 세션에서 auto다. Enterprise와 API 키는 default다. auto에서는 분류 모델이 승인하고 작업 중인 저장소로의 push와 PR 생성이 묻지 않고 실행된다. 프로젝트 settings.json의 defaultMode는 사용자 설정보다 앞서고 데스크톱 앱도 새 로컬 세션에 쓴다. 다만 프로젝트 설정에 적은 auto와 bypassPermissions는 먹지 않는다. 명시한 ask 규칙은 auto에서도 묻고, 규칙은 deny, ask, allow 순으로 평가된다. 2026-09-10의 10-19 2절 실측(비워 두면 매번 묻는다)과 다르다 | https://code.claude.com/docs/en/permission-modes 와 https://code.claude.com/docs/en/permissions (2026-09-25 확인). 같은 날 데스크톱 앱 세션 하나가 auto로 돈 것도 확인했다 | harness/docs/10-15 3절 | 중 | X |
 
 ## 질문과 답변 (2026-09-11 신설)
 
