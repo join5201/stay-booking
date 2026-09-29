@@ -14,17 +14,17 @@
 | 게스트 | 예약과 조회, Mock 결제, 취소와 전액 환불 |
 | 호스트 | 숙소와 객실 등록, 날짜별 재고와 요금 관리 |
 | 운영자 | 자동 적용 할인(프로모션) 등록과 수정 |
-| 시스템 | 결제 승인 시 확정, 시한 초과나 3회 실패 시 만료 |
+| 시스템 | 결제 승인 시 확정, 시한 초과나 결제 3회 실패 시 만료 |
 
 범위는 로컬 개발과 검증, EC2 한 대 배포까지다. 무중단 운영과 지표 수집은 넣지 않고, 배포는 2026-09-25 기준 계획 단계라 AWS 자원은 아직 없다.
 
 로그인 대신 개발용 요청 헤더 `X-Dev-Actor-Id`로 사용자를 정하고, 결제는 실제 대행사 대신 모의(Mock) 결제를 쓴다.
 
-예시 데이터를 넣고 찍은 게스트 결제 화면이다. 예약하면 객실을 기본 10분 동안 잡아 두고(선점), 그 안에 결제가 승인돼야 확정된다. 할인은 운영자가 등록한 프로모션이 자동으로 붙은 것이다.
+예시 데이터를 넣고 찍은 게스트 결제 화면이다. 오션뷰 더블 객실을 10월 9일부터 2박 예약한 직후다. 예약하면 객실을 기본 10분 동안 잡아 두고(선점), 그 안에 결제가 승인돼야 확정된다. 할인은 운영자가 등록한 프로모션이 자동으로 붙은 것이다.
 
 ![게스트 결제 화면](.github/readme/guest-pay.png)
 
-같은 객실 타입의 호스트 재고 달력이다. 10월 9일과 10일은 3실 중 1실이 위 예약으로 선점되고 1실이 판매되어 1실이 남았다.
+오션뷰 더블의 호스트 재고 달력이다. 10월 9일과 10일은 3실 중 1실이 위 예약으로 선점되고 1실이 판매되어 1실이 남았다.
 
 ![호스트 재고 달력](.github/readme/host-inventory.png)
 
@@ -54,13 +54,13 @@ flowchart LR
 
 - 문제: 마지막 객실 하나에 두 명이 동시에 예약하면 둘 다 남은 수량 1을 읽고 둘 다 성공할 수 있다.
 - 방법: 예약할 날짜의 재고 행을 날짜 순서로 잠근 뒤(비관적 락, SELECT ... FOR UPDATE) 수량을 줄인다. 늦게 온 요청은 남은 수량 0을 읽고 409 INVENTORY_UNAVAILABLE을 받는다. 연박 중 하루라도 모자라면 어느 날짜도 잡지 않는다.
-- 확인: [BookingApiTest](backend/src/test/java/com/o2o/booking/api/BookingApiTest.java) K19. 두 요청을 동시에 보내 하나만 201을 받는다.
+- 확인: [BookingApiTest](backend/src/test/java/com/o2o/booking/api/BookingApiTest.java)의 K19로 시작하는 테스트. 두 요청을 동시에 보내 하나만 201을 받는다.
 
 ### 같은 요청 재전송
 
 - 문제: 응답을 못 받은 클라이언트가 같은 예약 요청을 다시 보내면 예약이 두 번 생길 수 있다.
 - 방법: 예약, 결제 요청, 취소는 요청마다 고유 키를 담는 Idempotency-Key 헤더를 필수로 받는다. 같은 키로 같은 내용이 다시 오면 처리하지 않고 첫 응답을 돌려주고, 다른 내용이면 409 IDEMPOTENCY_KEY_REUSED다.
-- 확인: [BookingApiTest](backend/src/test/java/com/o2o/booking/api/BookingApiTest.java) K15. 같은 키로 다시 보내면 같은 응답이 오고 재고 선점 수가 늘지 않는다.
+- 확인: [BookingApiTest](backend/src/test/java/com/o2o/booking/api/BookingApiTest.java)의 K15로 시작하는 테스트. 같은 키로 다시 보내면 같은 응답이 오고 재고 선점 수가 늘지 않는다.
 
 ### 결제 승인과 만료
 
@@ -88,7 +88,7 @@ Claude Code가 만들면, 만든 대화를 모르는 Codex 새 작업 둘이 기
 ```
 # 백엔드. 저장소 루트에서
 cp backend/env.example backend/.env
-# backend/.env에 O2O_MYSQL_ROOT_PASSWORD, O2O_MYSQL_USER, O2O_MYSQL_PASSWORD를 채운 뒤
+# backend/.env의 O2O_MYSQL_ROOT_PASSWORD, O2O_MYSQL_USER, O2O_MYSQL_PASSWORD를 원하는 값으로 채운 뒤
 docker compose -f backend/docker-compose.yml up -d
 cd backend
 JAVA_HOME=<JDK 21 경로> ./gradlew bootRun
@@ -109,7 +109,7 @@ Mock 결제의 기본값은 승인이다. 실행이 실패할 때의 출력과 �
 |---|---|---|
 | 백엔드 | `./gradlew test` | 460건, 실패 0 |
 | 프론트 단위 | `npm run test` | 230건 통과 |
-| 프론트 검사 | `npm run typecheck`, `lint`, `build` | 오류 0 |
+| 프론트 검사 | `npm run typecheck`, `npm run lint`, `npm run build` | 오류 0 |
 | E2E | `npm run test:e2e` | 6건 통과 |
 
 마지막 측정은 2026-09-16 main [eb4cc19](https://github.com/join5201/stay-booking/commit/eb4cc19)이고, 그 뒤 소스와 테스트 코드는 바뀌지 않았다. 백엔드 테스트는 bootRun과 같은 DB의 스키마를 지우고 다시 만들어 띄워 둔 앱의 데이터도 지운다. E2E 조건은 [frontend/README.md](frontend/README.md#2-실행)에 있다.
@@ -119,7 +119,7 @@ Mock 결제의 기본값은 승인이다. 실행이 실패할 때의 출력과 �
 | 문서 | 내용 |
 |---|---|
 | [설계 요약](document/06-6-o2o-design-digest.md) | 영역 경계, 애그리거트, 책임, 계약의 요약 |
-| [API 명세](document/11-o2o-api-spec.md) | 서비스 API 32개와 Mock API 1개 |
+| [API 명세](document/11-o2o-api-spec.md) | 서비스 API 32개와 Mock 결제 결과를 넣는 로컬 API 1개 |
 | [용어 사전](document/05-3-o2o-glossary.md) | 영역별 용어 정의 |
 | [document/](document/README.md) | 설계 문서 전체와 검토 기록 |
 | [backend/](backend/README.md) | 백엔드 실행, 패키지 구조, 기능별 진행 |
