@@ -35,7 +35,7 @@ flowchart LR
   B["브라우저"] --> N["Next.js<br/>:3000"] -->|"/api/v1"| S["Spring Boot :8080<br/>숙소와 객실<br/>재고와 요금, 프로모션<br/>예약, 결제, 검색"] --> M[("MySQL<br/>:3307")]
 ```
 
-브라우저는 Next.js만 부르고, /api/v1 아래 요청은 Next.js가 백엔드로 넘긴다. 백엔드는 Spring Boot 애플리케이션 하나이고 MySQL은 Docker 컨테이너로 띄운다.
+브라우저는 3000번 포트의 Next.js만 부르고, /api/v1 아래 요청은 Next.js가 8080번 포트의 백엔드로 넘긴다. 백엔드는 Spring Boot 애플리케이션 하나이고 MySQL은 Docker 컨테이너로 3307번 포트에 띄운다.
 
 설계에서 나눈 업무 영역(바운디드 컨텍스트)마다 패키지 하나를 둔다. 숙소와 객실(catalog), 재고와 요금(inventory), 프로모션(promotion), 예약(booking), 결제(payment), 검색(search)이고 검색은 다른 영역의 데이터를 읽기만 한다. 층 규칙은 [backend/README.md](backend/README.md)에 있다.
 
@@ -75,7 +75,7 @@ flowchart LR
   G["만든다<br/>Claude Code"] --> A["기능 평가<br/>Codex"] & Q["품질 평가<br/>Codex"] --> D["정한다<br/>사람"] --> R["고친다<br/>Claude Code"]
 ```
 
-평가는 만든 대화를 모르는 Codex 새 작업 둘이 따로 한다. 두 도구는 API로 이어져 있지 않고, 파일 전달과 반영 결정과 완료 확정은 사람이 한다.
+Claude Code가 만들면, 만든 대화를 모르는 Codex 새 작업 둘이 기능과 품질을 따로 평가한다. 사람이 반영할 것을 정하면 Claude Code가 고친다. 두 도구는 API로 이어져 있지 않아 파일 전달과 완료 확정도 사람이 한다.
 
 스크립트가 평가 전에는 산출물 형식을, 결정 뒤에는 지적마다 결정이 있고 거부한 지적에 이유가 있는지를 검사한다. 백엔드는 기능 하나를 코드, 테스트, 검증까지 끝낸 뒤 다음 기능으로 넘어갔다.
 
