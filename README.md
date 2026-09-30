@@ -30,10 +30,9 @@
 
 ## 구조
 
-```mermaid
-flowchart LR
-  B["브라우저"] --> N["Next.js<br/>:3000"] -->|"/api/v1"| S["Spring Boot :8080<br/>숙소와 객실<br/>재고와 요금, 프로모션<br/>예약, 결제, 검색"] --> M[("MySQL<br/>:3307")]
-```
+![배포 목표 구성도](.github/readme/architecture.png)
+
+배포 목표 구성이다. EC2 한 대에 Nginx, Next.js, Spring Boot와 로그 수집(Alloy, Loki, Grafana)을 Docker Compose로 올리고 DB는 RDS를 쓴다. 2026-09-30 기준 AWS 자원은 아직 없고, 지금은 아래처럼 PC에서 돈다.
 
 브라우저는 3000번 포트의 Next.js만 부르고, /api/v1 아래 요청은 Next.js가 8080번 포트의 백엔드로 넘긴다. 백엔드는 Spring Boot 애플리케이션 하나이고 MySQL은 Docker 컨테이너로 3307번 포트에 띄운다.
 
