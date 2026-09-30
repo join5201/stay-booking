@@ -29,15 +29,15 @@
 //
 // 통과 출력 예시
 //   PASS g1 harness/out/task-S8-R1/candidate.md
-//     검사 10건 통과
-//       doc.date-created doc.date-updated doc.no-emdash doc.no-middot doc.no-bold doc.table-cells
+//     검사 9건 통과
+//       doc.date-created doc.date-updated doc.no-emdash doc.no-middot doc.table-cells
 //       link.exists link.stale link.anchor doc.end-sentence
 //   이름을 다 적는 이유는 그 명령이 무엇을 보는지 실행 한 번으로 알기 위해서다 (10-14 2-3절 A2).
 //
 // 범위 밖 출력 예시
 //   PASS g1 harness/docs/10-9-o2o-harness-answer-format-plan.md
 //     검사 9건 통과
-//       doc.date-created doc.date-updated doc.no-emdash doc.no-middot doc.no-bold doc.table-cells
+//       doc.date-created doc.date-updated doc.no-emdash doc.no-middot doc.table-cells
 //       link.exists link.stale link.anchor
 //     범위 밖 1건
 //       doc.end-sentence  하네스 문서는 Step 산출물이 아니라 고정 종료 문장이 없다 (10-14 3절)
@@ -708,18 +708,14 @@ function checkLinks(r, text, file) {
 // 같은 금지 기호를 두 벌 구현하면 한쪽만 고치는 사고가 난다
 function checkStyle(r, text, prefix = 'doc') {
   const lines = stripFences(text);
-  const seen = { emdash: true, middot: true, bold: true };
+  // 볼드는 2026-09-30부터 검사하지 않는다. 핵심 문장과 판정에 쓴다(CLAUDE.md W2, 이슈 221)
+  const seen = { emdash: true, middot: true };
   lines.forEach((line, i) => {
     if (line.includes(EM_DASH)) { seen.emdash = false; r.check(`${prefix}.no-emdash`, i + 1, false, '긴 줄표 사용 (F9)'); }
     if (line.includes(MIDDLE_DOT)) { seen.middot = false; r.check(`${prefix}.no-middot`, i + 1, false, '가운뎃점 사용 (F9)'); }
-    if (!/^\s*#/.test(line)) {
-      const b = line.match(/\*\*[^*\n]+\*\*/);
-      if (b) { seen.bold = false; r.check(`${prefix}.no-bold`, i + 1, false, `제목 밖 볼드 ${b[0]} (F8)`); }
-    }
   });
   if (seen.emdash) r.check(`${prefix}.no-emdash`, 0, true, '');
   if (seen.middot) r.check(`${prefix}.no-middot`, 0, true, '');
-  if (seen.bold) r.check(`${prefix}.no-bold`, 0, true, '');
 }
 
 // 표 행이 머리글과 같은 칸 수인가 (이슈 93). 원본이 표여도 렌더링이 표가 아니면 D3(F4)을 못 지킨다.

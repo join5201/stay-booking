@@ -15,7 +15,7 @@
 //   디렉터리를 넘기면 Node 24가 모듈로 해석해서 실패한다. 파일을 직접 넘긴다.
 //
 // 실패 시 출력 예시
-//   not ok 5 - g1 doc 볼드
+//   not ok 5 - g1 doc 긴 줄표
 //     error: 'Expected values to be strictly equal: 0 !== 1'
 
 import { test } from 'node:test';
@@ -229,7 +229,6 @@ test('g1 doc 통과. 펜스 안 기호는 제외된다', () => {
 const docCases = [
   ['최초 작성 줄 없음', (t) => t.replace(/^최초 작성:.*$/m, ''), /doc\.date-created/],
   ['최종 갱신 줄 없음', (t) => t.replace(/^최종 갱신:.*$/m, ''), /doc\.date-updated/],
-  ['제목 밖 볼드', (t) => t.replace('본문이다.', '**본문이다.**'), /doc\.no-bold/],
   ['긴 줄표', (t) => t.replace('본문이다.', '본문이다 — 그렇다.'), /doc\.no-emdash/],
   ['가운뎃점', (t) => t.replace('본문이다.', '본문 · 이다.'), /doc\.no-middot/],
   ['종료 문장 없음', (t) => t.replace('Step 9 산출물 제출. 다음 지시를 기다린다.', '끝.'), /doc\.end-sentence/],
@@ -614,11 +613,11 @@ test('answer 실패. 첫 줄이 결론 문장이 아니라 제목이다', () => 
   assert.match(r.out, /answer\.lead/);
 });
 
-test('answer 실패. 제목 밖 볼드', () => {
+test('answer 통과. 제목 밖 볼드는 2026-09-30부터 허용', () => {
   const f = prep('answer-a-pass.md', (t) => t.replace('## 결과', '**중요**\n\n## 결과'));
   const r = run(() => answer(f));
-  assert.equal(r.code, 1);
-  assert.match(r.out, /answer\.no-bold/);
+  assert.equal(r.code, 0);
+  assert.doesNotMatch(r.out, /no-bold/);
 });
 
 test('answer 지정 등급이 자동 판정을 이긴다. C로 지정하면 결과 절을 안 본다', () => {
