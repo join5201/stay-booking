@@ -1,6 +1,7 @@
 package com.o2o.inventory.infrastructure;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,4 +34,11 @@ public interface DailyRateJpaRepository extends JpaRepository<DailyRate, String>
     List<DailyRate> findRange(@Param("roomTypeId") String roomTypeId,
                               @Param("from") LocalDate from,
                               @Param("to") LocalDate toExclusive);
+
+    // SEARCH-01. findRange를 객실 타입 여러 개에. 이슈 223
+    @Query("select r from DailyRate r where r.roomTypeId in :roomTypeIds "
+            + "and r.stayDate >= :from and r.stayDate < :to order by r.roomTypeId, r.stayDate")
+    List<DailyRate> findRangeIn(@Param("roomTypeIds") Collection<String> roomTypeIds,
+                                @Param("from") LocalDate from,
+                                @Param("to") LocalDate toExclusive);
 }
