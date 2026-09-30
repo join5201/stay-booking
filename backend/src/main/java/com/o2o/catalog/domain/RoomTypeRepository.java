@@ -1,5 +1,6 @@
 package com.o2o.catalog.domain;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,4 +30,10 @@ public interface RoomTypeRepository {
      * 기존 메서드는 바꾸지 않았다.
      */
     List<RoomType> findAllByPropertyId(PropertyId propertyId);
+
+    /**
+     * SEARCH-01. 지역의 숙소 전부의 객실 타입을 한 번에 읽는다. 숙소마다 부르면 쿼리가 숙소 수만큼
+     * 나간다(이슈 223). 정렬은 숙소 id, 객실 타입 id 오름차순이다. 빈 목록이면 조회 없이 빈 목록이다.
+     */
+    List<RoomType> findAllByPropertyIdIn(Collection<PropertyId> propertyIds);
 }
