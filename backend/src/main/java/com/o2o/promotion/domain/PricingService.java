@@ -71,7 +71,7 @@ public final class PricingService {
         return evaluate(roomTypeId, property.region().code(), stay);
     }
 
-    /** 검색이 객실마다 카탈로그를 다시 읽지 않도록 지역 코드를 받는 경로다(06-1 R8 읽기 모델) */
+    /** 지역 코드를 이미 아는 호출자의 경로다. 요금과 프로모션은 여기서 읽는다 */
     public PricingResult evaluate(RoomTypeId roomTypeId, String regionCode, StayRange stay) {
         List<DailyRate> rates = dailyRateRepository.findRange(roomTypeId, stay.checkIn(),
                 stay.checkOut());
