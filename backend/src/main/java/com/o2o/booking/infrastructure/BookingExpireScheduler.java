@@ -22,9 +22,11 @@ public class BookingExpireScheduler {
     private static final Logger log = LoggerFactory.getLogger(BookingExpireScheduler.class);
 
     private final ExpireDueBookings expireDueBookings;
+    private final BookingMetrics metrics;
 
-    public BookingExpireScheduler(ExpireDueBookings expireDueBookings) {
+    public BookingExpireScheduler(ExpireDueBookings expireDueBookings, BookingMetrics metrics) {
         this.expireDueBookings = expireDueBookings;
+        this.metrics = metrics;
     }
 
     // 건별 실패는 runOnce가 격리한다. 여기서 잡는 것은 due 목록 조회 같은 바퀴 전체의 실패다
@@ -33,6 +35,7 @@ public class BookingExpireScheduler {
         try {
             expireDueBookings.runOnce();
         } catch (RuntimeException e) {
+            metrics.expireScanFailed();
             log.error("TTL 만료 스캔 실패. 다음 주기에 다시 돈다", e);
         }
     }

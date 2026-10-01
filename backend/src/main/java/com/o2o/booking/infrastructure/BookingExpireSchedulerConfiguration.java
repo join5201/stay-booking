@@ -25,7 +25,8 @@ import com.o2o.booking.application.ExpireDueBookings;
 public class BookingExpireSchedulerConfiguration {
 
     @Bean
-    public BookingExpireScheduler bookingExpireScheduler(ExpireDueBookings expireDueBookings) {
-        return new BookingExpireScheduler(expireDueBookings);
+    public BookingExpireScheduler bookingExpireScheduler(ExpireDueBookings expireDueBookings,
+                                                         BookingMetrics metrics) {
+        return new BookingExpireScheduler(expireDueBookings, metrics);
     }
 }

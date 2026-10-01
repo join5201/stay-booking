@@ -24,9 +24,11 @@ public class PaymentApprovedAdapter {
     private static final Logger log = LoggerFactory.getLogger(PaymentApprovedAdapter.class);
 
     private final PaymentOutcomeService outcomeService;
+    private final BookingMetrics metrics;
 
-    public PaymentApprovedAdapter(PaymentOutcomeService outcomeService) {
+    public PaymentApprovedAdapter(PaymentOutcomeService outcomeService, BookingMetrics metrics) {
         this.outcomeService = outcomeService;
+        this.metrics = metrics;
     }
 
     // phase 기본값이 AFTER_COMMIT이다. 발행이 트랜잭션 밖이면 오지 않는다(fallbackExecution 기본 false)
@@ -35,6 +37,7 @@ public class PaymentApprovedAdapter {
         try {
             outcomeService.onApproved(event);
         } catch (RuntimeException e) {
+            metrics.paymentResultHandlingFailed("approved");
             log.error("결제 승인 처리 실패. T1의 확정 우선이 닫는다. booking={} attempt={}",
                     event.bookingId(), event.paymentAttemptId().value(), e);
         }
