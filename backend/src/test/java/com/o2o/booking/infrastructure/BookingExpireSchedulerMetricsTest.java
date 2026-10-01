@@ -31,4 +31,21 @@ class BookingExpireSchedulerMetricsTest {
 
         assertEquals(1.0, registry.get("o2o.booking.expire.scan.failures").counter().count());
     }
+
+    @Test
+    void 스캔이_끝까지_돌면_실패_지표는_그대로다() {
+        // 위 테스트의 짝(testing.md T1). 무조건 올리는 구현도 위 테스트는 통과한다
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        BookingMetrics metrics = new BookingMetrics(registry);
+        ExpireDueBookings passing = new ExpireDueBookings(null, null, null, 1) {
+            @Override
+            public Summary runOnce() {
+                return new Summary(0, 0, 0, 0, 0);
+            }
+        };
+
+        new BookingExpireScheduler(passing, metrics).scan();
+
+        assertEquals(0.0, registry.get("o2o.booking.expire.scan.failures").counter().count());
+    }
 }
