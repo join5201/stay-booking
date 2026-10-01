@@ -1,7 +1,11 @@
 # 프론트 이미지 (이슈 230)
 #
 # 왜 이 파일이 필요한가: 프론트는 지금까지 개발 PC에서 npm run build 뒤 next start로만 떴다.
-# 이 파일이 빌드 결과(.next)와 실행에 필요한 패키지만 든 상자를 만든다. 소스와 개발용 패키지는 남지 않는다.
+# 이 파일이 빌드 결과 중 실행에 필요한 파일만 든 상자를 만든다. 소스와 개발용 패키지는 남지 않는다.
+#
+# next.config.ts의 output: "standalone"을 쓴다. 빌드가 서버 파일 하나(server.js)와 그것이 실제로
+# 읽는 패키지 파일만 .next/standalone에 모은다. 패키지를 통째로 다시 설치하던 때 904MB,
+# 이 방식으로 395MB였다(2026-10-01 실측). 정적 파일(.next/static)은 그 폴더에 안 들어가 따로 옮긴다.
 #
 # 백엔드 주소는 구울 때 정해진다. next.config.ts의 rewrites가 next build 때 계산돼
 # .next/routes-manifest.json에 굳는다. 띄울 때 BACKEND_URL을 줘도 바뀌지 않는다
@@ -36,17 +40,15 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# 실행에 필요한 패키지만 다시 설치한다. 테스트 도구와 타입 검사 도구는 빠진다
-COPY package.json package-lock.json ./
-# 내려받기 캐시(116MB, 2026-10-01 실측)는 설치가 끝나면 쓸 일이 없어 같은 층에서 비운다
-RUN npm ci --omit=dev && npm cache clean --force
+# server.js가 듣는 주소와 포트. 컨테이너 밖에서 들어오는 요청을 받으려면 모든 주소에서 듣는다
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
 
-COPY next.config.ts ./
-COPY --from=build /app/.next ./.next
+COPY --from=build /app/.next/standalone ./
+COPY --from=build /app/.next/static ./.next/static
 
 # node 이미지에 들어 있는 일반 계정. root로 돌리지 않는다
 USER node
 
 EXPOSE 3000
-# 컨테이너 밖에서 들어오는 요청을 받으려면 모든 주소에서 듣는다
-CMD ["node_modules/.bin/next", "start", "-H", "0.0.0.0", "-p", "3000"]
+CMD ["node", "server.js"]
