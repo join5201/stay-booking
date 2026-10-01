@@ -122,10 +122,6 @@ Mock 결제의 기본값은 승인입니다. 실행이 실패할 때의 출력�
 | [frontend/](frontend/README.md) | 화면 구성, 실행, E2E 조건 |
 | [harness/](harness/README.md) | AI 개발 절차의 양식, 평가 기준, 검사 스크립트 |
 
-## 라이선스
-
-라이선스는 지정하지 않았습니다. 만든 사람은 [join5201](https://github.com/join5201)입니다.
-
 최초 작성: 2026-09-08
 
 최종 갱신: 2026-10-01
