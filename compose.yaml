@@ -1,0 +1,86 @@
+# 앱 셋을 한 번에 띄운다: MySQL, 백엔드, 프론트 (이슈 230)
+#
+# 왜 이 파일이 필요한가: 지금까지는 MySQL 컨테이너, gradlew bootRun, next start를 터미널 셋에서
+# 따로 띄웠다. 서버에는 그 터미널이 없다. 이 파일이 셋을 같은 값과 같은 순서로 띄운다.
+# backend/docker-compose.yml은 그대로 둔다. 그쪽은 gradlew test가 쓰는 테스트용 DB(3307)다.
+#
+# 실행 예시 (저장소 루트에서)
+#   docker compose --env-file backend/.env up --wait --build
+#   docker compose --env-file backend/.env ps
+#   docker compose --env-file backend/.env down
+#   화면은 http://localhost:3000, API는 http://localhost:8080
+#
+# E2E를 돌릴 때는 예약 보류 시간을 20초로 줄여 띄운다 (frontend/README.md 2절)
+#   PowerShell:  $env:O2O_BOOKING_HOLD_TTL = 'PT20S'
+#   bash:        export O2O_BOOKING_HOLD_TTL=PT20S
+#
+# 실패 시 출력 예시
+#   required variable O2O_MYSQL_PASSWORD is missing a value: backend/.env를 --env-file로 준다
+#     --env-file을 빼먹었거나 backend/.env가 없다. backend/env.example을 보고 만든다
+#   Bind for 127.0.0.1:8080 failed: port is already allocated
+#     PC에서 bootRun이나 next start가 떠 있다. 끄고 다시 실행한다
+#   container o2o-backend-1 is unhealthy
+#     docker compose --env-file backend/.env logs backend 로 기동 로그를 본다
+#
+# 비밀번호는 이 파일에 적지 않는다. backend/.env의 세 값을 --env-file로 받는다.
+# 볼륨을 두지 않는다. down 하면 데이터도 같이 사라진다. 서버의 DB는 이 파일의 mysql이 아니라 RDS다.
+
+name: o2o
+
+services:
+  mysql:
+    # 서버의 RDS와 같은 8.4 LTS로 맞춘다
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${O2O_MYSQL_ROOT_PASSWORD:?backend/.env를 --env-file로 준다}
+      MYSQL_DATABASE: o2o
+      MYSQL_USER: ${O2O_MYSQL_USER:?backend/.env를 --env-file로 준다}
+      MYSQL_PASSWORD: ${O2O_MYSQL_PASSWORD:?backend/.env를 --env-file로 준다}
+    healthcheck:
+      # 127.0.0.1로 물어야 초기화 중 임시 서버(소켓만 연다)를 건강하다고 잘못 보지 않는다
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  backend:
+    build: ./backend
+    environment:
+      # 설정 파일의 고정값(127.0.0.1:3307/o2o_catalog_test)을 덮는다. mysql은 위 서비스 이름이다
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/o2o
+      O2O_MYSQL_USER: ${O2O_MYSQL_USER:?backend/.env를 --env-file로 준다}
+      O2O_MYSQL_PASSWORD: ${O2O_MYSQL_PASSWORD:?backend/.env를 --env-file로 준다}
+      # 예약 보류 시간. 설정 키 o2o.booking.hold-ttl. 안 주면 코드 기본값과 같은 10분
+      O2O_BOOKING_HOLD_TTL: ${O2O_BOOKING_HOLD_TTL:-PT10M}
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      # 응답 코드는 보지 않고 응답이 오는지만 본다. 헬스 주소가 아직 없다.
+      # 이슈 228이 /actuator/health를 넣으면 그 주소와 -f로 바꾼다
+      test: ["CMD", "curl", "-s", "-o", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # 프론트가 굽는 때에 굳히는 백엔드 주소. backend는 위 서비스 이름이다 (frontend/Dockerfile 머리)
+        BACKEND_URL: http://backend:8080
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      # node 이미지에 curl이 없어 node로 묻는다
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
