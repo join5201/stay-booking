@@ -30,12 +30,14 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * 관측 3-2(이슈 228). 업무 지표가 커밋된 사실만 세는지.
  *
  * 첫 테스트는 ApprovalLossRecoveryTest(L13)와 같은 길이다. 장애 실험 C1의 축소판이라 지표가 이 길에서
- * 맞아야 실험에서도 맞는다. 컨텍스트를 다른 테스트와 나눠 쓰므로 절대값이 아니라 증가분을 본다.
+ * 맞아야 실험에서도 맞는다. 컨텍스트와 DB를 다른 테스트와 나눠 쓰므로 절대값이 아니라 증가분을 본다.
  */
 @SpringBootTest
 @Import(BookingLifecycleTestConfiguration.class)
@@ -93,13 +95,16 @@ class BookingMetricsTest {
         assertEquals(confirmed, count("o2o.booking.confirmed"));
         assertEquals(resultFailures + 1, count("o2o.booking.payment.result.failures", "result", "approved"));
 
+        // 스캔은 다른 테스트가 남긴 due 예약도 함께 집는다. 그래서 1이 아니라 스캔이 직접 센 수와 맞댄다
         clock.advance(Duration.ofMinutes(10));
-        expireDueBookings.runOnce();
+        ExpireDueBookings.Summary summary = expireDueBookings.runOnce();
 
         assertEquals(BookingStatus.CONFIRMED, fixtures.reload(booking.id()).status());
-        assertEquals(confirmed + 1, count("o2o.booking.confirmed"));
-        assertEquals(expired, count("o2o.booking.expired", "reason", "ttl_expired"));
-        assertEquals(lateRefunds, count("o2o.payment.refunded", "reason", "late_approval"));
+        assertTrue(summary.confirmed() >= 1);
+        assertEquals(confirmed + summary.confirmed(), count("o2o.booking.confirmed"));
+        assertEquals(expired + summary.expired(), count("o2o.booking.expired", "reason", "ttl_expired"));
+        assertTrue(count("o2o.payment.refunded", "reason", "late_approval") - lateRefunds <= summary.expired());
+        assertNull(paymentService.attemptsOf(booking.id().value()).refund());
     }
 
     @Test
