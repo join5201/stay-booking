@@ -69,10 +69,7 @@
 
 ## 개발 방식
 
-```mermaid
-flowchart LR
-  G["만든다<br/>Claude Code"] --> A["기능 평가<br/>Codex"] & Q["품질 평가<br/>Codex"] --> D["정한다<br/>사람"] --> R["고친다<br/>Claude Code"]
-```
+![개발 방식: 만든다, 기능 평가와 품질 평가, 정한다, 고친다](.github/readme/dev-flow.png)
 
 Claude Code가 만들면, 만든 대화를 모르는 Codex 새 작업 둘이 기능과 품질을 따로 평가한다. 사람이 반영할 것을 정하면 Claude Code가 고친다. 두 도구는 API로 이어져 있지 않아 파일 전달과 완료 확정도 사람이 한다.
 
