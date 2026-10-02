@@ -1,0 +1,20 @@
+# 백엔드 이미지를 구울 때 도커에 보내지 않을 것 (이슈 230)
+# 빌드에 필요한 것은 gradlew, gradle/, settings.gradle, build.gradle, src/ 뿐이다
+
+# DB 계정. 이미지와 빌드 캐시에 들어가면 안 된다
+.env
+
+# PC에서 만든 빌드 결과와 캐시. 이미지 안에서 새로 굽는다
+build/
+.gradle/
+bin/
+out/
+
+# 빌드와 무관한 파일
+*.md
+env.example
+docker-compose.yml
+Dockerfile
+.dockerignore
+.idea/
+.vscode/
