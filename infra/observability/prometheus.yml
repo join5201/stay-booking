@@ -1,0 +1,9 @@
+# 백엔드 지표를 15초마다 긁는다 (이슈 236). backend는 루트 compose.yaml의 서비스 이름이다
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: backend
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["backend:8080"]
