@@ -32,8 +32,9 @@ public interface PromotionJpaRepository extends JpaRepository<Promotion, String>
     @Query("select p from Promotion p where p.enabled = :enabled")
     Page<Promotion> findAllByEnabled(@Param("enabled") boolean enabled, Pageable pageable);
 
-    // 11 내부 처리 가격과 프로모션 절 첫 줄. 오늘이 시작 이상 끝 미만이고 enabled=true
-    @Query("select p from Promotion p where p.enabled = true "
+    // 11 내부 처리 가격과 프로모션 절 첫 줄. 오늘이 시작 이상 끝 미만이고 enabled=true.
+    // 지역 목록을 같이 읽는다. 따로 두면 프로모션마다 조회가 하나씩 더 나간다(이슈 223)
+    @Query("select p from Promotion p left join fetch p.condition.regionCodes where p.enabled = true "
             + "and p.condition.campaignStartDate <= :at and p.condition.campaignEndDate > :at "
             + "order by p.id")
     List<Promotion> findEnabledOn(@Param("at") LocalDate at);

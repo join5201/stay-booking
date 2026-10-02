@@ -1,5 +1,6 @@
 package com.o2o.catalog.infrastructure;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,5 +47,15 @@ public class JpaRoomTypeRepository implements RoomTypeRepository {
     @Override
     public List<RoomType> findAllByPropertyId(PropertyId propertyId) {
         return jpaRepository.findAllByPropertyId(propertyId.value());
+    }
+
+    /** SEARCH-01. 여러 숙소를 한 번에. 빈 in ()을 DB에 보내지 않는다. 이슈 223 */
+    @Override
+    public List<RoomType> findAllByPropertyIdIn(Collection<PropertyId> propertyIds) {
+        if (propertyIds.isEmpty()) {
+            return List.of();
+        }
+        return jpaRepository.findAllByPropertyIdIn(
+                propertyIds.stream().map(PropertyId::value).toList());
     }
 }

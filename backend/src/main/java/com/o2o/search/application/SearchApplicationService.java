@@ -20,6 +20,7 @@ import com.o2o.inventory.domain.DailyInventory;
 import com.o2o.inventory.domain.DailyInventoryRepository;
 import com.o2o.inventory.domain.DailyRate;
 import com.o2o.inventory.domain.DailyRateRepository;
+import com.o2o.promotion.domain.ActivePromotions;
 import com.o2o.promotion.domain.OccupancyExceededException;
 import com.o2o.promotion.domain.PriceSnapshot;
 import com.o2o.promotion.domain.PricingService;
@@ -28,6 +29,7 @@ import com.o2o.shared.GuestCount;
 import com.o2o.shared.Money;
 import com.o2o.shared.PageQuery;
 import com.o2o.shared.PageResult;
+import com.o2o.shared.PropertyId;
 import com.o2o.shared.RoomTypeId;
 import com.o2o.shared.SeoulDate;
 
@@ -85,11 +87,38 @@ public class SearchApplicationService {
                                                              GuestCount guestCount,
                                                              PageQuery pageQuery) {
         stay.requireNotBefore(SeoulDate.today(clock));
+        List<Property> properties = propertyRepository.findAllByRegionCode(regionCode);
+
+        // 숙소와 객실마다 읽으면 쿼리가 숙소 수에 비례한다(이슈 223). 숙소, 객실 타입, 재고, 요금,
+        // 프로모션을 한 번씩 읽고 나머지는 메모리에서 묶는다. 포함 조건은 qualify 그대로다
+        Map<PropertyId, List<RoomType>> roomTypesByProperty = new HashMap<>();
+        List<RoomTypeId> candidates = new ArrayList<>();
+        for (RoomType roomType : roomTypeRepository.findAllByPropertyIdIn(
+                properties.stream().map(Property::id).toList())) {
+            roomTypesByProperty.computeIfAbsent(roomType.propertyId(), id -> new ArrayList<>())
+                    .add(roomType);
+            if (guestCount.value() <= roomType.maxOccupancy()) {
+                candidates.add(roomType.id());
+            }
+        }
+        Map<RoomTypeId, List<DailyInventory>> inventories = new HashMap<>();
+        for (DailyInventory inventory : inventoryRepository.findRangeIn(candidates, stay.checkIn(),
+                stay.checkOut())) {
+            inventories.computeIfAbsent(inventory.roomTypeId(), id -> new ArrayList<>()).add(inventory);
+        }
+        Map<RoomTypeId, List<DailyRate>> rates = new HashMap<>();
+        for (DailyRate rate : rateRepository.findRangeIn(candidates, stay.checkIn(), stay.checkOut())) {
+            rates.computeIfAbsent(rate.roomTypeId(), id -> new ArrayList<>()).add(rate);
+        }
+        ActivePromotions promotions = candidates.isEmpty() ? null : pricingService.activePromotions();
+
         List<PropertySearchResult> matched = new ArrayList<>();
-        for (Property property : propertyRepository.findAllByRegionCode(regionCode)) {
+        for (Property property : properties) {
             List<RoomSearchResult> rooms = new ArrayList<>();
-            for (RoomType roomType : roomTypeRepository.findAllByPropertyId(property.id())) {
-                RoomSearchResult room = qualify(roomType, regionCode, stay, guestCount);
+            for (RoomType roomType : roomTypesByProperty.getOrDefault(property.id(), List.of())) {
+                RoomSearchResult room = qualify(roomType, regionCode, stay, guestCount,
+                        inventories.getOrDefault(roomType.id(), List.of()),
+                        rates.getOrDefault(roomType.id(), List.of()), promotions);
                 if (room != null) {
                     rooms.add(room);
                 }
@@ -102,14 +131,16 @@ public class SearchApplicationService {
         return page(matched, pageQuery);
     }
 
-    /** 네 조건 중 하나라도 어긋나면 null이다. 조건의 순서는 11 SEARCH-01 처리 규칙 첫 줄 그대로다 */
+    /**
+     * 네 조건 중 하나라도 어긋나면 null이다. 조건의 순서는 11 SEARCH-01 처리 규칙 첫 줄 그대로다.
+     * 재고와 요금은 이 객실 타입의 숙박 기간 행이 날짜 오름차순으로 든 목록이다.
+     */
     private RoomSearchResult qualify(RoomType roomType, String regionCode, StayRange stay,
-                                     GuestCount guestCount) {
+                                     GuestCount guestCount, List<DailyInventory> inventories,
+                                     List<DailyRate> rates, ActivePromotions promotions) {
         if (guestCount.value() > roomType.maxOccupancy()) {
             return null;
         }
-        List<DailyInventory> inventories = inventoryRepository.findRange(
-                roomType.id(), stay.checkIn(), stay.checkOut());
         if (inventories.size() != stay.nights()) {
             return null;
         }
@@ -117,11 +148,11 @@ public class SearchApplicationService {
         if (minAvailable < 1) {
             return null;
         }
-        List<DailyRate> rates = rateRepository.findRange(roomType.id(), stay.checkIn(), stay.checkOut());
         if (rates.size() != stay.nights()) {
             return null;
         }
-        PriceSnapshot price = pricingService.evaluate(roomType.id(), regionCode, stay).snapshot();
+        PriceSnapshot price = pricingService.evaluate(roomType.id(), regionCode, stay, rates,
+                promotions).snapshot();
         return new RoomSearchResult(roomType.id(), roomType.name(), roomType.maxOccupancy(),
                 minAvailable, price.totalAmount());
     }

@@ -8,6 +8,8 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,6 +18,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import com.o2o.shared.RegionRegistry;
 import com.o2o.shared.SeoulDate;
 
+import jakarta.persistence.EntityManagerFactory;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -33,8 +36,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * 테스트의 숙소가 결과에 섞이기 때문이다.
  *
  * 서버가 실제 시계를 쓰므로 날짜는 서울 기준 오늘에서 센다(테스트 규칙 T4, T5).
+ *
+ * Hibernate 통계를 켜는 이유는 검색 한 건의 쿼리 수를 세기 위해서다(이슈 223).
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = "spring.jpa.properties.hibernate.generate_statistics=true")
 class SearchApiTest {
 
     private static final String OPERATOR = "operator_001";
@@ -50,6 +56,9 @@ class SearchApiTest {
 
     @Autowired
     private RegionRegistry regionRegistry;
+
+    @Autowired
+    private EntityManagerFactory entityManagerFactory;
 
     /** 서버와 같은 오늘. 서버가 서울 날짜로 판정하므로 여기도 서울 날짜다(11 명세 35행) */
     private static LocalDate today() {
@@ -369,6 +378,72 @@ class SearchApiTest {
             sum += room.get("totalAmount").asLong();
         }
         assertEquals(324_000, sum, res.body());
+    }
+
+    /**
+     * 이슈 223. 숙소, 객실 타입, 재고, 요금, 프로모션을 한 번씩. 숙소 수에도 켜진 프로모션 수에도
+     * 비례하지 않는다. 프로모션을 직접 켜 두는 이유는 다른 테스트가 남긴 수에 기대지 않기 위해서다
+     */
+    @Test
+    void SEARCH_01_쿼리_수는_숙소_수와_프로모션_수와_관계없이_다섯이다() throws Exception {
+        String one = 새_지역();
+        요금과_재고(객실_타입(숙소(one), "스탠다드", 2), 2, 100_000, 1);
+        String three = 새_지역();
+        for (int i = 0; i < 3; i++) {
+            String propertyId = 숙소(three);
+            요금과_재고(객실_타입(propertyId, "스탠다드", 2), 2, 100_000, 1);
+            요금과_재고(객실_타입(propertyId, "디럭스", 2), 2, 150_000, 1);
+        }
+        프로모션(one, 10);
+        프로모션(three, 20);
+
+        long oneCount = 검색_쿼리_수(one);
+        long threeCount = 검색_쿼리_수(three);
+
+        assertEquals(5, oneCount);
+        assertEquals(5, threeCount);
+    }
+
+    private long 검색_쿼리_수(String region) throws Exception {
+        Statistics statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        statistics.clear();
+        HttpResponse<String> res = get(검색(region, 2, 2));
+        assertEquals(200, res.statusCode(), res.body());
+        return statistics.getPrepareStatementCount();
+    }
+
+    /** 이슈 223. 검색은 읽어 둔 요금으로 계산한다. SEARCH-03 견적이 DB에서 읽어 낸 값과 같아야 한다 */
+    @Test
+    void SEARCH_01_객실_가격은_SEARCH_03_견적의_totalAmount와_같다() throws Exception {
+        String discounted = 새_지역();
+        String plain = 새_지역();
+        for (String region : new String[] {discounted, plain}) {
+            String propertyId = 숙소(region);
+            for (long base : new long[] {80_000, 123_457}) {
+                String roomTypeId = 객실_타입(propertyId, "객실 " + base, 2);
+                for (int i = 0; i < 3; i++) {
+                    요금(roomTypeId, checkIn().plusDays(i), base + i * 10_001);
+                    재고(roomTypeId, checkIn().plusDays(i), 1);
+                }
+            }
+        }
+        프로모션(discounted, 15);
+
+        for (String region : new String[] {discounted, plain}) {
+            HttpResponse<String> res = get(검색(region, 3, 2));
+            assertEquals(200, res.statusCode(), res.body());
+            JsonNode rooms = JSON.readTree(res.body()).get("items").get(0).get("availableRoomTypes");
+            assertEquals(2, rooms.size(), res.body());
+            for (JsonNode room : rooms) {
+                HttpResponse<String> quote = get(견적(room.get("roomTypeId").asString(), 3, 2));
+                assertEquals(200, quote.statusCode(), quote.body());
+                JsonNode price = JSON.readTree(quote.body()).get("price");
+                assertEquals(price.get("totalAmount").asLong(), room.get("totalAmount").asLong(),
+                        region + " " + res.body());
+                assertEquals(region.equals(discounted), price.get("discountTotalAmount").asLong() > 0,
+                        quote.body());
+            }
+        }
     }
 
     @Test
