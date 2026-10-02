@@ -64,6 +64,17 @@ public class JpaDailyInventoryRepository implements DailyInventoryRepository {
         return jpaRepository.findRange(roomTypeId.value(), from, toExclusive);
     }
 
+    /** SEARCH-01. 빈 in ()을 DB에 보내지 않는다. 이슈 223 */
+    @Override
+    public List<DailyInventory> findRangeIn(Collection<RoomTypeId> roomTypeIds, LocalDate from,
+                                            LocalDate toExclusive) {
+        if (roomTypeIds.isEmpty()) {
+            return List.of();
+        }
+        return jpaRepository.findRangeIn(roomTypeIds.stream().map(RoomTypeId::value).toList(),
+                from, toExclusive);
+    }
+
     /** HoldInventory. 06-4 1-2 hold(n)의 Pre 열이 요구하는 오름차순 잠금. PESSIMISTIC_WRITE다 */
     @Override
     public List<DailyInventory> findRangeForUpdate(RoomTypeId roomTypeId, LocalDate from,
