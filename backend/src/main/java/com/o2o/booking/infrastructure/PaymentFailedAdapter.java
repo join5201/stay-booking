@@ -22,9 +22,11 @@ public class PaymentFailedAdapter {
     private static final Logger log = LoggerFactory.getLogger(PaymentFailedAdapter.class);
 
     private final PaymentOutcomeService outcomeService;
+    private final BookingMetrics metrics;
 
-    public PaymentFailedAdapter(PaymentOutcomeService outcomeService) {
+    public PaymentFailedAdapter(PaymentOutcomeService outcomeService, BookingMetrics metrics) {
         this.outcomeService = outcomeService;
+        this.metrics = metrics;
     }
 
     // phase 기본값이 AFTER_COMMIT이다. 발행이 트랜잭션 밖이면 오지 않는다(fallbackExecution 기본 false)
@@ -33,6 +35,7 @@ public class PaymentFailedAdapter {
         try {
             outcomeService.onFailed(event);
         } catch (RuntimeException e) {
+            metrics.paymentResultHandlingFailed("failed");
             log.error("결제 실패 처리 실패. T1의 TTL 만료가 닫는다. booking={} attempt={} attemptCount={}",
                     event.bookingId(), event.paymentAttemptId().value(), event.attemptCount(), e);
         }

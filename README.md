@@ -103,12 +103,12 @@ Mock 결제의 기본값은 승인입니다. 실행이 실패할 때의 출력�
 
 | 대상 | 명령 | 결과 |
 |---|---|---|
-| 백엔드 | `./gradlew test` | 473건, 실패 0 |
+| 백엔드 | `./gradlew test` | 481건, 실패 0 |
 | 프론트 단위 | `npm run test` | 230건 통과 |
 | 프론트 검사 | `npm run typecheck`, `npm run lint`, `npm run build` | 오류 0 |
 | E2E | `npm run test:e2e` | 6건 통과 |
 
-백엔드 결과는 2026-09-30, 프론트 셋과 E2E 결과는 2026-09-16([eb4cc19](https://github.com/join5201/stay-booking/commit/eb4cc19))에 측정한 값입니다. 백엔드 테스트는 bootRun과 같은 DB의 스키마를 지우고 다시 만들기 때문에 띄워 둔 앱의 데이터도 지워집니다. E2E 조건은 [frontend/README.md](frontend/README.md#2-실행)에 있습니다.
+백엔드 결과는 2026-10-01, 프론트 셋과 E2E 결과는 2026-09-16([eb4cc19](https://github.com/join5201/stay-booking/commit/eb4cc19))에 측정한 값입니다. 백엔드 테스트는 bootRun과 같은 DB의 스키마를 지우고 다시 만들기 때문에 띄워 둔 앱의 데이터도 지워집니다. E2E 조건은 [frontend/README.md](frontend/README.md#2-실행)에 있습니다.
 
 ## 더 보기
 
