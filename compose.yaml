@@ -58,9 +58,8 @@ services:
       mysql:
         condition: service_healthy
     healthcheck:
-      # 응답 코드는 보지 않고 응답이 오는지만 본다. 헬스 주소가 아직 없다.
-      # 이슈 228이 /actuator/health를 넣으면 그 주소와 -f로 바꾼다
-      test: ["CMD", "curl", "-s", "-o", "/dev/null", "http://127.0.0.1:8080/"]
+      # actuator 건강 주소(이슈 228). DB에 못 붙으면 503이라 -f가 실패로 본다
+      test: ["CMD", "curl", "-fs", "-o", "/dev/null", "http://127.0.0.1:8080/actuator/health"]
       interval: 5s
       timeout: 5s
       retries: 30
