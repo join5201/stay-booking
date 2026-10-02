@@ -1,0 +1,175 @@
+# alerts.yml의 짝 시험 (이슈 240). 경보마다 켜지는 경우와 안 켜지는 경우를 둔다
+# 켜지는 경우만 보면 늘 켜지는 규칙도 통과한다. 실행 방법은 alerts.yml 머리 주석
+rule_files:
+  - alerts.yml
+
+evaluation_interval: 1m
+
+tests:
+  # 보류 지속. 1분에 승인 1건, 확정은 없다. 15분째는 아직 대기, 16분째에 켜진다
+  - interval: 1m
+    input_series:
+      - series: 'o2o_payment_approved_total{application="backend"}'
+        values: '0 1+0x30'
+      - series: 'o2o_booking_confirmed_total{application="backend"}'
+        values: '0+0x30'
+      - series: 'o2o_payment_refunded_total{application="backend",reason="late_approval"}'
+        values: '0+0x30'
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: O2OBookingHeldAfterApproval
+        exp_alerts: []
+      - eval_time: 16m
+        alertname: O2OBookingHeldAfterApproval
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+            exp_annotations:
+              summary: 결제는 승인됐는데 확정도 환불도 안 된 예약이 15분 넘게 남아 있다
+              description: 보류 추정 1건. 만료 스캔 실패 경보와 백엔드 경고 로그를 같이 본다
+
+  # 보류 지속의 짝. 5분에 확정이 따라오면 켜지지 않는다
+  - interval: 1m
+    input_series:
+      - series: 'o2o_payment_approved_total{application="backend"}'
+        values: '0 1+0x30'
+      - series: 'o2o_booking_confirmed_total{application="backend"}'
+        values: '0 0 0 0 0 1+0x26'
+      - series: 'o2o_payment_refunded_total{application="backend",reason="late_approval"}'
+        values: '0+0x30'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: O2OBookingHeldAfterApproval
+        exp_alerts: []
+
+  # 보류 지속의 짝 둘. 늦은 승인은 승인 1과 늦은 승인 환불 1이 같이 올라 0이다
+  - interval: 1m
+    input_series:
+      - series: 'o2o_payment_approved_total{application="backend"}'
+        values: '0 1+0x30'
+      - series: 'o2o_booking_confirmed_total{application="backend"}'
+        values: '0+0x30'
+      - series: 'o2o_payment_refunded_total{application="backend",reason="late_approval"}'
+        values: '0 1+0x30'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: O2OBookingHeldAfterApproval
+        exp_alerts: []
+
+  # 결제 결과 처리 실패. 3분에 1건 늘면 바로 켜지고, 5분 창을 벗어나면 꺼진다
+  - interval: 1m
+    input_series:
+      - series: 'o2o_booking_payment_result_failures_total{application="backend",result="approved"}'
+        values: '0 0 0 1+0x10'
+      - series: 'o2o_booking_payment_result_failures_total{application="backend",result="failed"}'
+        values: '0+0x13'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: O2OPaymentResultHandlingFailed
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              application: backend
+              result: approved
+            exp_annotations:
+              summary: 결제 결과(approved)를 받은 예약 쪽 처리가 예외로 끝났다
+              description: 최근 5분 1건. 승인이면 만료 스캔의 확정 우선이 닫아야 한다
+      - eval_time: 10m
+        alertname: O2OPaymentResultHandlingFailed
+        exp_alerts: []
+
+  # 만료 스캔 실패. 같은 모양
+  - interval: 1m
+    input_series:
+      - series: 'o2o_booking_expire_scan_failures_total{application="backend"}'
+        values: '0 0 0 1+0x10'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: O2OExpireScanFailed
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              application: backend
+            exp_annotations:
+              summary: 만료 스캔 한 바퀴가 예외로 끝났다
+              description: 최근 5분 1건. 보류를 닫아 줄 안전망이 멈췄다
+      - eval_time: 10m
+        alertname: O2OExpireScanFailed
+        exp_alerts: []
+
+  # 백엔드 수집 안 됨. 2분부터 down, 2분째는 대기, 3분째 켜짐, 6분에 돌아오면 꺼짐
+  - interval: 1m
+    input_series:
+      - series: 'up{job="backend",instance="backend:8080"}'
+        values: '1 1 0 0 0 0 1 1'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: O2OBackendDown
+        exp_alerts: []
+      - eval_time: 3m
+        alertname: O2OBackendDown
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              job: backend
+              instance: backend:8080
+            exp_annotations:
+              summary: Prometheus가 백엔드 지표를 1분 넘게 못 긁었다
+              description: 앱이 죽었거나 /actuator/prometheus가 응답하지 않는다
+      - eval_time: 7m
+        alertname: O2OBackendDown
+        exp_alerts: []
+
+  # 5xx 비율. 분당 200 100건에 500 10건이면 약 9%라 켜진다. actuator 500은 세지 않는다
+  - interval: 1m
+    input_series:
+      - series: 'http_server_requests_seconds_count{status="200",uri="/api/v1/bookings"}'
+        values: '0+100x20'
+      - series: 'http_server_requests_seconds_count{status="500",uri="/api/v1/bookings"}'
+        values: '0+10x20'
+      - series: 'http_server_requests_seconds_count{status="500",uri="/actuator/prometheus"}'
+        values: '0+1000x20'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: O2OHighServerErrorRatio
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: 서버 오류(5xx)가 2분 넘게 요청의 5%를 넘는다
+              description: 5xx 비율 9.091%
+
+  # 5xx 비율의 짝. 500이 분당 2건이면 약 2%라 안 켜진다
+  - interval: 1m
+    input_series:
+      - series: 'http_server_requests_seconds_count{status="200",uri="/api/v1/bookings"}'
+        values: '0+100x20'
+      - series: 'http_server_requests_seconds_count{status="500",uri="/api/v1/bookings"}'
+        values: '0+2x20'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: O2OHighServerErrorRatio
+        exp_alerts: []
+
+  # DB 커넥션 대기. 2분부터 3개가 이어지면 3분째 켜지고, 한 번만 튀면 안 켜진다
+  - interval: 1m
+    input_series:
+      - series: 'hikaricp_connections_pending{application="backend",pool="HikariPool-1"}'
+        values: '0 0 3 3 3 3'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: O2ODbConnectionPending
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: DB 커넥션을 기다리는 요청이 1분 넘게 있다
+              description: 대기 3개. DB 지연이나 긴 트랜잭션을 의심한다
+  - interval: 1m
+    input_series:
+      - series: 'hikaricp_connections_pending{application="backend",pool="HikariPool-1"}'
+        values: '0 0 3 0 0 0'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: O2ODbConnectionPending
+        exp_alerts: []
