@@ -33,4 +33,18 @@ class FlywayMigrationTest {
             assertEquals(Boolean.TRUE, row.get("success"), "실패한 판: " + row.get("version"));
         }
     }
+
+    // V2. 검색이 읽는 두 칸의 인덱스(이슈 242). 이름과 칸까지 본다
+    @Test
+    void searchIndexesExist() {
+        List<String> indexes = jdbcTemplate.queryForList("""
+                select concat(table_name, '.', index_name, '.', column_name)
+                from information_schema.statistics
+                where table_schema = database() and index_name in ('idx_property_region_code', 'idx_room_type_property_id')
+                order by 1""", String.class);
+
+        assertEquals(List.of(
+                "property.idx_property_region_code.region_code",
+                "room_type.idx_room_type_property_id.property_id"), indexes);
+    }
 }
