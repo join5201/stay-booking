@@ -16,6 +16,9 @@ export function apiRewrites(base: string) {
 }
 
 const nextConfig: NextConfig = {
+  // 이미지용. 빌드가 실행에 필요한 파일만 .next/standalone에 모은다 (frontend/Dockerfile).
+  // PC의 next start는 그대로 뜨고 standalone이면 server.js를 쓰라는 경고 한 줄이 나온다
+  output: "standalone",
   async rewrites() {
     return apiRewrites(backendUrl());
   },

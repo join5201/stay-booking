@@ -1,0 +1,21 @@
+# 프론트 이미지를 구울 때 도커에 보내지 않을 것 (이슈 230)
+
+# PC에서 설치한 패키지와 빌드 결과. 이미지 안에서 새로 설치하고 굽는다.
+# 윈도우용으로 받은 패키지가 리눅스 이미지에 섞이면 안 된다
+node_modules/
+.next/
+out/
+
+# 환경변수 파일. 백엔드 주소는 빌드 인자로 받는다
+.env*
+
+# E2E와 테스트 결과물
+playwright-report/
+test-results/
+coverage/
+
+# 빌드와 무관한 파일
+*.md
+env.example
+Dockerfile
+.dockerignore
