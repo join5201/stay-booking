@@ -1,0 +1,79 @@
+# 경보 규칙 여섯 (이슈 240). Prometheus가 15초마다 긁은 지표로 평가한다
+#
+# 왜 이 파일이 필요한가: 계기판(Grafana)은 사람이 보고 있어야만 쓸모가 있다. 장애 실험에서 돈만 받은
+# 예약의 앞 신호를 놓치지 않으려면 위험한 모양을 조건으로 적어 두고 켜지는지 시험해야 한다.
+# 알림 전송(Alertmanager)은 아직 없다. 켜진 경보는 Prometheus Alerts 화면에서 본다.
+#
+# 실행 예시 (저장소 루트에서, 규칙 검사와 짝 시험)
+#   docker run --rm -v "$PWD/infra/observability:/w" -w /w --entrypoint promtool prom/prometheus:v3.15.0 check rules alerts.yml
+#   docker run --rm -v "$PWD/infra/observability:/w" -w /w --entrypoint promtool prom/prometheus:v3.15.0 test rules alerts.test.yml
+#   Git Bash에서는 앞에 MSYS_NO_PATHCONV=1 을 붙인다. 안 붙이면 /w가 Windows 경로로 바뀐다
+#
+# 실패 시 출력 예시
+#   FAILED: alerts.test.yml: ... alertname: O2OBackendDown, time: 3m, exp:[...], got:[]
+#     조건이나 for 시간이 시험의 기대와 다르다. 규칙과 시험 중 어느 쪽이 의도인지 먼저 본다
+#   Prometheus Alerts 화면에 규칙이 없음
+#     prometheus.yml의 rule_files 경로와 compose의 alerts.yml 마운트를 본다
+#
+# 카운터는 앱이 다시 뜨면 0부터 센다. 보류 추정은 한 회차 안에서만 뜻이 있다(대시보드와 같다).
+
+groups:
+  - name: o2o-booking
+    rules:
+      - alert: O2OBookingHeldAfterApproval
+        # 승인 - 확정 - 늦은 승인 환불. 보류 시간 10분과 만료 스캔 주기를 넘겨 15분이면 스캔이 못 닫은 것이다
+        expr: sum(o2o_payment_approved_total) - sum(o2o_booking_confirmed_total) - sum(o2o_payment_refunded_total{reason="late_approval"}) > 0
+        for: 15m
+        labels:
+          severity: critical
+        annotations:
+          summary: 결제는 승인됐는데 확정도 환불도 안 된 예약이 15분 넘게 남아 있다
+          description: 보류 추정 {{ $value }}건. 만료 스캔 실패 경보와 백엔드 경고 로그를 같이 본다
+
+      - alert: O2OPaymentResultHandlingFailed
+        expr: increase(o2o_booking_payment_result_failures_total[5m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: 결제 결과({{ $labels.result }})를 받은 예약 쪽 처리가 예외로 끝났다
+          description: 최근 5분 {{ $value }}건. 승인이면 만료 스캔의 확정 우선이 닫아야 한다
+
+      - alert: O2OExpireScanFailed
+        expr: increase(o2o_booking_expire_scan_failures_total[5m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: 만료 스캔 한 바퀴가 예외로 끝났다
+          description: 최근 5분 {{ $value }}건. 보류를 닫아 줄 안전망이 멈췄다
+
+  - name: o2o-backend
+    rules:
+      - alert: O2OBackendDown
+        expr: up{job="backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Prometheus가 백엔드 지표를 1분 넘게 못 긁었다
+          description: 앱이 죽었거나 /actuator/prometheus가 응답하지 않는다
+
+      - alert: O2OHighServerErrorRatio
+        # actuator 요청은 빼고 손님 요청만 센다
+        expr: |
+          sum(rate(http_server_requests_seconds_count{status=~"5..", uri!~"/actuator.*"}[2m]))
+            / sum(rate(http_server_requests_seconds_count{uri!~"/actuator.*"}[2m])) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: 서버 오류(5xx)가 2분 넘게 요청의 5%를 넘는다
+          description: 5xx 비율 {{ $value | humanizePercentage }}
+
+      - alert: O2ODbConnectionPending
+        expr: max(hikaricp_connections_pending) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: DB 커넥션을 기다리는 요청이 1분 넘게 있다
+          description: 대기 {{ $value }}개. DB 지연이나 긴 트랜잭션을 의심한다
