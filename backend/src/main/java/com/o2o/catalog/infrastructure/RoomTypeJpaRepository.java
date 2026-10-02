@@ -1,5 +1,6 @@
 package com.o2o.catalog.infrastructure;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -21,4 +22,8 @@ public interface RoomTypeJpaRepository extends JpaRepository<RoomType, String> {
     // SEARCH-01. 쪽 없는 숙소 읽기. 정렬을 JPQL에 박는다. 2026-09-12 추가
     @Query("select r from RoomType r where r.propertyId = :propertyId order by r.id")
     List<RoomType> findAllByPropertyId(@Param("propertyId") String propertyId);
+
+    // SEARCH-01. 여러 숙소를 한 번에. 이슈 223
+    @Query("select r from RoomType r where r.propertyId in :propertyIds order by r.propertyId, r.id")
+    List<RoomType> findAllByPropertyIdIn(@Param("propertyIds") Collection<String> propertyIds);
 }

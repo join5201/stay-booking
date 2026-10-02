@@ -45,6 +45,13 @@ public interface DailyInventoryRepository {
     List<DailyInventory> findRange(RoomTypeId roomTypeId, LocalDate from, LocalDate toExclusive);
 
     /**
+     * SEARCH-01. findRange를 객실 타입 여러 개에 한 번에 한다. 객실마다 부르면 쿼리가 객실 수만큼
+     * 나간다(이슈 223). 정렬은 객실 타입 id, 날짜 오름차순이다. 빈 목록이면 조회 없이 빈 목록이다.
+     */
+    List<DailyInventory> findRangeIn(Collection<RoomTypeId> roomTypeIds, LocalDate from,
+                                     LocalDate toExclusive);
+
+    /**
      * HoldInventory. findRange와 같은 범위와 정렬에 잠금이 붙는다. 06-4 1-2 hold(n)의 Pre가
      * 오름차순 잠금을 적고 08-3 결정 3이 재고 N행을 날짜 오름차순으로 잠근다고 적는다.
      * 정렬을 질의가 보장하므로 잠금 순서가 호출 루프에 기대지 않는다(task-S9-booking 7절 D-2).

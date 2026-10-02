@@ -71,17 +71,32 @@ public final class PricingService {
         return evaluate(roomTypeId, property.region().code(), stay);
     }
 
-    /** 검색이 객실마다 카탈로그를 다시 읽지 않도록 지역 코드를 받는 경로다(06-1 R8 읽기 모델) */
+    /** 지역 코드를 이미 아는 호출자의 경로다. 요금과 프로모션은 여기서 읽는다 */
     public PricingResult evaluate(RoomTypeId roomTypeId, String regionCode, StayRange stay) {
-        List<LocalDate> dates = stay.dates();
         List<DailyRate> rates = dailyRateRepository.findRange(roomTypeId, stay.checkIn(),
                 stay.checkOut());
-        List<Long> baseAmounts = baseAmounts(roomTypeId, dates, rates);
+        return evaluate(roomTypeId, regionCode, stay, rates, activePromotions());
+    }
 
+    /** 오늘 켜진 프로모션을 한 번 읽는다. 검색이 객실마다 다시 읽지 않도록 밖에 연다. 이슈 223 */
+    public ActivePromotions activePromotions() {
         LocalDate today = SeoulDate.today(clock);
+        return new ActivePromotions(today, promotionRepository.findEnabledOn(today));
+    }
+
+    /**
+     * 읽어 둔 요금과 프로모션으로 계산만 한다. DB를 읽지 않는다. 검색이 숙소 여러 개의 요금을
+     * 한 번에 읽고 객실마다 이 경로를 부른다(이슈 223). ratesAscending은 이 객실 타입의 숙박
+     * 기간 요금이 날짜 오름차순으로 든 목록이다.
+     */
+    public PricingResult evaluate(RoomTypeId roomTypeId, String regionCode, StayRange stay,
+                                  List<DailyRate> ratesAscending, ActivePromotions promotions) {
+        List<LocalDate> dates = stay.dates();
+        List<Long> baseAmounts = baseAmounts(roomTypeId, dates, ratesAscending);
+
         List<Promotion> applicable = new ArrayList<>();
-        for (Promotion promotion : promotionRepository.findEnabledOn(today)) {
-            if (promotion.isApplicable(regionCode, stay, today)) {
+        for (Promotion promotion : promotions.promotions()) {
+            if (promotion.isApplicable(regionCode, stay, promotions.today())) {
                 applicable.add(promotion);
             }
         }

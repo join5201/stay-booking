@@ -1,6 +1,7 @@
 package com.o2o.inventory.infrastructure;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,5 +42,16 @@ public class JpaDailyRateRepository implements DailyRateRepository {
     @Override
     public List<DailyRate> findRange(RoomTypeId roomTypeId, LocalDate from, LocalDate toExclusive) {
         return jpaRepository.findRange(roomTypeId.value(), from, toExclusive);
+    }
+
+    /** SEARCH-01. 빈 in ()을 DB에 보내지 않는다. 이슈 223 */
+    @Override
+    public List<DailyRate> findRangeIn(Collection<RoomTypeId> roomTypeIds, LocalDate from,
+                                       LocalDate toExclusive) {
+        if (roomTypeIds.isEmpty()) {
+            return List.of();
+        }
+        return jpaRepository.findRangeIn(roomTypeIds.stream().map(RoomTypeId::value).toList(),
+                from, toExclusive);
     }
 }

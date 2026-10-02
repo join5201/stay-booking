@@ -1,6 +1,7 @@
 package com.o2o.inventory.domain;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,4 +24,8 @@ public interface DailyRateRepository {
 
     /** RATE-03. 재고의 findRange와 같은 규칙이다. from 포함, to 제외, 날짜 오름차순 */
     List<DailyRate> findRange(RoomTypeId roomTypeId, LocalDate from, LocalDate toExclusive);
+
+    /** SEARCH-01. 재고의 findRangeIn과 같은 규칙이다. 객실 타입 id, 날짜 오름차순. 이슈 223 */
+    List<DailyRate> findRangeIn(Collection<RoomTypeId> roomTypeIds, LocalDate from,
+                                LocalDate toExclusive);
 }
