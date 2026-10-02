@@ -1,0 +1,9 @@
+# 대시보드 폴더의 JSON을 켜질 때 읽는다 (이슈 236)
+apiVersion: 1
+
+providers:
+  - name: o2o
+    folder: O2O
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards
