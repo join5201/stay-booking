@@ -1,7 +1,7 @@
 {
   "uid": "o2o-booking",
   "title": "O2O 예약과 결제",
-  "description": "관측 3-3(이슈 236). 업무 지표(이슈 228)와 HTTP, DB 커넥션, 백엔드 경고 로그를 한 시간 축에 둔다. 카운터는 앱이 다시 뜨면 0부터 센다",
+  "description": "관측 3-3(이슈 236), 경보 상태 패널은 3-4(이슈 240). 업무 지표(이슈 228)와 HTTP, DB 커넥션, 백엔드 경고 로그를 한 시간 축에 둔다. 카운터는 앱이 다시 뜨면 0부터 센다",
   "tags": [
     "o2o"
   ],
@@ -408,7 +408,7 @@
         "x": 0,
         "y": 28,
         "w": 24,
-        "h": 10
+        "h": 7
       },
       "datasource": {
         "type": "loki",
@@ -423,6 +423,73 @@
         {
           "refId": "A",
           "expr": "{service=\"backend\"} |~ \"WARN|ERROR\""
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "경보 상태 (대기, 켜짐)",
+      "description": "Prometheus 경보 규칙(infra/observability/alerts.yml)의 상태. ALERTS 시계열로 그린다. 1이면 그 상태에 있다",
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "min": 0,
+          "max": 1,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "stepAfter",
+            "fillOpacity": 20
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*firing"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*pending"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (alertname, alertstate) (ALERTS)",
+          "legendFormat": "{{alertname}} {{alertstate}}"
         }
       ]
     }

@@ -1,6 +1,11 @@
 # 백엔드 지표를 15초마다 긁는다 (이슈 236). backend는 루트 compose.yaml의 서비스 이름이다
 global:
   scrape_interval: 15s
+  evaluation_interval: 15s
+
+# 경보 규칙 (이슈 240). 짝 시험은 alerts.test.yml
+rule_files:
+  - /etc/prometheus/alerts.yml
 
 scrape_configs:
   - job_name: backend
