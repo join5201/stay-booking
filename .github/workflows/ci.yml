@@ -5,7 +5,7 @@
 # 세션의 턴 끝 동작은 바꾸지 않는다(harness/docs/10-14 8-5절). LLM을 부르지 않는다(N1과 무관).
 #
 # 작업 둘
-#   backend  JDK 21과 mysql:9.7.2 서비스로 gradlew test. 이미지와 포트(3307)와 DB 이름은
+#   backend  JDK 21과 mysql:8.4 서비스로 gradlew test. 이미지와 포트(3307)와 DB 이름은
 #            backend/docker-compose.yml과 같다. DB 계정은 이 작업 안에서만 사는 일회용 값이라
 #            비밀이 아니다. JUnit XML은 성공과 실패 모두 올린다.
 #   harness  Windows와 Node 22로 검사기 테스트와 게이트 넷(settings, union, sweep, numbers).
@@ -56,7 +56,7 @@ jobs:
       O2O_MYSQL_PASSWORD: o2o_ci_only
     services:
       mysql:
-        image: mysql:9.7.2
+        image: mysql:8.4
         ports:
           - 3307:3306
         env:
