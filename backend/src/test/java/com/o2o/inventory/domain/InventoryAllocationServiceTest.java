@@ -5,12 +5,16 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.o2o.booking.BookingLifecycleTestConfiguration;
+import com.o2o.booking.MutableClock;
 import com.o2o.catalog.application.CatalogApplicationService;
 import com.o2o.catalog.domain.Property;
 import com.o2o.catalog.domain.RoomType;
@@ -31,7 +35,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * 변경이 롤백으로 지워져야 한다. 도메인 서비스는 트랜잭션을 열지 않으므로 테스트가 TransactionTemplate
  * 으로 감싼다. 호출자(예약의 BookingLifecycle)도 그렇게 부른다.
  */
+// 재고를 여는 단계가 오늘(서울 날짜) 이상을 요구하므로 시계를 NOW와 같은 시각에 고정한다(이슈 247).
+// 예약 통합 시험과 같은 설정을 가져와 캐시된 컨텍스트를 함께 쓴다. 컨텍스트를 하나 더 띄우면 DB 연결이 한도를 넘는다
 @SpringBootTest
+@Import(BookingLifecycleTestConfiguration.class)
 class InventoryAllocationServiceTest {
 
     private static final HostId HOST = HostId.of("host_001");
@@ -56,6 +63,14 @@ class InventoryAllocationServiceTest {
 
     @Autowired
     private PlatformTransactionManager transactionManager;
+
+    @Autowired
+    private MutableClock clock;
+
+    @BeforeEach
+    void resetClock() {
+        clock.reset();
+    }
 
     @Test
     void L4_commit은_N행_전부에서_선점을_판매로_옮긴다() {
