@@ -1,7 +1,9 @@
 package com.o2o.inventory.domain;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,6 +24,7 @@ import com.o2o.inventory.application.InventoryApplicationService;
 import com.o2o.shared.HostId;
 import com.o2o.shared.RegionRegistry;
 import com.o2o.shared.RoomTypeId;
+import com.o2o.shared.SeoulDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -35,16 +38,17 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * 변경이 롤백으로 지워져야 한다. 도메인 서비스는 트랜잭션을 열지 않으므로 테스트가 TransactionTemplate
  * 으로 감싼다. 호출자(예약의 BookingLifecycle)도 그렇게 부른다.
  */
-// 재고를 여는 단계가 오늘(서울 날짜) 이상을 요구하므로 시계를 NOW와 같은 시각에 고정한다(이슈 247).
+// 재고를 여는 단계가 오늘(서울 날짜) 이상을 요구하므로 시계를 고정한다(이슈 247).
 // 예약 통합 시험과 같은 설정을 가져와 캐시된 컨텍스트를 함께 쓴다. 컨텍스트를 하나 더 띄우면 DB 연결이 한도를 넘는다
 @SpringBootTest
 @Import(BookingLifecycleTestConfiguration.class)
 class InventoryAllocationServiceTest {
 
     private static final HostId HOST = HostId.of("host_001");
-    private static final LocalDate CHECK_IN = LocalDate.parse("2026-10-10");
+    // 날짜는 고정 시계의 오늘(서울)에서 센다(testing.md T4). 시계의 시작 시각을 바꿔도 숙박일이 따라간다
+    private static final Instant NOW = BookingLifecycleTestConfiguration.FIXED_NOW;
+    private static final LocalDate CHECK_IN = SeoulDate.today(Clock.fixed(NOW, ZoneOffset.UTC)).plusDays(8);
     private static final LocalDate CHECK_OUT = CHECK_IN.plusDays(3);
-    private static final Instant NOW = Instant.parse("2026-10-01T20:00:00Z");
 
     @Autowired
     private InventoryAllocationService allocationService;
