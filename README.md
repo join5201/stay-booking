@@ -41,7 +41,7 @@
 | 구분 | 기술 |
 |---|---|
 | 백엔드 | Java 21, Spring Boot 4.1, Gradle 9.7 |
-| DB | MySQL 9.7 (Docker 컨테이너) |
+| DB | MySQL 8.4 (Docker 컨테이너) |
 | 프론트 | Next.js 16.3, React 19.2, TypeScript 5.9 |
 | 화면과 데이터 | Tailwind CSS 4.3, TanStack Query 5 |
 | 백엔드 테스트 | JUnit 6, 실제 MySQL 컨테이너 |
@@ -124,4 +124,4 @@ Mock 결제의 기본값은 승인입니다. 실행이 실패할 때의 출력�
 
 최초 작성: 2026-09-08
 
-최종 갱신: 2026-10-01
+최종 갱신: 2026-10-26
