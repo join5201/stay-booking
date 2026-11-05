@@ -58,8 +58,8 @@
 ### 같은 요청 재전송
 
 - 문제: 응답을 못 받은 클라이언트가 같은 예약 요청을 다시 보내면 예약이 두 번 생길 수 있습니다.
-- 방법: 예약, 결제 요청, 취소는 요청마다 고유 키를 담는 Idempotency-Key 헤더를 필수로 받습니다. 같은 키로 같은 내용이 다시 오면 처리하지 않고 첫 응답을 돌려주고, 다른 내용이면 409 IDEMPOTENCY_KEY_REUSED로 거절합니다.
-- 확인: [BookingApiTest](backend/src/test/java/com/o2o/booking/api/BookingApiTest.java)의 K15로 시작하는 테스트에서 같은 키로 다시 보내면 같은 응답이 오고 재고 선점 수가 늘지 않습니다.
+- 방법: 예약, 결제 요청, 취소는 요청마다 고유 키를 담는 Idempotency-Key 헤더를 필수로 받습니다. 같은 키로 같은 내용이 다시 오면 처리하지 않고 첫 응답을 돌려주고, 다른 내용이면 409 IDEMPOTENCY_KEY_REUSED로 거절합니다. 처리 중인 키도 내용을 먼저 비교해, 내용이 다르면 재시도를 안내하지 않고 바로 거절합니다.
+- 확인: [BookingApiTest](backend/src/test/java/com/o2o/booking/api/BookingApiTest.java)의 K15로 시작하는 테스트에서 같은 키로 다시 보내면 같은 응답이 오고 재고 선점 수가 늘지 않습니다. K27로 시작하는 테스트에서 처리 중인 키에 다른 내용을 보내면 바로 거절됩니다.
 
 ### 결제 승인과 만료
 
