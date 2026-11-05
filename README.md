@@ -33,7 +33,7 @@
 
 ![배포 목표 구성도](.github/readme/architecture.png)
 
-배포 목표 구성입니다. EC2 한 대에 Nginx, Next.js, Spring Boot와 로그 수집(Alloy, Loki, Grafana)을 Docker Compose로 올리고 DB는 RDS를 씁니다. 2026-09-30 기준 AWS 자원은 아직 없고, 지금은 아래처럼 PC에서 실행합니다.
+배포 목표 구성입니다. EC2 한 대에 Nginx, Next.js, Spring Boot, MySQL과 로그 수집(Alloy, Loki, Grafana)을 Docker Compose로 올립니다. AWS 배포는 진행 중이고, 지금은 아래처럼 PC에서 실행합니다.
 
 브라우저는 3000번 포트의 Next.js만 부르고, /api/v1 아래 요청은 Next.js가 8080번 포트의 백엔드로 넘깁니다. 백엔드는 Spring Boot 애플리케이션 하나이고 MySQL은 Docker 컨테이너로 3307번 포트에 띄웁니다.
 
@@ -131,4 +131,4 @@ Mock 결제의 기본값은 승인입니다. 실행이 실패할 때의 출력�
 
 최초 작성: 2026-09-08
 
-최종 갱신: 2026-10-26
+최종 갱신: 2026-11-06
