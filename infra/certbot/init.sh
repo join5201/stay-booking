@@ -8,6 +8,7 @@
 # 실행 예시 (서버의 /opt/o2o에서)
 #   sh infra/certbot/init.sh
 #   O2O_CERT_STAGING=1 sh infra/certbot/init.sh     시험 발급. 발급 한도를 쓰지 않고 브라우저는 경고한다
+#   sh infra/certbot/init.sh                         시험 발급 뒤에 다시 돌리면 시험 인증서를 지우고 정식으로 받는다
 #
 # 실패 시 출력 예시
 #   이미 인증서가 있다. 갱신은 infra/certbot/renew.sh
@@ -22,9 +23,16 @@ cd "$(dirname "$0")/../.."
 NAME=o2o-stay.duckdns.org
 LIVE=/etc/letsencrypt/live/$NAME
 
-if docker compose run --rm --entrypoint test certbot -f "/etc/letsencrypt/renewal/$NAME.conf"; then
-  echo "이미 인증서가 있다. 갱신은 infra/certbot/renew.sh"
-  exit 0
+CONF=/etc/letsencrypt/renewal/$NAME.conf
+if docker compose run --rm --entrypoint test certbot -f "$CONF"; then
+  # 시험 인증서가 있고 정식을 요청했으면 시험 것을 지우고 받는다. 그대로 두면 갱신도 시험 서버로 간다
+  if [ "${O2O_CERT_STAGING:-0}" != "1" ] && docker compose run --rm --entrypoint grep certbot -q acme-staging "$CONF"; then
+    echo "시험 인증서를 지우고 정식으로 받는다"
+    docker compose run --rm certbot delete --cert-name "$NAME" --non-interactive
+  else
+    echo "이미 인증서가 있다. 갱신은 infra/certbot/renew.sh"
+    exit 0
+  fi
 fi
 
 echo "1/4 임시 인증서"
