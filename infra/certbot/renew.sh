@@ -6,6 +6,8 @@
 #   sh infra/certbot/renew.sh
 #   sh infra/certbot/renew.sh --dry-run      예행. 발급 한도를 쓰지 않는다
 #   cron:  17 4 * * * cd /opt/o2o && sh infra/certbot/renew.sh >> /var/log/o2o-renew.log 2>&1
+#          Amazon Linux 2023에는 cron이 없다. dnf install cronie 뒤 /etc/cron.d/에 사용자 root를 넣어 둔다
+#   터미널 없이 돌면 certbot이 갱신 전에 몇 분을 무작위로 쉰다. 멈춘 것이 아니다 (2026-11-11 서버에서 468초)
 #
 # 실패 시 출력 예시
 #   No renewals were attempted.
