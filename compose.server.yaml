@@ -1,7 +1,9 @@
 # 서버에서 compose.yaml 위에 덮는다 (이슈 250 넷째 항목)
 #
-# 왜 이 파일이 필요한가: PC와 서버는 같은 앱을 띄우지만 다른 곳이 넷이다. DB는 컨테이너가 아니라 RDS이고,
+# 왜 이 파일이 필요한가: PC와 서버는 같은 앱을 띄우지만 다른 곳이 넷이다. DB 데이터는 이름 붙은 볼륨에 남기고,
 # 이미지는 굽지 않고 ECR에서 받고, 앞문은 80과 443을 밖에 열고, 인증서가 있다. 그 넷만 여기서 바꾼다.
+# DB는 RDS가 아니라 같은 서버의 MySQL 컨테이너다. 무료 플랜 크레딧에서 RDS가 월 비용의 78%였다.
+# 나중에 RDS로 옮기면 .env의 O2O_DB_HOST만 바꾼다.
 #
 # 실행 예시 (서버의 /opt/o2o에서. .env의 COMPOSE_FILE이 두 파일을 겹친다)
 #   처음 한 번   sh infra/certbot/init.sh
@@ -10,10 +12,10 @@
 #
 # 서버의 .env (서버에서만 만든다. 저장소에 없다)
 #   COMPOSE_FILE=compose.yaml:compose.server.yaml
-#   O2O_ECR_REGISTRY=<계정>.dkr.ecr.ap-northeast-2.amazonaws.com
+#   O2O_ECR_REGISTRY=<계정>.dkr.ecr.ap-southeast-2.amazonaws.com
 #   O2O_IMAGE_TAG=<커밋 해시>
-#   O2O_DB_HOST, O2O_DB_NAME, O2O_MYSQL_USER, O2O_MYSQL_PASSWORD   Parameter Store에서 꺼낸 값
-#   O2O_MYSQL_ROOT_PASSWORD   서버에서는 쓰지 않는다. compose.yaml의 mysql이 요구해서 아무 값이나 둔다
+#   O2O_DB_HOST(mysql), O2O_DB_NAME, O2O_MYSQL_USER, O2O_MYSQL_PASSWORD, O2O_MYSQL_ROOT_PASSWORD
+#     Parameter Store /o2o/db/ 아래 값
 #
 # 실패 시 출력 예시
 #   required variable O2O_DB_HOST is missing a value
@@ -21,14 +23,16 @@
 #   failed to resolve reference ".../o2o/backend:...": not found
 #     그 태그 이미지를 ECR에 올리지 않았다. 태그를 확인한다
 #   container o2o-backend-1 is unhealthy
-#     RDS에 못 붙었다. docker compose logs backend 에서 Communications link failure를 찾는다
+#     MySQL에 못 붙었다. docker compose logs backend 에서 Communications link failure를 찾는다
 #
 # Compose 2.24.4 이상이 필요하다. !reset과 !override가 그때 들어왔다.
 
 services:
   mysql:
-    # 서버에서는 띄우지 않는다. DB는 RDS다
-    profiles: ["pc-only"]
+    # 볼륨이 없으면 down 뒤 up에서 빈 DB로 바뀐다
+    volumes:
+      - mysql-data:/var/lib/mysql
+    restart: unless-stopped
 
   backend:
     image: ${O2O_ECR_REGISTRY:?서버 .env}/o2o/backend:${O2O_IMAGE_TAG:?서버 .env}
@@ -36,7 +40,6 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://${O2O_DB_HOST:?서버 .env}:3306/${O2O_DB_NAME:?서버 .env}
     ports: !reset []
-    depends_on: !reset {}
     restart: unless-stopped
 
   frontend:
@@ -68,5 +71,6 @@ services:
       - certbot-www:/var/www/certbot
 
 volumes:
+  mysql-data:
   certbot-conf:
   certbot-www:

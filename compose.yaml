@@ -29,7 +29,7 @@ name: o2o
 
 services:
   mysql:
-    # 서버의 RDS와 같은 8.4 LTS로 맞춘다
+    # 서버와 같은 8.4 LTS로 맞춘다
     image: mysql:8.4
     environment:
       MYSQL_ROOT_PASSWORD: ${O2O_MYSQL_ROOT_PASSWORD:?backend/.env를 --env-file로 준다}
