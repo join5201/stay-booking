@@ -23,13 +23,13 @@
 #     docker compose --env-file backend/.env logs backend 로 기동 로그를 본다
 #
 # 비밀번호는 이 파일에 적지 않는다. backend/.env의 세 값을 --env-file로 받는다.
-# 볼륨을 두지 않는다. down 하면 데이터도 같이 사라진다. 서버의 DB는 이 파일의 mysql이 아니라 RDS다.
+# 볼륨을 두지 않는다. down 하면 데이터도 같이 사라진다. 서버는 compose.server.yaml이 이 mysql에 볼륨을 단다.
 
 name: o2o
 
 services:
   mysql:
-    # 서버의 RDS와 같은 8.4 LTS로 맞춘다
+    # 서버와 같은 8.4 LTS로 맞춘다
     image: mysql:8.4
     environment:
       MYSQL_ROOT_PASSWORD: ${O2O_MYSQL_ROOT_PASSWORD:?backend/.env를 --env-file로 준다}
@@ -89,6 +89,7 @@ services:
     image: nginx:1.30-alpine
     volumes:
       - ./infra/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./infra/nginx/o2o-proxy.conf:/etc/nginx/o2o/o2o-proxy.conf:ro
     ports:
       - "127.0.0.1:80:80"
     depends_on:
