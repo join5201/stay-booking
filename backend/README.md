@@ -22,7 +22,7 @@ O2O 숙박 예약 백엔드. 단일 Spring Boot 모듈에 컨텍스트별 패키
 | Spring Boot | 4.1.1 | start.spring.io metadata의 기본값 |
 | Gradle | 9.7.1 | 뼈대에 들어 있는 wrapper. gradlew --version |
 | Java 툴체인 | 21 | build.gradle. 로컬 JDK는 Microsoft 21.0.11 |
-| MySQL 이미지 | mysql:8.4 | 서버의 RDS와 같은 8.4 LTS. 2026-10-26 SELECT VERSION()이 8.4.11 |
+| MySQL 이미지 | mysql:8.4 | 서버와 같은 8.4 LTS. 2026-10-26 SELECT VERSION()이 8.4.11 |
 
 Java 17도 로컬에 있으나(Temurin 17.0.18) 툴체인은 21이다. PATH의 java가 17이므로 Gradle을 부를 때 JAVA_HOME을 21로 준다.
 
