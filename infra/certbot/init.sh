@@ -17,6 +17,8 @@
 #     80이 밖에서 안 닿는다. 보안 그룹의 80, DuckDNS의 IP가 Elastic IP와 같은지 본다
 #   too many certificates (5) already issued for this exact set of identifiers
 #     같은 이름으로 일주일에 5번을 넘겼다. 시험은 O2O_CERT_STAGING=1로 한다
+#   3/4에서 멈추면 임시 인증서도 지워진 뒤다. 떠 있는 nginx는 그대로 돌지만 재시작하면 뜨지 못한다.
+#   원인을 고치고 이 스크립트를 다시 돌린다. 임시 인증서부터 다시 만든다
 set -eu
 
 cd "$(dirname "$0")/../.."
