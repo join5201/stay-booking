@@ -108,33 +108,33 @@ Mock 결제의 기본값은 승인입니다. 실행이 실패할 때의 출력�
 
 ## 테스트
 
-| 대상 | 명령 | 결과 |
-|---|---|---|
-| 백엔드 | `./gradlew test` | 481건, 실패 0 |
-| 프론트 단위 | `npm run test` | 230건 통과 |
-| 프론트 검사 | `npm run typecheck`, `npm run lint`, `npm run build` | 오류 0 |
-| E2E | `npm run test:e2e` | 6건 통과 |
+| 대상과 명령 | 결과 |
+|---|---|
+| 백엔드<br>`./gradlew test` | 481건, 실패 0 |
+| 프론트 단위<br>`npm run test` | 230건 통과 |
+| 프론트 검사<br>`npm run typecheck`<br>`npm run lint`<br>`npm run build` | 오류 0 |
+| E2E<br>`npm run test:e2e` | 6건 통과 |
 
 백엔드 결과는 2026-10-01, 프론트 셋과 E2E 결과는 2026-09-16([eb4cc19](https://github.com/join5201/stay-booking/commit/eb4cc19))에 측정한 값입니다. 백엔드 테스트는 bootRun과 같은 DB의 스키마를 지우고 다시 만들기 때문에 띄워 둔 앱의 데이터도 지워집니다. E2E 조건은 [frontend/README.md](frontend/README.md#2-실행)에 있습니다.
 
 ## 단계별 문서
 
-| 단&#8288;계 | 문서 | 내용 |
-|---|---|---|
-| 기&#8288;획 | [DDD 설계 진행 계획](document/01-o2o-ddd-plan.md) | 설계 전제와 9단계 진행 계획 |
-| 기&#8288;획 | [기능 목록](document/02-o2o-feature-list.md) | 기능 목록과 시스템이 보장할 요구사항 |
-| 설&#8288;계 | [설계 요약](document/06-6-o2o-design-digest.md) | 영역 경계, 애그리거트, 책임, 계약의 요약 |
-| 설&#8288;계 | [API 명세](document/11-o2o-api-spec.md) | 서비스 API 32개와 Mock 결제 결과를 넣는 로컬 API 1개 |
-| 설&#8288;계 | [애그리거트 검토](document/06-3-o2o-aggregates-blind-review.md), [계약 검토](document/06-5-o2o-contracts-blind-review.md) | 작성 대화를 모르는 서브에이전트가 애그리거트와 계약을 검토한 기록 |
-| 설&#8288;계 | [document/](document/README.md) | 설계 문서 전체와 검토 기록. [이벤트 스토밍](document/03-o2o-event-storming.md), [용어 사전](document/05-3-o2o-glossary.md) 포함 |
-| 구&#8288;현 | [backend/](backend/README.md) | 백엔드 실행, 패키지 구조, 기능별 진행 |
-| 구&#8288;현 | [frontend/](frontend/README.md) | 화면 구성, 실행, E2E 조건 |
-| 검&#8288;증 | [테스트](#테스트), [CI](.github/workflows/ci.yml) | 테스트 명령과 결과. CI는 PR과 main에서 백엔드 테스트와 하네스 검사를 돌립니다 |
-| 검&#8288;증 | [harness/](harness/README.md) | AI 개발 절차와 Codex 블라인드 평가의 양식, 평가 기준, 검사 스크립트 |
-| 검&#8288;증 | [PR 235](https://github.com/join5201/stay-booking/pull/235) | 검색 한 건의 쿼리 5,201개를 5개로, 로컬 50명 부하의 검색 p95 9.97초를 0.97초로 |
-| 검&#8288;증 | [PR 253](https://github.com/join5201/stay-booking/pull/253) | 마지막 객실 동시 선점. 잠금이 없으면 60판 모두 초과 판매, 지금 방식은 판마다 1건만 성공 |
-| 배&#8288;포 | [서버 구성](compose.server.yaml), [infra](infra/), [PR 256](https://github.com/join5201/stay-booking/pull/256) | EC2 한 대에 https 첫 배포. Nginx, 인증서 자동 갱신 |
-| 배&#8288;포 | [관측 설정](infra/observability/) | 지표, 대시보드, 경보 규칙 6개. 로컬에서 띄웁니다 |
+| 단계와 문서 | 내용 |
+|---|---|
+| 기획<br>[DDD 설계 진행 계획](document/01-o2o-ddd-plan.md) | 설계 전제와 9단계 진행 계획 |
+| 기획<br>[기능 목록](document/02-o2o-feature-list.md) | 기능 목록과 시스템이 보장할 요구사항 |
+| 설계<br>[설계 요약](document/06-6-o2o-design-digest.md) | 영역 경계, 애그리거트, 책임, 계약의 요약 |
+| 설계<br>[API 명세](document/11-o2o-api-spec.md) | 서비스 API 32개와 Mock 결제 결과를 넣는 로컬 API 1개 |
+| 설계<br>[애그리거트 검토](document/06-3-o2o-aggregates-blind-review.md), [계약 검토](document/06-5-o2o-contracts-blind-review.md) | 작성 대화를 모르는 서브에이전트가 애그리거트와 계약을 검토한 기록 |
+| 설계<br>[document/](document/README.md) | 설계 문서 전체와 검토 기록. [이벤트 스토밍](document/03-o2o-event-storming.md), [용어 사전](document/05-3-o2o-glossary.md) 포함 |
+| 구현<br>[backend/](backend/README.md) | 백엔드 실행, 패키지 구조, 기능별 진행 |
+| 구현<br>[frontend/](frontend/README.md) | 화면 구성, 실행, E2E 조건 |
+| 검증<br>[테스트](#테스트), [CI](.github/workflows/ci.yml) | 테스트 명령과 결과. CI는 PR과 main에서 백엔드 테스트와 하네스 검사를 돌립니다 |
+| 검증<br>[harness/](harness/README.md) | AI 개발 절차와 Codex 블라인드 평가의 양식, 평가 기준, 검사 스크립트 |
+| 검증<br>[PR 235](https://github.com/join5201/stay-booking/pull/235) | 검색 한 건의 쿼리 5,201개를 5개로, 로컬 50명 부하의 검색 p95 9.97초를 0.97초로 |
+| 검증<br>[PR 253](https://github.com/join5201/stay-booking/pull/253) | 마지막 객실 동시 선점. 잠금이 없으면 60판 모두 초과 판매, 지금 방식은 판마다 1건만 성공 |
+| 배포<br>[서버 구성](compose.server.yaml), [infra](infra/), [PR 256](https://github.com/join5201/stay-booking/pull/256) | EC2 한 대에 https 첫 배포. Nginx, 인증서 자동 갱신 |
+| 배포<br>[관측 설정](infra/observability/) | 지표, 대시보드, 경보 규칙 6개. 로컬에서 띄웁니다 |
 
 최초 작성: 2026-09-08
 
