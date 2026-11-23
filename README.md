@@ -119,22 +119,22 @@ Mock 결제의 기본값은 승인입니다. 실행이 실패할 때의 출력�
 
 ## 단계별 문서
 
-| 단계 | 문서 | 내용 |
+| 단&#8288;계 | 문서 | 내용 |
 |---|---|---|
-| 기획 | [DDD 설계 진행 계획](document/01-o2o-ddd-plan.md) | 설계 전제와 9단계 진행 계획 |
-| 기획 | [기능 목록](document/02-o2o-feature-list.md) | 기능 목록과 시스템이 보장할 요구사항 |
-| 설계 | [설계 요약](document/06-6-o2o-design-digest.md) | 영역 경계, 애그리거트, 책임, 계약의 요약 |
-| 설계 | [API 명세](document/11-o2o-api-spec.md) | 서비스 API 32개와 Mock 결제 결과를 넣는 로컬 API 1개 |
-| 설계 | [애그리거트 검토](document/06-3-o2o-aggregates-blind-review.md), [계약 검토](document/06-5-o2o-contracts-blind-review.md) | 작성 대화를 모르는 서브에이전트가 애그리거트와 계약을 검토한 기록 |
-| 설계 | [document/](document/README.md) | 설계 문서 전체와 검토 기록. [이벤트 스토밍](document/03-o2o-event-storming.md), [용어 사전](document/05-3-o2o-glossary.md) 포함 |
-| 구현 | [backend/](backend/README.md) | 백엔드 실행, 패키지 구조, 기능별 진행 |
-| 구현 | [frontend/](frontend/README.md) | 화면 구성, 실행, E2E 조건 |
-| 검증 | [테스트](#테스트), [CI](.github/workflows/ci.yml) | 테스트 명령과 결과. CI는 PR과 main에서 백엔드 테스트와 하네스 검사를 돌립니다 |
-| 검증 | [harness/](harness/README.md) | AI 개발 절차와 Codex 블라인드 평가의 양식, 평가 기준, 검사 스크립트 |
-| 검증 | [PR 235](https://github.com/join5201/stay-booking/pull/235) | 검색 한 건의 쿼리 5,201개를 5개로, 로컬 50명 부하의 검색 p95 9.97초를 0.97초로 |
-| 검증 | [PR 253](https://github.com/join5201/stay-booking/pull/253) | 마지막 객실 동시 선점. 잠금이 없으면 60판 모두 초과 판매, 지금 방식은 판마다 1건만 성공 |
-| 배포 | [compose.server.yaml](compose.server.yaml), [infra/](infra/), [PR 256](https://github.com/join5201/stay-booking/pull/256) | EC2 한 대에 https 첫 배포. Nginx, 인증서 자동 갱신 |
-| 배포 | [infra/observability/](infra/observability/) | 지표, 대시보드, 경보 규칙 6개. 로컬에서 띄웁니다 |
+| 기&#8288;획 | [DDD 설계 진행 계획](document/01-o2o-ddd-plan.md) | 설계 전제와 9단계 진행 계획 |
+| 기&#8288;획 | [기능 목록](document/02-o2o-feature-list.md) | 기능 목록과 시스템이 보장할 요구사항 |
+| 설&#8288;계 | [설계 요약](document/06-6-o2o-design-digest.md) | 영역 경계, 애그리거트, 책임, 계약의 요약 |
+| 설&#8288;계 | [API 명세](document/11-o2o-api-spec.md) | 서비스 API 32개와 Mock 결제 결과를 넣는 로컬 API 1개 |
+| 설&#8288;계 | [애그리거트 검토](document/06-3-o2o-aggregates-blind-review.md), [계약 검토](document/06-5-o2o-contracts-blind-review.md) | 작성 대화를 모르는 서브에이전트가 애그리거트와 계약을 검토한 기록 |
+| 설&#8288;계 | [document/](document/README.md) | 설계 문서 전체와 검토 기록. [이벤트 스토밍](document/03-o2o-event-storming.md), [용어 사전](document/05-3-o2o-glossary.md) 포함 |
+| 구&#8288;현 | [backend/](backend/README.md) | 백엔드 실행, 패키지 구조, 기능별 진행 |
+| 구&#8288;현 | [frontend/](frontend/README.md) | 화면 구성, 실행, E2E 조건 |
+| 검&#8288;증 | [테스트](#테스트), [CI](.github/workflows/ci.yml) | 테스트 명령과 결과. CI는 PR과 main에서 백엔드 테스트와 하네스 검사를 돌립니다 |
+| 검&#8288;증 | [harness/](harness/README.md) | AI 개발 절차와 Codex 블라인드 평가의 양식, 평가 기준, 검사 스크립트 |
+| 검&#8288;증 | [PR 235](https://github.com/join5201/stay-booking/pull/235) | 검색 한 건의 쿼리 5,201개를 5개로, 로컬 50명 부하의 검색 p95 9.97초를 0.97초로 |
+| 검&#8288;증 | [PR 253](https://github.com/join5201/stay-booking/pull/253) | 마지막 객실 동시 선점. 잠금이 없으면 60판 모두 초과 판매, 지금 방식은 판마다 1건만 성공 |
+| 배&#8288;포 | [compose.server.yaml](compose.server.yaml), [infra/](infra/), [PR 256](https://github.com/join5201/stay-booking/pull/256) | EC2 한 대에 https 첫 배포. Nginx, 인증서 자동 갱신 |
+| 배&#8288;포 | [infra/observability/](infra/observability/) | 지표, 대시보드, 경보 규칙 6개. 로컬에서 띄웁니다 |
 
 최초 작성: 2026-09-08
 
