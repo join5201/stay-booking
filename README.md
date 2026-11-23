@@ -133,8 +133,8 @@ Mock 결제의 기본값은 승인입니다. 실행이 실패할 때의 출력�
 | 검&#8288;증 | [harness/](harness/README.md) | AI 개발 절차와 Codex 블라인드 평가의 양식, 평가 기준, 검사 스크립트 |
 | 검&#8288;증 | [PR 235](https://github.com/join5201/stay-booking/pull/235) | 검색 한 건의 쿼리 5,201개를 5개로, 로컬 50명 부하의 검색 p95 9.97초를 0.97초로 |
 | 검&#8288;증 | [PR 253](https://github.com/join5201/stay-booking/pull/253) | 마지막 객실 동시 선점. 잠금이 없으면 60판 모두 초과 판매, 지금 방식은 판마다 1건만 성공 |
-| 배&#8288;포 | [compose.server.yaml](compose.server.yaml), [infra/](infra/), [PR 256](https://github.com/join5201/stay-booking/pull/256) | EC2 한 대에 https 첫 배포. Nginx, 인증서 자동 갱신 |
-| 배&#8288;포 | [infra/observability/](infra/observability/) | 지표, 대시보드, 경보 규칙 6개. 로컬에서 띄웁니다 |
+| 배&#8288;포 | [서버 구성](compose.server.yaml), [infra](infra/), [PR 256](https://github.com/join5201/stay-booking/pull/256) | EC2 한 대에 https 첫 배포. Nginx, 인증서 자동 갱신 |
+| 배&#8288;포 | [관측 설정](infra/observability/) | 지표, 대시보드, 경보 규칙 6개. 로컬에서 띄웁니다 |
 
 최초 작성: 2026-09-08
 
